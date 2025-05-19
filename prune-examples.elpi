@@ -1,0 +1,25 @@
+pred init0.
+init0 :-
+  pi x\
+    % CTX [x]
+    sigma N\
+      % CTX [x,N]
+      N = x.
+      % We unify with assignation "N := x". This is valid because N is defined with context [x] i.e. We can replace `sigma N` with `let N := x` syntaxically.
+    % We found an assignation for the sigma clause
+  % We found an assigation for any value of x
+  % Therefore it works
+
+pred initA.
+initA :-
+  pi x\
+    sigma N\ % N is defined under the context [x]
+      prune N [x],
+      N = x.
+
+pred initB.
+initB :-
+  pi x\
+    sigma N\
+    prune N [],
+    N = x.

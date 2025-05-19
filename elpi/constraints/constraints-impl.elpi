@@ -23,7 +23,7 @@ init :-
 % link a variable parametricity class C to its Coq representation (arguments of PType)
 univ-link C M N :- var C, var M, var N, !,
   declare_constraint (internal.c.univ-link? C M N) [_].
-univ-link C M N :- var C, !,
+univ-link C M N :- var C, !, % TODO Bug if M xor N are unknown!
   C = pc {trocq.db.term->map-class M} {trocq.db.term->map-class N}.
 univ-link (pc M' N') M N :-
   trocq.db.map-class->term M' M,
