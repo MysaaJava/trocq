@@ -4,6 +4,7 @@
 -R . Trocq_examples
 
 artifact_paper_example.v
+coercion.v
 flt3_step.v
 int_to_Zp.v
 list_option.v
@@ -18,4 +19,3 @@ trocq_setoid_rewrite.v
 stuck.v
 Vector_tuple.v
 trocq_gen_rewrite.v
-coercion.v

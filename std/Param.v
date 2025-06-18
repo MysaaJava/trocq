@@ -68,4 +68,10 @@ Elpi Accumulate File param.
 Elpi Accumulate File util_rocq.
 Elpi Accumulate File tactic.
 
-Tactic Notation "trocq" ident_list(l) := elpi trocq ltac_string_list:(l).
+Ltac trocqtactic l g :=
+  match type of g with
+  | ltac_no_arg => elpi trocq l
+  | _ => elpi trocq g l
+  end.
+
+Tactic Notation "trocq" ident_list(l) "to" constr(g) := trocqtactic l g.

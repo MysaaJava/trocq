@@ -11,10 +11,12 @@
 (*                            * see LICENSE file for the text of the license *)
 (*****************************************************************************)
 
-From Coq Require Import ssreflect.
-From Trocq Require Import Trocq.
-From Trocq_examples Require Import N.
+From Trocq Require Import Stdlib Trocq.
+From mathcomp Require Import ssreflect.
 From elpi Require Import elpi.
+
+Set Universe Polymorphism.
+
 
 Set Universe Polymorphism.
 
@@ -39,10 +41,10 @@ Section SimpleTest.
   Trocq Use IdA.
 
   Definition IdB : Param01.Rel B B := mkParam01 idmap.
-  Trocq Use IdB.
+  (*Trocq Use IdB.*)
 
   Goal B.
-    elpi trocqoercion (A).
+    trocq A.
   Abort.
 
   Print weaken.
@@ -66,17 +68,17 @@ Section BothSidesTest.
   Trocq Use RA1 RA2 RB.
 
   Goal A.
-  elpi trocqoercion (A'').
+    trocq A''.
   Abort.
 
   Goal A -> B.
-  elpi trocqoercion (A' -> B').
+    trocq (A' -> B').
   Abort.
 
   About True.
 
   Goal B -> A.
-  elpi trocqoercion (B' -> A'').
+    trocq (B' -> A'').
   Abort.
 
 End BothSidesTest.
@@ -96,7 +98,7 @@ Section DoubleTest.
   Trocq Use Rg.
 
   Goal (B' -> A').
-    elpi trocqoercion (B -> A).
+    trocq (B -> A).
   Abort.
   
 

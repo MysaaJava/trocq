@@ -20,6 +20,7 @@ Set Universe Polymorphism.
 
 (*Elpi Trace.*)
 
+Trocq Logging trace.
 (** In this example, we transport the induction principle on natural numbers
   from two equivalent representations of `N`: the unary one `nat` and the binary
   one `N`. We introduce the `Trocq Use` command to register such translations.
