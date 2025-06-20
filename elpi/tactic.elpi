@@ -36,22 +36,50 @@ load-rels GRRels DB :- std.do! [
   std.flatten DBs DB
 ].
 
-solve InitialGoal NewGoals :- std.do! [
-  InitialGoal = goal _Context _ G _ Args,
+pred parse-goal i:goal, o:term, o: term, o:term, o:list gref.
+parse-goal Goal _ _ _ _ :- logging.info (coq.say "[solve] trying to solve goal" Goal), fail.
+% trocq to G with A B C.
+parse-goal Goal G Ty G' Rels :-
+  Goal = goal _Context _ G _ [(str "to"),RG',(str "with")|RRels], !,
   std.assert-ok! (coq.typecheck G Ty) "goal ill-typed",
-  logging.info (coq.say "translating args" Args),
-  std.map Args util.argument->gref GRArgs,
+  std.map RRels util.argument->gref Rels,
+  util.argument->term RG' G'.
+% trocq to G.
+parse-goal Goal G Ty G' [] :-
+  Goal = goal _Context _ G _ [(str "to"),RG'], !,
+  std.assert-ok! (coq.typecheck G Ty) "goal ill-typed",
+  util.argument->term RG' G'.
+% trocq with A B C.
+parse-goal Goal G Ty G' Rels :-
+  Goal = goal _Context _ G _ [(str "with")|RRels], !,
+  std.assert-ok! (coq.typecheck G Ty) "goal ill-typed",
+  std.map RRels util.argument->gref Rels.
+% trocq.
+parse-goal Goal G Ty _ [] :-
+  Goal = goal _Context _ G _ [], !,
+  logging.trace (coq.say "[parse-goal] No arguments"),
+  std.assert-ok! (coq.typecheck G Ty) "goal ill-typed".
+parse-goal Goal _ _ _ _ :- !,
+  coq.error "Wrong usage of trocq tactic",
+  fail.
+
+solve InitialGoal NewGoals :- std.do! [
+  % parse-goal InitialGoal G Ty G' GRArgs,
+  InitialGoal = goal _Context _ G _ [],
+  std.assert-ok! (coq.typecheck G Ty) "goal ill-typed",
+  GRArgs = [],
   logging.info (coq.say "loading rels" GRArgs),
   load-rels GRArgs DB,
   logging.info (coq.say "local DB" DB),
   logging.info (coq.say "goal" {coq.term->string G}),
+  coq.say "objective" {coq.term->string G'},
   translate-goal DB Ty G (pc map0 map1) G' GR,
-  logging.info (
-    coq.say "trocq:" {coq.term->string G} "~" {coq.term->string G'}
-      "by" {coq.term->string GR}
-  ),
+  % logging.info (
+  %   coq.say "trocq:" {coq.term->string G} "~" {coq.term->string G'}
+  %     "by" {coq.term->string GR}
+  % ),
   FinalProof = {{ @comap lp:G lp:G' lp:GR (_ : lp:G') }},
-  logging.info (coq.say {coq.term->string FinalProof}),
+  % logging.info (coq.say {coq.term->string FinalProof}),
 
   std.assert-ok! (coq.elaborate-skeleton FinalProof G EFinalProof) "proof elaboration error",
   std.assert-ok! (coq.typecheck EFinalProof G2) "proof typechecking error",

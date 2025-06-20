@@ -18,7 +18,7 @@ From elpi Require Import elpi.
 
 Set Universe Polymorphism.
 
-(*Elpi Trace.*)
+Elpi Trace.
 
 (** In this example, we transport the induction principle on natural numbers
   from two equivalent representations of `N`: the unary one `nat` and the binary

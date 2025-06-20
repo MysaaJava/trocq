@@ -68,4 +68,8 @@ Elpi Accumulate File param.
 Elpi Accumulate File util_rocq.
 Elpi Accumulate File tactic.
 
-Tactic Notation "trocq" ident_list(l) := elpi trocq ltac_string_list:(l).
+Elpi Export trocq.
+
+Tactic Notation "trocq" := elpi trocq.
+Tactic Notation "trocq" "to" constr(g) := elpi trocq "to" ltac_term:(g).
+Tactic Notation "trocq" "with" ident_list(l) := elpi trocq "with" ltac_string_list:(l).
