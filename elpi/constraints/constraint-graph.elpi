@@ -47,12 +47,14 @@ typeabbrev
 
 pred empty o:constraint-graph.
 empty (constraint-graph G) :-
+  logging.debug (coq.say "[graph] Created empty graph"),
   std.map.make util.cmp-int G.
 
 % D_π(C, C_A, C_B) is represented as two edges C -> C_A and C -> C_B
 % here one node from C to [C_A, C_B], and two nodes from C_A and C_B to C
 pred add-dep-pi i:class-id, i:class-id, i:class-id, i:constraint-graph, o:constraint-graph.
 add-dep-pi ID IDA IDB (constraint-graph G) (constraint-graph G') :-
+  logging.debug (coq.say "[graph] Add pi" ID IDA IDB),
   util.map.update ID (internal.add-higher-node (node.var ct.pi [IDA, IDB])) G G1,
   util.map.update IDA (internal.add-lower-node (node.var ct.pi [ID])) G1 G2,
   util.map.update IDB (internal.add-lower-node (node.var ct.pi [ID])) G2 G'.
@@ -60,6 +62,7 @@ add-dep-pi ID IDA IDB (constraint-graph G) (constraint-graph G') :-
 % D_->(C, C_A, C_B) is similar
 pred add-dep-arrow i:class-id, i:class-id, i:class-id, i:constraint-graph, o:constraint-graph.
 add-dep-arrow ID IDA IDB (constraint-graph G) (constraint-graph G') :-
+  logging.debug (coq.say "[graph] Add arrow ID IDA IDB"),
   util.map.update ID (internal.add-higher-node (node.var ct.arrow [IDA, IDB])) G G1,
   util.map.update IDA (internal.add-lower-node (node.var ct.arrow [ID])) G1 G2,
   util.map.update IDB (internal.add-lower-node (node.var ct.arrow [ID])) G2 G'.
@@ -67,6 +70,7 @@ add-dep-arrow ID IDA IDB (constraint-graph G) (constraint-graph G') :-
 % D_□(C, C_R) is an edge C -> C_R, which is one node in each direction
 pred add-dep-type i:class-id, i:class-id, i:constraint-graph, o:constraint-graph.
 add-dep-type ID IDR (constraint-graph G) (constraint-graph G') :-
+  logging.debug (coq.say "[graph] Add type" ID IDR),
   util.map.update ID (internal.add-higher-node (node.var ct.type [IDR])) G G1,
   util.map.update IDR (internal.add-lower-node (node.var ct.type [ID])) G1 G'.
 
@@ -80,6 +84,7 @@ pred add-dep-gref
 add-dep-gref ID GR T Tm' GRR IDs (constraint-graph G) (constraint-graph G') :-
   % the classes C_i (IDs) are not really "higher" than the output class C (ID)
   % here, higher is a way to say that they must be instantiated later than the output class
+  logging.debug (coq.say "[graph] Add gref" ID GR T Tm' GRR IDs),
   util.map.update ID (internal.add-higher-node (node.var (ct.gref GR T Tm' GRR) IDs)) G G1,
   std.fold IDs G1 (id\ g\ g'\
     util.map.update id (internal.add-lower-node (node.var (ct.gref _ _ _ _) [ID])) g g')
@@ -88,6 +93,8 @@ add-dep-gref ID GR T Tm' GRR IDs (constraint-graph G) (constraint-graph G') :-
 % simple order constraint C >= C', handled differently if C and C' are constant classes or variables
 pred add-geq
   i:or class-id param-class, i:or class-id param-class, i:constraint-graph, o:constraint-graph.
+add-geq X Y (constraint-graph G) (constraint-graph G') :-
+  logging.debug (coq.say "[graph] Add geq" IDA IDA IDB), fail.
 add-geq (inl IDA) (inl IDB) (constraint-graph G) (constraint-graph G') :-
   util.map.update IDB (internal.add-higher-node (node.var ct.geq [IDA])) G G1,
   util.map.update IDA (internal.add-lower-node (node.var ct.geq [IDB])) G1 G'.
@@ -100,6 +107,7 @@ add-geq (inr C) (inl ID) (constraint-graph G) (constraint-graph G') :-
 % = least upper bound of all the lower constant classes
 pred minimal-class i:class-id, i:constraint-graph, o:param-class.
 minimal-class ID (constraint-graph G) MinClass :-
+  logging.debug (coq.say "[graph] Finding minimal class for " ID),
   std.map.find ID G (pr LowerNodes _), !,
   std.fold {internal.filter-const LowerNodes} (pc map0 map0) param-class.union MinClass.
 minimal-class _ _ (pc map0 map0). % default minimal class for an unconstrained variable
@@ -108,6 +116,7 @@ minimal-class _ _ (pc map0 map0). % default minimal class for an unconstrained v
 % = greatest lower bound of all the higher constant classes
 pred maximal-class i:class-id, i:constraint-graph, o:param-class.
 maximal-class ID (constraint-graph G) MaxClass :-
+  logging.debug (coq.say "[graph] Finding minimal class for " ID),
   std.map.find ID G (pr _ HigherNodes), !,
   std.fold {internal.filter-const HigherNodes} (pc map4 map4) param-class.inter MaxClass.
 maximal-class _ _ (pc map4 map4). % default maximal class for an unconstrained variable
@@ -117,7 +126,7 @@ maximal-class _ _ (pc map4 map4). % default maximal class for an unconstrained v
 % they can now be computed and   reduced to simpler constraints on the other variables
 pred instantiate i:class-id, i:param-class, i:constraint-graph, o:constraint-graph.
 instantiate ID Class G _ :-
-  logging.trace (coq.say "instantiate" ID Class G), fail.
+  logging.trace (coq.say "[graph] instantiate" ID Class G), fail.
 instantiate ID Class (constraint-graph G) (constraint-graph G') :-
   std.map.find ID G (pr LowerNodes HigherNodes), !, std.do! [
   internal.filter-var LowerNodes LowerIDs,
@@ -128,7 +137,7 @@ instantiate ID Class (constraint-graph G) (constraint-graph G') :-
   std.map.remove ID G1 G'
   ].
 instantiate ID Class G G :-
-  logging.debug (coq.say "cannot instantiate" ID "at" Class "because it is not in the graph").
+  logging.debug (coq.say "[graph] cannot instantiate" ID "at" Class "because it is not in the graph").
 pred instantiate.aux
   i:class-id, i:param-class, i:node, i:constraint-graph-content, o:constraint-graph-content.
 instantiate.aux ID Class (node.const C) G G :-
@@ -203,9 +212,9 @@ pp (constraint-graph G) :-
   std.forall {std.map.bindings G} pp.aux.
 pp.aux (pr ID (pr LowerNodes HigherNodes)) :-
   logging.debug (
-    coq.say "id" ID,
-    coq.say "higher than:" LowerNodes,
-    coq.say "lower than:" HigherNodes).
+    coq.say "[graph] id" ID,
+    coq.say "[graph] higher than:" LowerNodes,
+    coq.say "[graph] lower than:" HigherNodes).
 
 namespace internal {
 

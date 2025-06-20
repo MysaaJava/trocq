@@ -54,6 +54,10 @@ pred argument->gref i:argument, o:gref.
 argument->gref (str S) GR :- coq.locate S GR.
 argument->gref (trm T) GR :- coq.term->gref T GR.
 
+pred argument->term i:argument, o:term.
+argument->term (str S) (global GR) :- coq.locate S GR.
+argument->term (trm T) T.
+
 % named-coe Rec1 Rec2 Coe Depth
 % builds a function from (p?global (indt Rec1)) to (p?global (indt Rec1))
 % assuming
