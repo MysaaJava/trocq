@@ -73,3 +73,4 @@ Elpi Export trocq.
 Tactic Notation "trocq" := elpi trocq.
 Tactic Notation "trocq" "to" constr(g) := elpi trocq "to" ltac_term:(g).
 Tactic Notation "trocq" "with" ident_list(l) := elpi trocq "with" ltac_string_list:(l).
+Tactic Notation "trocq" "to" constr(g) "with" ident_list(l) := elpi trocq "to" ltac_term:(g) "with" ltac_string_list:(l).

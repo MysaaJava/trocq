@@ -12,7 +12,7 @@
 (*****************************************************************************)
 
 Require Import ssreflect.
-From Trocq Require Import Stdlib Trocq.
+From Trocq Require Import Trocq.
 From elpi Require Import elpi.
 
 Set Universe Polymorphism.
@@ -38,7 +38,7 @@ Section SimpleTest.
     Trocq Use IdA.
 
     Goal B.
-        trocq.
+        trocq to A.
         suff x : A by [].
     Abort.
 
@@ -67,8 +67,6 @@ Section BothSidesTest.
         suff x : (A' -> B') by [].
     Abort.
 
-    About True.
-
     Goal B -> A.
         trocq.
         suff x : (B' -> A'')     by [].
@@ -76,3 +74,31 @@ Section BothSidesTest.
 
 End BothSidesTest.
 End BothSidesTest.
+
+Module TwoTranslationsTest.
+Section TwoTranslationsTest.
+
+    Variable (A B C : Type).
+    Variable (f1 : B -> A) (f2 : C -> A).
+
+    Definition R1 : Param01.Rel A B := mkParam01 f1.
+    Definition R2 : Param01.Rel A C := mkParam01 f2.
+
+    Trocq RelatedWith R1 R1.
+    Trocq RelatedWith R2 R2
+
+    Goal A.
+        trocq to B with R1.
+        suff x : (B) by [].
+    Abort.
+
+    Goal A.
+        trocq to C with R2.
+        suff x : (C) by [].
+    Abort.
+
+
+    
+
+End TwoTranslationsTest.
+End TwoTranslationsTest.

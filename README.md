@@ -83,10 +83,13 @@ In short, the plugin provides a tactic:
 - `trocq` (without arguments) which attempts to run a translation on
   a given goal, using the information provided by the user with the
   commands described below.
-- `trocq R1 R2 ...` which works similarly to its argumentless counterpart
+- `trocq with R1 R2 ...` which works similarly to its argumentless counterpart
   except that it also uses translations associated to the relations `R1`,
   `R2`... ; see below regarding how to associated translations to a relation.
-
+- `trocq to A` which will fail if the newly computed goal is not _exactly_ `A`.
+  this will be able (in the future) to guide trocq so it uses the right relations
+  in order to achieve the objective goal.
+- `trocq to A with R1 R2` is a combination of the two options above
 And four commands:
 - `Trocq Use t` to use a translation `t` during the subsequent calls
   to the tactic `trocq`.
@@ -94,7 +97,7 @@ And four commands:
 - `Trocq Register Funext fe` to declare a function extensionality
   axiom `fe`.
 - `Trocq RelatedWith R t1 t2 ...` to associate `t1`, `t2`, ... to `R`.
-  Subsequent calls to `trocq R` will be able to use the translations `t1`,
+  Subsequent calls to `trocq with R` will be able to use the translations `t1`,
   `t2`, ...
 - `Trocq Logging "off"|"info"|"debug"|"trace"` to set the verbosity level.
 
