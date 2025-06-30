@@ -7,7 +7,6 @@
 # fl3_step.v, int_to_Zp.v, square_and_cube_mod7.v depend on mathcomp features
 # that clashes with HoTT, so they are std-only.
 
-abc.v
 list_option.v
 misc.v
 N.v
