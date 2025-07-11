@@ -116,7 +116,7 @@ minimal-class _ _ (pc map0 map0). % default minimal class for an unconstrained v
 % = greatest lower bound of all the higher constant classes
 pred maximal-class i:class-id, i:constraint-graph, o:param-class.
 maximal-class ID (constraint-graph G) MaxClass :-
-  logging.debug (coq.say "[graph] Finding minimal class for " ID),
+  logging.debug (coq.say "[graph] Finding maximal class for " ID),
   std.map.find ID G (pr _ HigherNodes), !,
   std.fold {internal.filter-const HigherNodes} (pc map4 map4) param-class.inter MaxClass.
 maximal-class _ _ (pc map4 map4). % default maximal class for an unconstrained variable

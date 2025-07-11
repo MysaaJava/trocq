@@ -75,8 +75,26 @@ Section BothSidesTest.
 End BothSidesTest.
 End BothSidesTest.
 
-Module TwoTranslationsTest.
-Section TwoTranslationsTest.
+(* Module UsingGraphTest.
+Section UsingGraphTest.
+
+    Variable (U : Type) (LA : Type -> Type) (LB : Type -> Type).
+    Variable (U' : Type) (LA' : Type -> Type) (LB' : Type -> Type).
+
+    Variable (fU : U' -> U).
+    Definition RU := mkParam01 fU.
+    Trocq Use RU.
+
+    (*Goal (fun A : Type => U) (forall X : Type, U). -> error fragment*)
+    Goal (fun A : Type => U) (forall X : Type, X).
+        trocq.
+    Abort.
+
+End UsingGraphTest.
+End UsingGraphTest. *)
+
+Module RelatedWithTest.
+Section RelatedWithTest.
 
     Variable (A B C : Type).
     Variable (f1 : B -> A) (f2 : C -> A).
@@ -97,8 +115,31 @@ Section TwoTranslationsTest.
         suff x : (C) by [].
     Abort.
 
+End RelatedWithTest.
+End RelatedWithTest.
+(* Module TwoTranslationsTest.
+Section TwoTranslationsTest.
+
+    Variable (A B C : Type).
+    Variable (f1 : B -> A) (f2 : C -> A).
+
+    Definition R1 : Param01.Rel A B := mkParam01 f1.
+    Definition R2 : Param01.Rel A C := mkParam01 f2.
+
+    Trocq Use R1 R2.
+
+    Goal A.
+        trocq to B.
+        suff x : (B) by [].
+    Abort.
+    Goal A.
+        trocq to C.
+        suff x : (C) by [].
+    Abort.
+
 
     
 
 End TwoTranslationsTest.
-End TwoTranslationsTest.
+End TwoTranslationsTest. *)
+        
