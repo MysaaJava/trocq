@@ -18,6 +18,88 @@
 :before "subst-fun:fail"
 coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 
+kind aterm type.
+type asort    sort -> param-class -> aterm.
+type aglobal  gref -> string -> aterm.
+type apglobal gref -> univ-instance -> string -> aterm.
+type afun     name -> aterm -> (aterm -> aterm) -> aterm.     % fun x : t =>
+type aprod    name -> aterm -> (aterm -> aterm) -> aterm.         % forall x : t,
+type alet     name -> aterm -> aterm -> (term -> aterm) -> aterm. % let x : T := v in
+type aapp     list aterm -> aterm.                              % app [hd|args]
+type amatch   aterm -> aterm -> list aterm -> aterm.              % match t p [branch])
+type afix     name -> int -> aterm -> (term -> aterm) -> aterm.  % fix name rno ty bo
+type aprimitive primitive-value -> aterm.
+
+% Get the type of the aterm |R|
+pred aterm->type i:aterm o:term.
+aterm->type (asort Sort _) (sort Sort).
+aterm->type (aglobal GRef _) (global GRef).
+aterm->type (apglobal GRef Universe _) (pglobal GRef Universe).
+aterm->type (afun N AT AF) (fun N T F) :-
+  aterm->type AT T,
+  pi y\ aterm->type (AF {term->aterm y}) (F y).
+aterm->type (aprod N AT AF) (prod N T F) :-
+  aterm->type AT T,
+  pi y\ aterm->type (AF {term->aterm y}) (F y).
+aterm->type (aapp AL) (app L) :-
+  std.map AL aterm->type L.
+%TODO implement the other constructors
+aterm->type T _ :-
+  coq.error "[aterm->type] Unsupported aterm" T.
+
+% Get the relation of the aterm 〚R〛: |R| -> |R| -> □ 
+pred aterm->rel  i:aterm o:term.
+%TODO implement or remove this
+aterm->rel T _ :-
+  coq.error "[aterm->rel] Unsupported aterm" T.
+
+
+% Create variables for every term
+pred term->aterm i:term o:aterm.
+term->aterm (sort S) (asort S Alpha_).
+term->aterm (global GRef) (aglobal GRef Str_).
+term->aterm (pglobal GRef Universe) (apglobal GRef Universe Str_).
+term->aterm (fun Name T F) (afun Name AT AF) :-
+  term->aterm T AT,
+  pi y\ term->aterm (F y) (AF {term->aterm y}).
+term->aterm (prod Name T F) (aprod Name AT AF) :-
+  term->aterm T AT,
+  pi y\ term->aterm (F y) (AF {term->aterm y}).
+term->aterm (app L) (aapp AL) :-
+  std.map L term->aterm AL.
+%TODO implement the other constructors
+aterm->type T _ :-
+  coq.error "[term->aterm] Unsupported term" T.
+
+
+% Make a aterm into a former «anotated term», for test purposes
+% TODO remove this
+pred aterm->former-term i:aterm, o:term.
+aterm->former-term (asort prop (pc M N)) (app [PProp, MT, NT]) :-
+  trocq.db.pprop PPropGR,
+  trocq.db.map-class->term M MT,
+  trocq.db.map-class->term N NT,
+  coq.env.global (const PPropGR) PProp.
+aterm->former-term (asort (typ U) (pc M N)) (app [pglobal (const PTypeGR) UI, MT, NT]) :-
+  trocq.db.ptype PTypeGR, !,
+  trocq.db.map-class->term M MT,
+  trocq.db.map-class->term N NT,
+  coq.univ-instance UI [{coq.univ.variable U}].
+aterm->former-term (aglobal GRef _) (global GRef).
+aterm->former-term (apglobal GRef Universe _) (pglobal GRef Universe).
+aterm->former-term (afun N AT AF) (fun N T F) :-
+  aterm->former-term AT T,
+  pi y\ aterm->former-term (AF {term->aterm y}) (F y).
+aterm->former-term (aprod N AT AF) (prod N T F) :-
+  aterm->type AT T,
+  pi y\ aterm->former-term (AF {term->aterm y}) (F y).
+aterm->former-term (aapp AL) (app L) :-
+  std.map AL aterm->former-term L.
+aterm->former-term T _ :-
+  coq.error "[aterm->former-term] Unsupported aterm" T.
+
+
+
 % annotate a term
 % NB: the output type is term because the annotations are encoded directly in Coq
 % see PType in Param.v
@@ -47,7 +129,7 @@ term->annot-term (app L) (app L') :- !,
 term->annot-term X X :- (name X ; X = global _ ; X = pglobal _ _), !.
 term->annot-term T _ :- coq.error "term->annot-term:" T.
 
-macro @annot-pi-decl N T F :- pi x\ annot.adecl x N T => F x.
+macro @annot-pi-decl N T F :- pi x\ term->aterm T AT, annot.adecl x N AT => F x.
 
 namespace annot {
 
@@ -55,13 +137,13 @@ namespace annot {
 % calling term->annot-term on it will add fresh annotations
 % if we want to typecheck a variable several times and get the same type everytime, we need to
 % add some memory, which is the purpose of adecl
-pred adecl i:term, o:name, o:term.
+pred adecl i:term, o:name, o:aterm.
 
-pred typecheck i:term, o:term.
+pred typecheck i:term, o:aterm.
 typecheck T ATy :- adecl T _ ATy, !.
 typecheck T ATy :-
   coq.typecheck T Ty ok, !,
-  term->annot-term Ty ATy.
+  term->aterm Ty ATy.
 
 % sub-typing predicate following the sub-typing rules in the article
 pred sub-type i:term, i:term.

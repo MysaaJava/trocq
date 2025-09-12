@@ -63,18 +63,15 @@ pred translate-goal i:list prop, i:term, i:term, i:param-class, o:term, o:term.
 translate-goal DB Ty G (pc M N) G' GR' :- DB => std.do! [
   cstr.init,
   if (Ty = sort prop)
-    (SortAnnotation = pglobal (const {trocq.db.pprop}) _;
-      coq.error "Prop goals are not supported when using the HoTT variant.")
-    (SortAnnotation = pglobal (const {trocq.db.ptype}) _),
-  T = app [SortAnnotation, {trocq.db.map-class->term M}, {trocq.db.map-class->term N}],
-  % first annotate the initial goal with fresh parametricity class variables
-  term->annot-term G AG,
+    (SortSort = prop) % XXX Warning went away: coq.error "Prop goals are not supported when using the HoTT variant.")
+    (SortSort = typ _U), % XXX Why discard U
+  T = asort SortSort (pc M N),
   logging.debug (
-    coq.say "will translate" AG "at level" T,
+    coq.say "will translate" G "at level" T,
     coq.say "***********************************************************************************"
   ),
   % generate the associated goal G' and witness GR
-  param AG T G' GR,
+  param G T G' GR,
   logging.debug (
     coq.say "***********************************************************************************",
     coq.say "after translation:",
