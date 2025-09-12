@@ -78,7 +78,7 @@ generate-module (pc M N as Class) :-
   coq.env.global (const CR) R,
   % add record to the database for later use
   coq.elpi.accumulate _ "trocq.db"
-    (clause _ (after "default-r") (trocq.db.r Class CR)),
+    (clause _ _ (trocq.db.r Class CR)),
   coq.elpi.accumulate execution-site "trocq.db"
     (clause _ _ (trocq.db.rel Class (indt TrocqInd) (indc TrocqBuild)
       (const CR) (const CovariantProj) (const ContravariantProj))),
@@ -123,11 +123,13 @@ pred generate-forget i:param-class.
 generate-forget Class :-
   trocq.db.rel Class RelMN _ _ _ _,
   std.forall {param-class.weakenings-from Class} (c\
-    sigma ForgetName RelMN'\
+    sigma ForgetName RelMN' ForgetConst \
     std.do! [
       param-class.add-2-suffix "_" Class c "forget_" ForgetName,
       trocq.db.rel c RelMN' _ _ _ _,
-      util.add-named-coe ForgetName RelMN RelMN' _
+      util.add-named-coe ForgetName RelMN RelMN' ForgetConst,
+      coq.elpi.accumulate execution-site "trocq.db"
+        (clause _ _ (trocq.db.forget Class c ForgetConst))
     ]
   ).
 

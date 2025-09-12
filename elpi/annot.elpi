@@ -11,135 +11,83 @@
 %                            % (see LICENSE file for the text of the license) %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -----------------------------------------------------------------------------
-% annotated type theory
+% Links annotated terms with the constraint graph
 % -----------------------------------------------------------------------------
 
-% this allows to easily make sure an application is beta-reduced
-:before "subst-fun:fail"
-coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 
-% annotate a term
-% NB: the output type is term because the annotations are encoded directly in Coq
-% see PType in Param.v
-pred term->annot-term i:term, o:term.
-term->annot-term (app [pglobal (const PPropGR) _, M, N] as P) P :-
-  trocq.db.pprop PPropGR, !,
-  cstr.univ-link _ M N.
-term->annot-term (app [pglobal (const PTypeGR) _, M, N] as P) P :-
-  trocq.db.ptype PTypeGR, !,
-  cstr.univ-link _ M N.
-term->annot-term (sort prop) (app [PProp , M, N]) :-
-  trocq.db.pprop PPropGR, !,
-  coq.env.global (const PPropGR) PProp, !,
-  cstr.univ-link _ M N.
-term->annot-term (sort (typ U)) (app [pglobal (const PTypeGR) UI, M, N]) :-
-  trocq.db.ptype PTypeGR, !,
-  coq.univ-instance UI [{coq.univ.variable U}],
-  cstr.univ-link _ M N.
-term->annot-term (fun N T F) (fun N T' F') :- !,
-  term->annot-term T T', !,
-  pi x\ term->annot-term (F x) (F' x).
-term->annot-term (prod N T F) (prod N T' F') :- !,
-  term->annot-term T T', !,
-  pi x\ term->annot-term (F x) (F' x).
-term->annot-term (app L) (app L') :- !,
-  std.map L term->annot-term L'.
-term->annot-term X X :- (name X ; X = global _ ; X = pglobal _ _), !.
-term->annot-term T _ :- coq.error "term->annot-term:" T.
-
-macro @annot-pi-decl N T F :- pi x\ annot.adecl x N T => F x.
+macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax.
 
 namespace annot {
 
 % typechecking a term calls Coq's typechecker, which gives back a non annotated term
-% calling term->annot-term on it will add fresh annotations
+% calling term->aterm on it will add fresh annotations
 % if we want to typecheck a variable several times and get the same type everytime, we need to
 % add some memory, which is the purpose of adecl
-pred adecl i:term, o:name, o:term.
+func adecl aterm -> name, aterm.
 
-pred typecheck i:term, o:term.
+pred typecheck i:aterm, o:aterm.
 typecheck T ATy :- adecl T _ ATy, !.
-typecheck T ATy :-
-  coq.typecheck T Ty ok, !,
-  term->annot-term Ty ATy.
+% TODO We should recode this function in order to intelligently typecheck
+% λ x : AT, t' ==> AT' -> _ with AT' <= AT
+% For now, new annotations are created, so AT is discarded
+% Before, we relied on rocq copying the lambda annotation and we had AT -> _
+typecheck AT ATy :-
+  aterm->term AT T,
+  coq.typecheck T Ty ok,
+  term->aterm Ty ATy.
 
 % sub-typing predicate following the sub-typing rules in the article
-pred sub-type i:term, i:term.
+% This should only be called between two types
+pred sub-type i:aterm, i:aterm.
+sub-type AT AT' :-
+  logging.trace (coq.say "[sub-type] Checking wether" AT "<=" AT'), fail.
 % SubSort
-sub-type (app [pglobal (const PType) _, M1, N1]) (app [pglobal (const PType) _, M2, N2]) :-
-  (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do![
-  cstr.univ-link C1 M1 N1,
-  cstr.univ-link C2 M2 N2,
-  cstr.geq C1 C2
-  ].
+% We don't check wether S and S' are related.
+% We need to think this again when algebraic types will be added to Rocq
+sub-type (asort _S C) (asort _S' C') :- !,
+  cstr.geq C C'.
 % SubPi
-sub-type (prod N T F) (prod _ T' F') :- !,
-  sub-type T' T, !,
-  @annot-pi-decl N T' x\ sub-type (F x) (F' x).
+sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
+  sub-type AT' AT, !,
+  @annot-pi-decl N AT' x\ sub-type (AF x) (AF' x).
 % SubLam
-sub-type (fun N T F) (fun _ T F') :- !,
-  @annot-pi-decl N T x\ sub-type (F x) (F' x).
+sub-type (afun N AT AF) (afun _ AT AF') :- !,
+  @annot-pi-decl N AT x\ sub-type (AF x) (AF' x).
 % SubApp
-sub-type (app [F|Xs]) (app [F'|Xs']) :-
-  sub-type F F',
-  std.forall2 Xs Xs' eq.
+sub-type (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) :- !,
+  % We beta-reduce
+  sub-type (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']).
+sub-type (aapp [X|AXs] as T) (aapp [X|AXs']) :- !,
+  (name X ; X = aglobal _ ; X = apglobal _ _ ; coq.error "[sub-type] Input" T "is not a type"), !,
+  std.forall2 AXs AXs' eq.
 % SubConv
-sub-type X X :- (name X ; X = global _ ; X = pglobal _ _), !.
-sub-type X Y :- coq.unify-eq X Y _.
-sub-type X Y :- coq.error "annot.sub-type:" X "vs" Y.
+sub-type X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
+sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
-pred eq i:term, i:term.
-eq (app [pglobal (const PType) UI, M1, N1]) (app [pglobal (const PType) UI, M2, N2]) :-
-  (trocq.db.ptype PType; trocq.db.pprop PType), !,
-  cstr.univ-link C1 M1 N1,
-  cstr.univ-link C2 M2 N2,
+% This should only be called between two types
+pred eq i:aterm, i:aterm.
+eq AT AT' :-
+  logging.trace (coq.say "[eq] Checking equality" AT "==" AT'), fail.
+eq (asort S C1) (asort S C2) :-
   cstr.eq C1 C2.
-eq (prod _ T F) (prod _ T' F') :- !,
-  eq T T', !,
-  pi x\ eq (F x) (F' x).
-eq (fun _ T F) (fun _ T' F') :- !,
-  eq T T', !,
-  pi x\ eq (F x) (F' x).
-eq (app L) (app L') :- !,
-  std.forall2 L L' eq.
-eq X X :- (name X ; X = global _ ; X = pglobal _ _), !.
-eq _ _ :- fail.
+eq (aprod _ AT AF) (aprod _ AT' AF') :- !,
+  eq AT AT', !,
+  pi x\ eq (AF x) (AF' x).
+eq (afun _ AT AF) (afun _ AT' AF') :- !,
+  eq AT AT', !,
+  pi x\ eq (AF x) (AF' x).
+eq X Y :- unify-eq X Y ok.
+eq (aapp AL) (aapp AL') :- !,
+  std.forall2 AL AL' eq.
+eq X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
 
-% get all the annotations in a type T, as well as the "output class", i.e., the parametricity class
-% of the output type of T, as an option basically returning some (A,B) for an output type PType A B,
-% and none for output types that are not sorts, because it means values of type T are not type
-% constructors, so their translation will be made at class (0,0)
-pred classes i:term, o:list param-class, o:option param-class.
-classes T Cs' Out :- std.do! [
-  all-classes T Cs,
-  out-class T Out,
-  if (not (Cs = []), Out = some C, std.last Cs LastC, LastC == C) (
-    std.drop-last 1 Cs Cs'
-  ) (
-    Cs' = Cs
-  )].
-
-pred all-classes i:term, o:list param-class.
-all-classes (app [PCst, M, N]) [C] :- trocq.db.ptype-or-pprop PCst _, !,
-  cstr.univ-link C M N.
-all-classes X Cs :- (X = prod _ T F ; X = fun _ T F), !,
-  pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
-all-classes (app L) Cs :- !,
-  std.flatten {std.map L all-classes} Cs.
-all-classes X [] :- (name X ; X = global _ ; X = pglobal _ _), !.
-all-classes X _ :- coq.error "all-classes:" X.
-
-% output class of a term
-pred out-class i:term, o:option param-class.
-out-class (app [PCst, M, N]) (some C) :- trocq.db.ptype-or-pprop PCst _, !,
-  cstr.univ-link C M N.
-out-class (prod _ _ F) Out :- !, pi x\ out-class (F x) Out.
-out-class (fun _ _ _) none :- !.
-out-class (app [F|Xs]) Out :- !,
-  coq.subst-fun Xs F App,
-  if (App = app [F|Xs]) (Out = none) (out-class App Out).
-out-class X none :- (name X ; X = global _ ; X = pglobal _ _), !.
-out-class X _ :- coq.error "out-class:" X.
+pred unify-eq i:aterm i:aterm o:diagnostic.
+% TODO this should implement rocq unification algorithm and create equalities for param classes
+% along the way.
+% This is not implemented right now, and is replaced with term equality
+unify-eq AT AT' ok :- AT = AT'.
+unify-eq AT AT' ok :- coq.unify-eq {aterm->term AT} {aterm->term AT'} ok.
+unify-eq AT AT' _ :- coq.error "Could not unify" AT "with" AT'.
 
 } % annot

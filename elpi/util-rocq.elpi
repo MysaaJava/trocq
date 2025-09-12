@@ -128,4 +128,9 @@ add-named-coe Name GR1 GR2 C :-
 add-named-coe _ GR1 GR2 _ :-
   coq.error GR1 "and" GR2 "do not have the same number of universe variables, or is different from 1".
 
+func mk-app term, list term -> term.
+mk-app HD [] HD :- !.
+mk-app (app L) Args R :- !, std.append L Args LArgs, R = app LArgs.
+mk-app HD Args (app [HD|Args]).
+
 } % util
