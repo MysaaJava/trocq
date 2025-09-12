@@ -47,8 +47,9 @@ param (global GR) AT Tm' GrefR :- !,
   ) (
     std.do![
       annot.typecheck (global GR) AT,
+      annot.sub-type AT AT',
       aterm->former-term AT T,
-      annot.sub-type T T',
+      aterm->former-term AT' T',
       cstr.dep-gref GR T Tm' GRR,
       weakening T T' (wfun W),
       GrefR = (W (pglobal GRR _))
@@ -64,8 +65,9 @@ param (pglobal GR UI) AT Tm' GrefR :- !,
     GrefR = pglobal GRR UI
   ) (
     annot.typecheck (pglobal GR UI) AT,
-    aterm->former-term AT T',
-    annot.sub-type T T',
+    annot.sub-type AT AT',
+    aterm->former-term AT T,
+    aterm->former-term AT' T',
     cstr.dep-gref GR T Tm' GRR,
     weakening T T' (wfun W),
     GrefR = (W (pglobal GRR UI))
@@ -73,12 +75,12 @@ param (pglobal GR UI) AT Tm' GrefR :- !,
 
 % TrocqConv + TrocqVar
 param X AT' X' (W XR) :- name X, !,
-  logging.debug (coq.say "param/var" X "@" T'),
+  logging.debug (coq.say "param/var" X "@" AT'),
   param.store X AT X' XR, !,
+  logging.trace (coq.say "param/var: found" X "@" AT "~" X' "by" XR),
+  annot.sub-type AT AT', !,
   aterm->former-term AT T,
   aterm->former-term AT' T',
-  logging.trace (coq.say "param/var: found" X "@" T "~" X' "by" XR),
-  annot.sub-type T T', !,
   weakening T T' (wfun W).
 
 % TrocqSort
@@ -247,9 +249,9 @@ param (app [F|Xs]) B (app [F'|Xs']) (W AppR) :- std.do! [
 
 pred param.args i:aterm, i:aterm, i:list term, o:list term, o:list term, o:term -> term.
 param.args AT AB [] [] [] W :- std.do! [
+  annot.sub-type AT AB,
   aterm->former-term AT T,
   aterm->former-term AB B,
-  annot.sub-type T B,
   weakening T B (wfun W)].
 param.args FunTy B [X|Xs] [X'|Xs'] [X, X', XR|XsR] W :- !,
   %XXX Removed this line for non-unifying equality

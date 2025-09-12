@@ -129,7 +129,7 @@ term->annot-term (app L) (app L') :- !,
 term->annot-term X X :- (name X ; X = global _ ; X = pglobal _ _), !.
 term->annot-term T _ :- coq.error "term->annot-term:" T.
 
-macro @annot-pi-decl N T F :- pi x\ term->aterm T AT, annot.adecl x N AT => F x.
+macro @annot-pi-decl N AT F :- pi ax\ aterm->type ax X, annot.adecl X N AT => F ax. %XXX Weird thing going on here
 
 namespace annot {
 
@@ -145,47 +145,57 @@ typecheck T ATy :-
   coq.typecheck T Ty ok, !,
   term->aterm Ty ATy.
 
+
 % sub-typing predicate following the sub-typing rules in the article
-pred sub-type i:term, i:term.
+pred sub-type i:aterm, i:aterm.
 % SubSort
-sub-type (app [pglobal (const PType) _, M1, N1]) (app [pglobal (const PType) _, M2, N2]) :-
-  (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do![
-  cstr.univ-link C1 M1 N1,
-  cstr.univ-link C2 M2 N2,
+sub-type (asort S (pc M1 N1)) (asort S (pc M2 N2)) :- std.do![
+  trocq.db.map-class->term M1 M1T,
+  trocq.db.map-class->term N1 N1T,
+  trocq.db.map-class->term M2 M2T,
+  trocq.db.map-class->term N2 N2T,
+  cstr.univ-link C1 M1T N1T,
+  cstr.univ-link C2 M2T N2T,
   cstr.geq C1 C2
-  ].
+].
 % SubPi
-sub-type (prod N T F) (prod _ T' F') :- !,
-  sub-type T' T, !,
-  @annot-pi-decl N T' x\ sub-type (F x) (F' x).
+sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
+  sub-type AT' AT, !,
+  @annot-pi-decl N AT' x\ sub-type (AF x) (AF' x).
 % SubLam
-sub-type (fun N T F) (fun _ T F') :- !,
-  @annot-pi-decl N T x\ sub-type (F x) (F' x).
+sub-type (afun N AT AF) (afun _ AT AF') :- !,
+  @annot-pi-decl N AT x\ sub-type (AF x) (AF' x).
 % SubApp
-sub-type (app [F|Xs]) (app [F'|Xs']) :-
-  sub-type F F',
-  std.forall2 Xs Xs' eq.
+sub-type (aapp [AF|AXs]) (aapp [AF'|AXs']) :-
+  sub-type AF AF',
+  std.forall2 AXs AXs' eq.
 % SubConv
-sub-type X X :- (name X ; X = global _ ; X = pglobal _ _), !.
-sub-type X Y :- coq.unify-eq X Y _.
+sub-type X X :- (name X ; X = aglobal _ _Str; X = apglobal _ _ _Str'), !. %XXX For now we don't check Str <= Str'
+%XXX We disable the unification equal not working on aterms
+%sub-type X Y :- coq.unify-eq X Y _.
+% We must add a way of setting when right hand is var
+sub-type X Y :- var Y, !, X = Y. % XXX Should not work but does the same as unify-eq, so no changes i guess
 sub-type X Y :- coq.error "annot.sub-type:" X "vs" Y.
 
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
-pred eq i:term, i:term.
-eq (app [pglobal (const PType) UI, M1, N1]) (app [pglobal (const PType) UI, M2, N2]) :-
-  (trocq.db.ptype PType; trocq.db.pprop PType), !,
-  cstr.univ-link C1 M1 N1,
-  cstr.univ-link C2 M2 N2,
+pred eq i:aterm, i:aterm.
+eq (asort (typ U) (pc M1 N1)) (asort (typ U) (pc M2 N2)) :- %XXX U comes out of nowhere
+  trocq.db.map-class->term M1 M1T,
+  trocq.db.map-class->term N1 N1T,
+  trocq.db.map-class->term M2 M2T,
+  trocq.db.map-class->term N2 N2T,
+  cstr.univ-link C1 M1T N1T,
+  cstr.univ-link C2 M2T N2T,
   cstr.eq C1 C2.
-eq (prod _ T F) (prod _ T' F') :- !,
-  eq T T', !,
-  pi x\ eq (F x) (F' x).
-eq (fun _ T F) (fun _ T' F') :- !,
-  eq T T', !,
-  pi x\ eq (F x) (F' x).
-eq (app L) (app L') :- !,
-  std.forall2 L L' eq.
-eq X X :- (name X ; X = global _ ; X = pglobal _ _), !.
+eq (aprod _ AT AF) (aprod _ AT' AF') :- !,
+  eq AT AT', !,
+  pi x\ eq (AF x) (AF' x).
+eq (afun _ AT AF) (afun _ AT' AF') :- !,
+  eq AT AT', !,
+  pi x\ eq (AF x) (AF' x).
+eq (aapp AL) (aapp AL') :- !,
+  std.forall2 AL AL' eq.
+eq X X :- (name X ; X = aglobal _ _Str ; X = apglobal _ _ _Str'), !. %XXX For now we don't check Str = Str' in the graph
 eq _ _ :- fail.
 
 % get all the annotations in a type T, as well as the "output class", i.e., the parametricity class
