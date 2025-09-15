@@ -18,12 +18,19 @@ pred map->class o:map-class, o:gref.
 pred map-class->indc-class o:map-class, o:gref.
 
 pred map-class->term i:map-class, o:term.
+map-class->term Class Term :- var Class, !,
+  declare_constraint (map-class->term Class Term) [Class]. % XXX Is there a more common way to do this ?
 map-class->term Class (pglobal Map UI) :- std.do! [
   map-class->indc-class Class Map, coq.univ-instance UI [] ].
+map-class->term C _ :-
+  coq.error "Could not find term associated with map class" M.
 
 pred term->map-class i:term, o:map-class.
-term->map-class (pglobal Map _) Class :-
+term->map-class M Class :-
+  M = pglobal Map _, % XXX This should disappear when map terms are evaluated in the end
   map-class->indc-class Class Map.
+term->map-class M _ :-
+  coq.error "Could not find map class associated with term" M.
 
 % Given the class M, obtain {{Id_MapM}}
 pred id-map o:map-class, o:constant.

@@ -37,12 +37,14 @@ aterm->type (aglobal GRef _) (global GRef).
 aterm->type (apglobal GRef Universe _) (pglobal GRef Universe).
 aterm->type (afun N AT AF) (fun N T F) :-
   aterm->type AT T,
-  pi y\ aterm->type (AF {term->aterm y}) (F y).
+  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y).
 aterm->type (aprod N AT AF) (prod N T F) :-
   aterm->type AT T,
-  pi y\ aterm->type (AF {term->aterm y}) (F y).
+  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y).
 aterm->type (aapp AL) (app L) :-
   std.map AL aterm->type L.
+aterm->type AT T :- name AT, !, 
+  coq.error "[aterm->type] Cannot annotate undeclared 'name'" T.
 %TODO implement the other constructors
 aterm->type T _ :-
   coq.error "[aterm->type] Unsupported aterm" T.
@@ -53,35 +55,47 @@ pred aterm->rel  i:aterm o:term.
 aterm->rel T _ :-
   coq.error "[aterm->rel] Unsupported aterm" T.
 
-
 % Create variables for every term
 pred term->aterm i:term o:aterm.
+term->aterm T AT :-
+  coq.say "[term->aterm] Converting term" T "to" AT, fail.
 term->aterm (sort S) (asort S Alpha_).
 term->aterm (global GRef) (aglobal GRef Str_).
 term->aterm (pglobal GRef Universe) (apglobal GRef Universe Str_).
 term->aterm (fun Name T F) (afun Name AT AF) :-
   term->aterm T AT,
-  pi y\ term->aterm (F y) (AF {term->aterm y}).
+  pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
 term->aterm (prod Name T F) (aprod Name AT AF) :-
   term->aterm T AT,
-  pi y\ term->aterm (F y) (AF {term->aterm y}).
+  pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
 term->aterm (app L) (aapp AL) :-
   std.map L term->aterm AL.
+% XXX Written but sholud be useless ? i guess
+%term->aterm T AT :- var T, !,
+%  % We wait for resolution on T so we can resolve the conversion
+%  declare_constraint (term->aterm T AT) [T]. 
+term->aterm T AT :- name T, !,
+  coq.error "[term->aterm] Cannot annotate undeclared 'name'" T.
 %TODO implement the other constructors
-aterm->type T _ :-
+term->aterm T _ :-
   coq.error "[term->aterm] Unsupported term" T.
 
 
 % Make a aterm into a former «anotated term», for test purposes
-% TODO remove this
+% XXX remove this
 pred aterm->former-term i:aterm, o:term.
-aterm->former-term (asort prop (pc M N)) (app [PProp, MT, NT]) :-
+aterm->former-term T _ :-
+  coq.say "[aterm->former-term] Converting aterm" T,
+  fail.
+aterm->former-term (asort prop Alpha) (app [PProp, MT, NT]) :-
+  Alpha = pc M N, % XXX Why doesn't this work in the one-line declaration ?
   trocq.db.pprop PPropGR,
   trocq.db.map-class->term M MT,
   trocq.db.map-class->term N NT,
   coq.env.global (const PPropGR) PProp.
-aterm->former-term (asort (typ U) (pc M N)) (app [pglobal (const PTypeGR) UI, MT, NT]) :-
-  trocq.db.ptype PTypeGR, !,
+aterm->former-term (asort (typ U) Alpha) (app [pglobal (const PTypeGR) UI, MT, NT]) :- !,
+  Alpha = pc M N, % XXX Why doesn't this work in the one-line declaration ?
+  trocq.db.ptype PTypeGR,
   trocq.db.map-class->term M MT,
   trocq.db.map-class->term N NT,
   coq.univ-instance UI [{coq.univ.variable U}].
@@ -89,12 +103,14 @@ aterm->former-term (aglobal GRef _) (global GRef).
 aterm->former-term (apglobal GRef Universe _) (pglobal GRef Universe).
 aterm->former-term (afun N AT AF) (fun N T F) :-
   aterm->former-term AT T,
-  pi y\ aterm->former-term (AF {term->aterm y}) (F y).
+  pi ay\ pi y\ aterm->former-term ay y => (aterm->former-term (AF ay) (F y)).
 aterm->former-term (aprod N AT AF) (prod N T F) :-
-  aterm->type AT T,
-  pi y\ aterm->former-term (AF {term->aterm y}) (F y).
+  aterm->former-term AT T,
+  pi ay\ pi y\ aterm->former-term ay y => (aterm->former-term (AF ay) (F y)).
 aterm->former-term (aapp AL) (app L) :-
   std.map AL aterm->former-term L.
+aterm->former-term AT T :- name AT, !,
+  coq.error "[aterm->former-term] Cannot annotate undeclared 'name'" AT.
 aterm->former-term T _ :-
   coq.error "[aterm->former-term] Unsupported aterm" T.
 
