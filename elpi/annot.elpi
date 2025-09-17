@@ -59,7 +59,12 @@ aterm->rel T _ :-
 pred term->aterm i:term o:aterm.
 term->aterm T AT :-
   coq.say "[term->aterm] Converting term" T "to" AT, fail.
-term->aterm (sort S) (asort S Alpha_).
+term->aterm (sort S) (asort S Alpha).
+term->aterm (sort (typ U)) (asort (typ U') Alpha_) :-
+  %coq.say "Trying to unify" S "and" S',
+  %coq.say "Universe constraints",
+  %coq.univ.print,
+  coq.unify-eq (sort S) (sort S') ok. % XXX Is this the right way to do this ?
 term->aterm (global GRef) (aglobal GRef Str_).
 term->aterm (pglobal GRef Universe) (apglobal GRef Universe Str_).
 term->aterm (fun Name T F) (afun Name AT AF) :-
@@ -191,7 +196,7 @@ sub-type X X :- (name X ; X = aglobal _ _Str; X = apglobal _ _ _Str'), !. %XXX F
 %sub-type X Y :- coq.unify-eq X Y _.
 % We must add a way of setting when right hand is var
 sub-type X Y :- var Y, !, X = Y. % XXX Should not work but does the same as unify-eq, so no changes i guess
-sub-type X Y :- coq.error "annot.sub-type:" X "vs" Y.
+sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
 pred eq i:aterm, i:aterm.

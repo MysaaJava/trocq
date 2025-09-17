@@ -20,7 +20,9 @@ coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 
 % traversing a binder should give information for both typechecking and annotation
 % XXX: New line: we Create the variables for the variable here
-macro @param-pi-decl N T F :- pi x\ [term->aterm T AT, annot.adecl x N AT, decl x N T] => F x AT.
+macro @param-pi-decl N T F :- pi ax\ pi x\ [term->aterm x ax, term->aterm T AT, annot.adecl x N AT, decl x N T] => (
+  logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" T "with annotated version" ax),
+  F x AT).
 
 % param X T X' XR translates X at annotated type T, to X' with witness XR
 pred param i:term, i:aterm, o:term, o:term.
@@ -74,14 +76,17 @@ param (pglobal GR UI) AT Tm' GrefR :- !,
   ).
 
 % TrocqConv + TrocqVar
-param X AT' X' (W XR) :- name X, !,
+param X AT' X' Wout :- name X, !,
   logging.debug (coq.say "param/var" X "@" AT'),
   param.store X AT X' XR, !,
   logging.trace (coq.say "param/var: found" X "@" AT "~" X' "by" XR),
   annot.sub-type AT AT', !,
   aterm->former-term AT T,
   aterm->former-term AT' T',
-  weakening T T' (wfun W).
+  weakening T T' (wfun W),
+  Wout = W XR. % XXX We do not put that directly in the predicate term, because it makes
+  % Elpi to try to match param . . . (X a b c) against param X AT' X' (W XR)
+  % which reduces to (W XR) = (X a b c) rasing a unification outside pattern fragment error
 
 % TrocqSort
 param
@@ -214,7 +219,7 @@ param
     logging.trace (coq.say "param/forall:" M1B M2B "is linked to" CB),
     (@param-pi-decl N A a\ AA\ pi a' aR\ param.store a AA a' aR => std.do![
       logging.trace (coq.say "param/forall: introducing" a "@" AA "~" a' "by" aR),
-      param (B a) (asort (typ U_) (pc M1B M2B)) (B' a') (BR a a' aR), !, % XXX U sort de nul part
+      param (B a) (asort (typ _) (pc M1B M2B)) (B' a') (BR a a' aR), !, % XXX U sort de nul part
       logging.trace (coq.say "param/forall:" (B a) "@" M1B M2B "~" (B' a') "by" (BR a a' aR))
     ]),
     trocq.db.r CA RA, !,
@@ -238,13 +243,14 @@ param
     ].
 
 % TrocqConv for F (argument B in param.args) + TrocqApp
-param (app [F|Xs]) B (app [F'|Xs']) (W AppR) :- std.do! [
+param (app [F|Xs]) B (app [F'|Xs']) Wout :- std.do! [
   logging.debug (coq.say "param/app" F Xs "@" B),
   annot.typecheck F FTy,
   fresh-type => param F FTy F' FR,
   logging.trace (coq.say "param/app:" F "@" FTy "~" F' "by" FR),
   param.args FTy B Xs Xs' XsR W,
-  coq.subst-fun XsR FR AppR
+  coq.subst-fun XsR FR AppR,
+  Wout = W AppR, % XXX Same as for TrocqVar
 ].
 
 pred param.args i:aterm, i:aterm, i:list term, o:list term, o:list term, o:term -> term.
