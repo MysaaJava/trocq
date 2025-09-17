@@ -49,6 +49,14 @@ aterm->type AT T :- name AT, !,
 aterm->type T _ :-
   coq.error "[aterm->type] Unsupported aterm" T.
 
+pred aterm->term i:aterm o:term.
+aterm->term AT T :- !, aterm->type AT T. %XXX Choose a name
+
+pred atermaterm->termterm i:aterm -> aterm o:term -> term.
+atermaterm-termterm AF F :-
+  pi x\ (term->aterm x AX =>
+    aterm->term (AF AX) (F x)).
+
 % Get the relation of the aterm 〚R〛: |R| -> |R| -> □ 
 pred aterm->rel  i:aterm o:term.
 %TODO implement or remove this
@@ -150,7 +158,7 @@ term->annot-term (app L) (app L') :- !,
 term->annot-term X X :- (name X ; X = global _ ; X = pglobal _ _), !.
 term->annot-term T _ :- coq.error "term->annot-term:" T.
 
-macro @annot-pi-decl N AT F :- pi ax\ aterm->type ax X, annot.adecl X N AT => F ax. %XXX Weird thing going on here
+macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax. %XXX Weird thing going on here
 
 namespace annot {
 
@@ -158,13 +166,12 @@ namespace annot {
 % calling term->annot-term on it will add fresh annotations
 % if we want to typecheck a variable several times and get the same type everytime, we need to
 % add some memory, which is the purpose of adecl
-pred adecl i:term, o:name, o:aterm.
+pred adecl i:aterm, o:name, o:aterm.
 
-pred typecheck i:term, o:aterm.
+pred typecheck i:aterm, o:aterm.
 typecheck T ATy :- adecl T _ ATy, !.
 typecheck T ATy :-
-  coq.typecheck T Ty ok, !,
-  term->aterm Ty ATy.
+  coq.typecheck {aterm->term T} {aterm->term Ty} ok. %XXX Should i check the annotations for something ?
 
 
 % sub-typing predicate following the sub-typing rules in the article

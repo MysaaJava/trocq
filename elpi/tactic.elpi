@@ -70,8 +70,9 @@ translate-goal DB Ty G (pc M N) G' GR' :- DB => std.do! [
     coq.say "will translate" G "at level" T,
     coq.say "***********************************************************************************"
   ),
+  term->aterm G AG,
   % generate the associated goal G' and witness GR
-  param G T G' GR,
+  param AG T G' GR,
   logging.debug (
     coq.say "***********************************************************************************",
     coq.say "after translation:",
