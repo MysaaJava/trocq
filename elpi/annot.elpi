@@ -30,6 +30,8 @@ type amatch   aterm -> aterm -> list aterm -> aterm.              % match t p [b
 type afix     name -> int -> aterm -> (term -> aterm) -> aterm.  % fix name rno ty bo
 type aprimitive primitive-value -> aterm.
 
+pred aterm->decl i:aterm o:term.
+
 % Get the type of the aterm |R|
 pred aterm->type i:aterm o:term.
 aterm->type (asort Sort _) (sort Sort).
@@ -44,7 +46,10 @@ aterm->type (aprod N AT AF) (prod N T F) :-
 aterm->type (aapp AL) (app L) :-
   std.map AL aterm->type L.
 aterm->type AT T :- name AT, !, 
-  coq.error "[aterm->type] Cannot annotate undeclared 'name'" T.
+  (aterm->decl AT T;
+  coq.error "[aterm->type] Cannot unannotate undeclared 'name'" AT).
+aterm->type AT T :- var AT, !,
+  declare_constraint (aterm->type AT T) [AT].
 %TODO implement the other constructors
 aterm->type T _ :-
   coq.error "[aterm->type] Unsupported aterm" T.
@@ -65,6 +70,7 @@ aterm->rel T _ :-
 
 % Create variables for every term
 pred term->aterm i:term o:aterm.
+term->aterm T AT :- aterm->decl AT T.
 term->aterm T AT :-
   coq.say "[term->aterm] Converting term" T "to" AT, fail.
 term->aterm (sort S) (asort S Alpha).
@@ -124,6 +130,8 @@ aterm->former-term (aapp AL) (app L) :-
   std.map AL aterm->former-term L.
 aterm->former-term AT T :- name AT, !,
   coq.error "[aterm->former-term] Cannot annotate undeclared 'name'" AT.
+aterm->former-term AT T :- var AT, !,
+  declare_constraint (aterm->former-term AT T) [AT].
 aterm->former-term T _ :-
   coq.error "[aterm->former-term] Unsupported aterm" T.
 
@@ -176,6 +184,8 @@ typecheck T ATy :-
 
 % sub-typing predicate following the sub-typing rules in the article
 pred sub-type i:aterm, i:aterm.
+sub-type AT AT' :-
+  coq.say "[sub-type] Checking wether" AT "<=" AT', fail.
 % SubSort
 sub-type (asort S (pc M1 N1)) (asort S (pc M2 N2)) :- std.do![
   trocq.db.map-class->term M1 M1T,
@@ -207,6 +217,8 @@ sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
 pred eq i:aterm, i:aterm.
+eq AT AT' :-
+  coq.say "[eq] Checking equality" AT "==" AT', fail.
 eq (asort (typ U) (pc M1 N1)) (asort (typ U) (pc M2 N2)) :- %XXX U comes out of nowhere
   trocq.db.map-class->term M1 M1T,
   trocq.db.map-class->term N1 N1T,
@@ -241,8 +253,12 @@ classes T Cs' Out :- std.do! [
   )].
 
 pred all-classes i:term, o:list param-class.
+all-classes T L :-
+  coq.say "[all-classes] Finding classes in" T L, fail.
 all-classes (app [PCst, M, N]) [C] :- trocq.db.ptype-or-pprop PCst _, !,
   cstr.univ-link C M N.
+all-classes X L :- var X,
+  declare_constraint (all-classes X L) [X].
 all-classes X Cs :- (X = prod _ T F ; X = fun _ T F), !,
   pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
 all-classes (app L) Cs :- !,
@@ -259,6 +275,7 @@ out-class (fun _ _ _) none :- !.
 out-class (app [F|Xs]) Out :- !,
   coq.subst-fun Xs F App,
   if (App = app [F|Xs]) (Out = none) (out-class App Out).
+out-class X C :- var X, !, declare_constraint (out-class X C) [X].
 out-class X none :- (name X ; X = global _ ; X = pglobal _ _), !.
 out-class X _ :- coq.error "out-class:" X.
 

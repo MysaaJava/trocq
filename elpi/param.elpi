@@ -21,7 +21,7 @@ coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 % traversing a binder should give information for both typechecking and annotation
 % XXX: New line: we Create the variables for the variable here
 % XXX WWWT -> Change the name to T and it breaks :shrug:
-macro @param-pi-decl N AT F :- pi ax\ pi x\ [aterm->term ax x, aterm->term AT WWWT, annot.adecl ax N AT, decl x N WWWT] => (
+macro @param-pi-decl N AT F :- pi ax\ pi x\ [aterm->decl ax x, aterm->term AT WWWT, annot.adecl ax N AT, decl x N WWWT] => (
   logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" WWWT "with annotated version" ax),
   F ax AT).
 
@@ -38,7 +38,7 @@ pred fresh-type.
 
 % TrocqConv + TrocqConst
 param (aglobal GR _) AT Tm' GrefR :- !,
-  logging.debug (coq.say "param/const" GR "@" AT),
+  logging.debug (coq.say "[param/const]" GR "@" AT),
   if (fresh-type) (
     % T' already comes from a call to annot.typecheck in the case for app
     % subtyping will be handled there
@@ -61,7 +61,7 @@ param (aglobal GR _) AT Tm' GrefR :- !,
 
 % universe-polymorphic case
 param (apglobal GR UI _) AT Tm' GrefR :- !,
-  logging.debug (coq.say "param/const" GR "@" AT),
+  logging.debug (coq.say "[param/const]" GR "@" AT),
   if (fresh-type) (
     aterm->former-term AT T',
     cstr.dep-gref GR T' Tm' GRR,
@@ -78,9 +78,9 @@ param (apglobal GR UI _) AT Tm' GrefR :- !,
 
 % TrocqConv + TrocqVar
 param X AT' X' Wout :- name X, !,
-  logging.debug (coq.say "param/var" X "@" AT'),
+  logging.debug (coq.say "[param/var]" X "@" AT'),
   param.store X AT X' XR, !,
-  logging.trace (coq.say "param/var: found" X "@" AT "~" X' "by" XR),
+  logging.trace (coq.say "[param/var] found" X "@" AT "~" X' "by" XR),
   annot.sub-type AT AT', !,
   aterm->former-term AT T,
   aterm->former-term AT' T',
@@ -99,28 +99,28 @@ param
     std.do! [
     trocq.db.map-class->term MR MRT,
     trocq.db.map-class->term NR NRT,
-    logging.debug (coq.say "param/type" MR NR "@" M N),
+    logging.debug (coq.say "[param/type]" MR NR "@" M N),
     cstr.univ-link CR MRT NRT,
-    logging.trace (coq.say "param/type:" MR NR "is linked to" CR),
+    logging.trace (coq.say "[param/type]" MR NR "is linked to" CR),
 
     trocq.db.map-class->term M MT,
     trocq.db.map-class->term N NT,
     cstr.univ-link C MT NT,
-    logging.trace (coq.say "param/type:" M N "is linked to" C),
+    logging.trace (coq.say "[param/type]" M N "is linked to" C),
     cstr.dep-type C CR,
-    logging.trace (coq.say "param/type: added dep-type from" C "to" CR),
+    logging.trace (coq.say "[param/type] added dep-type from" C "to" CR),
     coq.univ-instance _UI [L], % XXX Why am i discarding this ?
     coq.univ.variable U L,
     coq.univ-instance UI1 [L, {coq.univ.variable {coq.univ.alg-super U}}],
     trocq.db.pparam-type C PParamType,
-    logging.trace (coq.say "param/type: suspending proof on" C),
+    logging.trace (coq.say "[param/type] suspending proof on" C),
     util.if-suspend C (param-class.requires-axiom C) (
-      logging.trace (coq.say "param/type: resuming proof on" C "(univalence needed)"),
+      logging.trace (coq.say "[param/type] resuming proof on" C "(univalence needed)"),
       coq.univ-instance UI0 [],
       Args = [MRT, NRT, pglobal (const {trocq.db.univalence}) UI0]
     ) (
       logging.trace
-        (coq.say "param/type: resuming proof on" C "(univalence not needed)"),
+        (coq.say "[param/type] resuming proof on" C "(univalence not needed)"),
       Args = [MRT, NRT]
     )
   ].
@@ -131,7 +131,7 @@ param
 
 % TrocqLam
 param (afun N T F) FunTy (fun N' T' F') FunR :- !,
-  logging.debug (coq.say "param/fun" N ":" T "@" FunTy),
+  logging.debug (coq.say "[param/fun]" N ":" T "@" FunTy),
   %XXX Removed this line for non-unifying equality
   %std.assert-ok! (coq.unify-eq FunTy (prod _ T TF)) {std.string.concat " "
   %  ["type not convertible to Π:", {coq.term->string FunTy}]},
@@ -139,11 +139,11 @@ param (afun N T F) FunTy (fun N' T' F') FunR :- !,
   coq.name-suffix N "'" N',
   coq.name-suffix N "R" NR,
   param AT (asort (typ _U) (pc map0 map0)) T' TR, !, %XXX U is arbitrary. Why not prop
-  logging.trace (coq.say "param/fun:" AT "@ 0,0 ~" T' "by" TR),
+  logging.trace (coq.say "[param/fun]" AT "@ 0,0 ~" T' "by" TR),
   (@param-pi-decl N AT ax\ AT\ pi x' xR\ param.store ax AT x' xR => (
-    logging.trace (coq.say "param/fun: introducing" ax "@" AT "~" x' "by" xR),
+    logging.trace (coq.say "[param/fun] introducing" ax "@" AT "~" x' "by" xR),
     param (F ax) (ATF ax) (F' x') (FR {aterm->term x} x' xR),
-    logging.trace (coq.say "param/fun:" (F ax) "@" (ATF ax) "~" (F' x') "by" (FR {aterm->term x} x' xR))
+    logging.trace (coq.say "[param/fun]" (F ax) "@" (ATF ax) "~" (F' x') "by" (FR {aterm->term x} x' xR))
   )),
   trocq.db.r (pc map0 map0) R,
   prune UI [],
@@ -155,39 +155,37 @@ param
   (aprod _ A (_\ B )) (asort (typ _) (pc M N))
   (prod `_` A' (_\ B')) (app [pglobal (const ParamArrow) UI|Args]) :-
     (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do! [
-      logging.debug (coq.say "param/arrow" A "->" B "@" M N),
+      logging.debug (coq.say "[param/arrow]" A "->" B "@" M N),
 
       trocq.db.map-class->term M MT,
       trocq.db.map-class->term N NT,
       cstr.univ-link C MT NT,
-      logging.trace (coq.say "param/arrow:" M N "is linked to" C),
+      logging.trace (coq.say "[param/arrow]" M N "is linked to" C),
       cstr.dep-arrow C CA CB,
-      logging.trace (coq.say "param/arrow: added dep-arrow from" C "to" CA "and" CB),
+      logging.trace (coq.say "[param/arrow] added dep-arrow from" C "to" CA "and" CB),
       cstr.univ-link CA MAT NAT,
       trocq.db.term->map-class MAT MA,
       trocq.db.term->map-class NAT NA,
-      logging.trace (coq.say "param/arrow:" MA NA "is linked to" CA),
-      std.assert-ok! (coq.typecheck {aterm->term A} TyA) "param/arrow: cannot typecheck A",
+      logging.trace (coq.say "[param/arrow]" MA NA "is linked to" CA),
+      std.assert-ok! (coq.typecheck {aterm->term A} TyA) "[param/arrow] cannot typecheck A",
       if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
       PTypeA = (asort PTypeSort (pc MA NA)),
       param A PTypeA A' AR,
       cstr.univ-link CB MBT NBT,
       trocq.db.term->map-class MBT MB,
       trocq.db.term->map-class NBT NB,
-      logging.trace (coq.say "param/arrow:" MB NB "is linked to" CB),
+      logging.trace (coq.say "[param/arrow]" MB NB "is linked to" CB),
       param B (asort (typ _U) (pc MB NB)) B' BR, % XXX le U sort de nul part
-      logging.trace (coq.say "param/arrow:" B "@" MB NB "~" B' "by" BR),
-      logging.trace (coq.say "before db param-arrow" C),
+      logging.trace (coq.say "[param/arrow]" B "@" MB NB "~" B' "by" BR),
       trocq.db.param-arrow C ParamArrow,
-      logging.trace (coq.say UI),
       prune UI [],
-      logging.trace (coq.say "param/arrow: suspending proof on" C),
+      logging.trace (coq.say "[param/arrow] suspending proof on" C),
       util.if-suspend C (param-class.requires-axiom C) (
-        logging.trace (coq.say "param/arrow: resuming proof on" C "(funext needed)"),
+        logging.trace (coq.say "[param/arrow] resuming proof on" C "(funext needed)"),
         coq.univ-instance UI0 [],
         Args = [pglobal (const {trocq.db.funext}) UI0, {aterm->term A}, A', AR, {aterm->term B}, B', BR]
       ) (
-        logging.trace (coq.say "param/arrow: resuming proof on" C "(funext not needed)"),
+        logging.trace (coq.say "[param/arrow] resuming proof on" C "(funext not needed)"),
         Args = [{aterm->term A}, A', AR, {aterm->term B}, B', BR]
       )
     ].
@@ -197,20 +195,20 @@ param
   (aprod N A B) (asort _Sort (pc M1 M2))
   (prod N' A' B') (app [pglobal (const ParamForall) UI|Args']) :-
     (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do![
-    logging.debug (coq.say "param/forall" N ":" A "," B "@" M1 M2),
+    logging.debug (coq.say "[param/forall]" N ":" A "," B "@" M1 M2),
     coq.name-suffix N "'" N',
     coq.name-suffix N "R" NR,
 
     trocq.db.map-class->term M1 M1T,
     trocq.db.map-class->term M2 M2T,
     cstr.univ-link C M1T M2T, !,
-    logging.trace (coq.say "param/forall:" M1 M2 "is linked to" C),
+    logging.trace (coq.say "[param/forall]" M1 M2 "is linked to" C),
     cstr.dep-pi C CA CB, !,
-    logging.trace (coq.say "param/forall: added dep-pi from" C "to" CA "and" CB),
+    logging.trace (coq.say "[param/forall] added dep-pi from" C "to" CA "and" CB),
     cstr.univ-link CA M1AT M2AT, !,
     trocq.db.term->map-class M1AT M1A,
     trocq.db.term->map-class M2AT M2A,
-    logging.trace (coq.say "param/forall:" M1A M2A "is linked to" CA),
+    logging.trace (coq.say "[param/forall]" M1A M2A "is linked to" CA),
     std.assert-ok! (coq.typecheck {aterm->term A} TyA) "param/arrow: cannot typecheck A",
     if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
     PTypeA = (asort PTypeSort (pc M1A M2A)),
@@ -218,14 +216,14 @@ param
     cstr.univ-link CB M1BT M2BT, !,
     trocq.db.term->map-class M1BT M1B,
     trocq.db.term->map-class M2BT M2B,
-    logging.trace (coq.say "param/forall:" M1B M2B "is linked to" CB),
+    logging.trace (coq.say "[param/forall]" M1B M2B "is linked to" CB),
     (@param-pi-decl N A a\ AA\ pi a' aR\ param.store a AA a' aR => std.do![
-      logging.trace (coq.say "param/forall: introducing" a "@" AA "~" a' "by" aR),
+      logging.trace (coq.say "[param/forall] introducing" a "@" AA "~" a' "by" aR),
       param (B a) (asort (typ _) (pc M1B M2B)) (B' a') (BR {aterm->term a} a' aR), !, % XXX U sort de nul part
-      logging.trace (coq.say "param/forall:" (B a) "@" M1B M2B "~" (B' a') "by" (BR {aterm->term a} a' aR))
+      logging.trace (coq.say "[param/forall]" (B a) "@" M1B M2B "~" (B' a') "by" (BR {aterm->term a} a' aR))
     ]),
     trocq.db.r CA RA, !,
-    logging.trace (coq.say "param/forall db CA RA"), !,
+    logging.trace (coq.say "[param/forall] db CA RA"), !,
     prune UIA [],
     Args =
       [ {aterm->term A}, A', AR, fun N {aterm->term A} {atermaterm-termterm B}, fun N' A' B',
@@ -233,23 +231,23 @@ param
           BR a a' aR ],
     trocq.db.param-forall C ParamForall,
     prune UI [],
-    logging.trace (coq.say "param/forall: suspending proof on" C),
+    logging.trace (coq.say "[param/forall] suspending proof on" C),
     util.if-suspend C (param-class.requires-axiom C) (
-      logging.trace (coq.say "param/forall: resuming proof on" C "(funext needed)"),
+      logging.trace (coq.say "[param/forall] resuming proof on" C "(funext needed)"),
       coq.univ-instance UI0 [],
       Args' = [pglobal (const {trocq.db.funext}) UI0|Args]
     ) (
-      logging.trace (coq.say "param/forall: resuming proof on" C "(funext not needed)"),
+      logging.trace (coq.say "[param/forall] resuming proof on" C "(funext not needed)"),
       Args' = Args
     )
     ].
 
 % TrocqConv for F (argument B in param.args) + TrocqApp
-param (aapp [F|Xs]) B (app [F'|Xs']) Wout :- std.do! [
-  logging.debug (coq.say "param/app" F Xs "@" B),
+param (aapp [F|Xs]) B (app [F'|Xs']) Wout :- !, std.do! [
+  logging.debug (coq.say "[param/app]" F Xs "@" B),
   annot.typecheck F FTy,
   fresh-type => param F FTy F' FR,
-  logging.trace (coq.say "param/app:" F "@" FTy "~" F' "by" FR),
+  logging.trace (coq.say "[param/app]" F "@" FTy "~" F' "by" FR),
   param.args FTy B Xs Xs' XsR W,
   coq.subst-fun XsR FR AppR,
   Wout = W AppR, % XXX Same as for TrocqVar
