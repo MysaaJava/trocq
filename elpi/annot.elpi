@@ -30,7 +30,7 @@ type amatch   aterm -> aterm -> list aterm -> aterm.              % match t p [b
 type afix     name -> int -> aterm -> (term -> aterm) -> aterm.  % fix name rno ty bo
 type aprimitive primitive-value -> aterm.
 
-pred aterm->decl i:aterm o:term.
+pred aterm->decl o:aterm o:term.
 
 % Get the type of the aterm |R|
 pred aterm->type i:aterm o:term.
@@ -46,8 +46,8 @@ aterm->type (aprod N AT AF) (prod N T F) :-
 aterm->type (aapp AL) (app L) :-
   std.map AL aterm->type L.
 aterm->type AT T :- name AT, !, 
-  (aterm->decl AT T;
-  coq.error "[aterm->type] Cannot unannotate undeclared 'name'" AT).
+  (aterm->decl AT T , !;
+  coq.error "[aterm->type] Cannot unannotate undeclared 'name'" AT "to" T).
 aterm->type AT T :- var AT, !,
   declare_constraint (aterm->type AT T) [AT].
 %TODO implement the other constructors
@@ -70,9 +70,6 @@ aterm->rel T _ :-
 
 % Create variables for every term
 pred term->aterm i:term o:aterm.
-term->aterm T AT :- aterm->decl AT T.
-term->aterm T AT :-
-  coq.say "[term->aterm] Converting term" T "to" AT, fail.
 term->aterm (sort S) (asort S Alpha).
 term->aterm (sort (typ U)) (asort (typ U') Alpha_) :-
   %coq.say "Trying to unify" S "and" S',
@@ -89,13 +86,13 @@ term->aterm (prod Name T F) (aprod Name AT AF) :-
   pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
 term->aterm (app L) (aapp AL) :-
   std.map L term->aterm AL.
-% XXX Written but sholud be useless ? i guess
-%term->aterm T AT :- var T, !,
-%  % We wait for resolution on T so we can resolve the conversion
-%  declare_constraint (term->aterm T AT) [T]. 
-term->aterm T AT :- name T, !,
-  coq.error "[term->aterm] Cannot annotate undeclared 'name'" T.
 %TODO implement the other constructors
+% XXX Written but sholud be useless ? i guess
+term->aterm T AT :- var T, !,
+  % We wait for resolution on T so we can resolve the conversion
+  declare_constraint (term->aterm T AT) [T].
+term->aterm T AT :- name T, !,
+  (aterm->decl AT T, !; coq.error "[term->aterm] Cannot annotate undeclared 'name'" T).
 term->aterm T _ :-
   coq.error "[term->aterm] Unsupported term" T.
 
@@ -103,9 +100,6 @@ term->aterm T _ :-
 % Make a aterm into a former «anotated term», for test purposes
 % XXX remove this
 pred aterm->former-term i:aterm, o:term.
-aterm->former-term T _ :-
-  coq.say "[aterm->former-term] Converting aterm" T,
-  fail.
 aterm->former-term (asort prop Alpha) (app [PProp, MT, NT]) :-
   Alpha = pc M N, % XXX Why doesn't this work in the one-line declaration ?
   trocq.db.pprop PPropGR,
@@ -178,8 +172,10 @@ pred adecl i:aterm, o:name, o:aterm.
 
 pred typecheck i:aterm, o:aterm.
 typecheck T ATy :- adecl T _ ATy, !.
-typecheck T ATy :-
-  coq.typecheck {aterm->term T} {aterm->term Ty} ok. %XXX Should i check the annotations for something ?
+typecheck AT ATy :-
+  aterm->term AT T,
+  coq.typecheck T Ty ok,
+  term->aterm Ty ATy. %XXX Should i check the annotations for something ?
 
 
 % sub-typing predicate following the sub-typing rules in the article
@@ -207,8 +203,12 @@ sub-type (afun N AT AF) (afun _ AT AF') :- !,
 sub-type (aapp [AF|AXs]) (aapp [AF'|AXs']) :-
   sub-type AF AF',
   std.forall2 AXs AXs' eq.
+sub-type (aglobal X Str) (aglobal X Str') :-
+  Str = Str'. %XXX For now, no check
+sub-type (apglobal X U Str) (apglobal X P Str') :-
+  Str = Str'. %XXX For now, no check
 % SubConv
-sub-type X X :- (name X ; X = aglobal _ _Str; X = apglobal _ _ _Str'), !. %XXX For now we don't check Str <= Str'
+sub-type X Y :- name X, !, X = Y.
 %XXX We disable the unification equal not working on aterms
 %sub-type X Y :- coq.unify-eq X Y _.
 % We must add a way of setting when right hand is var
@@ -253,8 +253,6 @@ classes T Cs' Out :- std.do! [
   )].
 
 pred all-classes i:term, o:list param-class.
-all-classes T L :-
-  coq.say "[all-classes] Finding classes in" T L, fail.
 all-classes (app [PCst, M, N]) [C] :- trocq.db.ptype-or-pprop PCst _, !,
   cstr.univ-link C M N.
 all-classes X L :- var X,

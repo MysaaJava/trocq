@@ -56,6 +56,7 @@ logging.trace P :- util.at-level level.trace P.
 namespace util {
 
 pred option.value i:option A, i:A, o:A.
+option.value TA D O :- var TA, declare_constraint (option.value TA D O) [TA].
 option.value none Default Default.
 option.value (some A) _ A.
 

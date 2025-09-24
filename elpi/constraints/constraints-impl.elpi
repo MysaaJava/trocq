@@ -58,8 +58,6 @@ dep-type C CR :-
 
 % D_K(C, C_1, ..., C_n)
 dep-gref GR T Tm' GRR :-
-  coq.say "[dep-gref]" GR "with" T, fail.
-dep-gref GR T Tm' GRR :-
   annot.classes T TCs OutOpt,
   util.option.value OutOpt (pc map0 map0) Out,
   if (var Out) (
