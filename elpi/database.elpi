@@ -28,7 +28,7 @@ map-class->term C _ :-
 pred term->map-class i:term, o:map-class.
 term->map-class M Class :-
   M = pglobal Map _, % XXX This should disappear when map terms are evaluated in the end
-  map-class->indc-class Class Map.
+  map-class->indc-class Class Map, !.
 term->map-class M _ :-
   coq.error "Could not find map class associated with term" M.
 

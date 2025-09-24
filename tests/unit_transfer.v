@@ -31,7 +31,7 @@ Section Transfer.
     Trocq Use Rg.
 
     Trocq Logging trace.
-    
+
     Goal forall m: I', @eq I' m (p' m m).
         trocq.
         enough (forall m n : I, m = p n n -> m = n) by exact x.

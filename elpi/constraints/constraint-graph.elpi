@@ -116,7 +116,9 @@ maximal-class _ _ (pc map4 map4). % default maximal class for an unconstrained v
 % they can now be computed and   reduced to simpler constraints on the other variables
 pred instantiate i:class-id, i:param-class, i:constraint-graph, o:constraint-graph.
 instantiate ID Class G _ :-
-  logging.trace (coq.say "instantiate" ID Class G), fail.
+  logging.trace (coq.say "instantiate" ID Class),
+  logging.trace (coq.say "Remaining graph:"),
+  logging.trace (cstr-graph.pp G), fail.
 instantiate ID Class (constraint-graph G) (constraint-graph G') :-
   std.map.find ID G (pr LowerNodes HigherNodes), !, std.do! [
   internal.filter-var LowerNodes LowerIDs,

@@ -18,6 +18,8 @@ namespace param-class {
 
 % generate a weakening function from a parametricity class to another, by forgetting fields 1 by 1
 pred forget i:param-class, i:param-class, o:univ-instance -> term -> term -> term -> term.
+forget (pc M N) (pc M' N') _ :- not (map-class.geq M M', map-class.geq N N'), !,
+  coq.error "Cannot forget fields from" (pc M N) "to" (pc M' N').
 forget (pc M N) (pc M N) (_\ _\ _\ r\ r) :- !.
 forget (pc M N) (pc M N') ForgetF :- !,
   std.mem {map-class.weakenings-from N} N1,
