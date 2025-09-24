@@ -34,25 +34,25 @@ pred aterm->decl o:aterm o:term.
 
 % Get the type of the aterm |R|
 pred aterm->type i:aterm o:term.
-aterm->type (asort Sort _) (sort Sort).
-aterm->type (aglobal GRef _) (global GRef).
-aterm->type (apglobal GRef Universe _) (pglobal GRef Universe).
+aterm->type (asort Sort _) (sort Sort) :- !.
+aterm->type (aglobal GRef _) (global GRef) :- !.
+aterm->type (apglobal GRef Universe _) (pglobal GRef Universe) :- !.
 aterm->type (afun N AT AF) (fun N T F) :-
   aterm->type AT T,
-  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y).
+  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y), !.
 aterm->type (aprod N AT AF) (prod N T F) :-
   aterm->type AT T,
-  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y).
+  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y), !.
 aterm->type (aapp AL) (app L) :-
-  std.map AL aterm->type L.
+  std.map AL aterm->type L, !.
 aterm->type AT T :- name AT, !, 
   (aterm->decl AT T , !;
   coq.error "[aterm->type] Cannot unannotate undeclared 'name'" AT "to" T).
 aterm->type AT T :- var AT, !,
   declare_constraint (aterm->type AT T) [AT].
 %TODO implement the other constructors
-aterm->type T _ :-
-  coq.error "[aterm->type] Unsupported aterm" T.
+aterm->type AT T :-
+  coq.error "[aterm->type] Unsupported aterm" AT "to" T.
 
 pred aterm->term i:aterm o:term.
 aterm->term AT T :- !, aterm->type AT T. %XXX Choose a name
@@ -183,7 +183,9 @@ pred sub-type i:aterm, i:aterm.
 sub-type AT AT' :-
   coq.say "[sub-type] Checking wether" AT "<=" AT', fail.
 % SubSort
-sub-type (asort S (pc M1 N1)) (asort S (pc M2 N2)) :- std.do![
+sub-type (asort S C) (asort S C') :- !, std.do![
+  C = pc M1 N1,
+  C' = pc M2 N2,
   trocq.db.map-class->term M1 M1T,
   trocq.db.map-class->term N1 N1T,
   trocq.db.map-class->term M2 M2T,
@@ -192,6 +194,9 @@ sub-type (asort S (pc M1 N1)) (asort S (pc M2 N2)) :- std.do![
   cstr.univ-link C2 M2T N2T,
   cstr.geq C1 C2
 ].
+sub-type (asort S C) (asort S' C') :-
+  coq.unify-eq (sort S) (sort S') ok,
+  sub-type (asort S C) (asort S C').
 % SubPi
 sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
   sub-type AT' AT, !,

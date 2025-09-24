@@ -21,7 +21,7 @@ coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 % traversing a binder should give information for both typechecking and annotation
 % XXX: New line: we Create the variables for the variable here
 % XXX WWWT -> Change the name to T and it breaks :shrug:
-macro @param-pi-decl N AT F :- pi ax\ pi x\ [aterm->decl ax x, aterm->term AT WWWT, annot.adecl ax N AT, decl x N WWWT] => (
+macro @param-pi-decl N AT F :- aterm->term AT WWWT, pi ax\ pi x\ [aterm->decl ax x, annot.adecl ax N AT, decl x N WWWT] => (
   logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" WWWT "with annotated version" ax),
   F ax AT).
 
@@ -37,17 +37,18 @@ pred fresh-type.
 % ==================================================================================================
 
 % TrocqConv + TrocqConst
-param (aglobal GR _) AT Tm' GrefR :- !,
+param (aglobal GR _) AT' Tm' GrefR :- !,
   logging.debug (coq.say "[param/const]" GR "@" AT),
   if (fresh-type) (
     % T' already comes from a call to annot.typecheck in the case for app
     % subtyping will be handled there
     % (we do not want to annot.typecheck several times a same constant, because it creates
     %  fresh class variables twice, which would split the information)
-    aterm->former-term AT T',
+    aterm->former-term AT' T',
     cstr.dep-gref GR T' Tm' GRR,
     GrefR = pglobal GRR _
   ) (
+    coq.say "Not fresh type WWWWW",
     std.do![
       annot.typecheck (aglobal GR _) AT,
       annot.sub-type AT AT',
@@ -60,10 +61,10 @@ param (aglobal GR _) AT Tm' GrefR :- !,
   ).
 
 % universe-polymorphic case
-param (apglobal GR UI _) AT Tm' GrefR :- !,
+param (apglobal GR UI _) AT' Tm' GrefR :- !,
   logging.debug (coq.say "[param/const]" GR "@" AT),
   if (fresh-type) (
-    aterm->former-term AT T',
+    aterm->former-term AT' T',
     cstr.dep-gref GR T' Tm' GRR,
     GrefR = pglobal GRR UI
   ) (
@@ -209,7 +210,9 @@ param
     trocq.db.term->map-class M1AT M1A,
     trocq.db.term->map-class M2AT M2A,
     logging.trace (coq.say "[param/forall]" M1A M2A "is linked to" CA),
-    std.assert-ok! (coq.typecheck {aterm->term A} TyA) "param/arrow: cannot typecheck A",
+    aterm->term A A0,
+    coq.say "Will typecheck" A0 "to" Ty,
+    std.assert-ok! (coq.typecheck A0 TyA) "[param/forall]: cannot typecheck A",
     if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
     PTypeA = (asort PTypeSort (pc M1A M2A)),
     param A PTypeA A' AR,

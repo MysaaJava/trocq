@@ -29,6 +29,18 @@ univ-link (pc M' N') M N :-
   trocq.db.map-class->term M' M,
   trocq.db.map-class->term N' N.
 
+% Printers
+dep-pi C CA CB :- 
+  logging.trace (coq.say "[dep-pi]" C "to" CA CB), fail.
+dep-arrow C CA CB :- 
+  logging.trace (coq.say "[dep-arrow]" C "to" CA CB), fail.
+dep-type C CR :- 
+  logging.trace (coq.say "[dep-type]" C "to" CR), fail.
+dep-gref GR T Tm' GRR :- 
+  logging.trace (coq.say "[dep-gref]" GR "at" T "to" Tm' "with" GRR), fail.
+geq CA CB :-
+  logging.trace (coq.say "[dep-geq]" CA "<=" CB), fail.
+
 % D_π(C, C_A, C_B)
 dep-pi C CA CB :- var C, !,
   internal.link? C ID,
