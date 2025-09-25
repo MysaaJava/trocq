@@ -100,6 +100,8 @@ term->aterm T _ :-
 % Make a aterm into a former «anotated term», for test purposes
 % XXX remove this
 pred aterm->former-term i:aterm, o:term.
+aterm->former-term A FT :-
+  coq.say "[aterm->former-term] Making former term from" A "to" FT, fail.
 aterm->former-term (asort prop Alpha) (app [PProp, MT, NT]) :-
   Alpha = pc M N, % XXX Why doesn't this work in the one-line declaration ?
   trocq.db.pprop PPropGR,
@@ -175,7 +177,8 @@ typecheck T ATy :- adecl T _ ATy, !.
 typecheck AT ATy :-
   aterm->term AT T,
   coq.typecheck T Ty ok,
-  term->aterm Ty ATy. %XXX Should i check the annotations for something ?
+  term->aterm Ty ATy,
+  coq.say "Produced term" Ty "->" ATy. %XXX Should i check the annotations for something ?
 
 
 % sub-typing predicate following the sub-typing rules in the article
@@ -283,3 +286,12 @@ out-class X none :- (name X ; X = global _ ; X = pglobal _ _), !.
 out-class X _ :- coq.error "out-class:" X.
 
 } % annot
+
+% XXX better place for this ?
+func aterm.mk-app aterm, list aterm -> aterm.
+aterm.mk-app HD [] HD :- !.
+aterm.mk-app (aapp L) Args R :- !, std.append L Args LArgs, R = aapp LArgs.
+aterm.mk-app (afun _ _ F) [A|Args] R :- !, aterm.mk-app (F A) Args R.
+%XXX enable when let is enabled
+%aterm.mk-app (alet _ _ A F) Args R :- !, aterm.mk-app (F A) Args R.
+aterm.mk-app HD Args (aapp [HD|Args]).

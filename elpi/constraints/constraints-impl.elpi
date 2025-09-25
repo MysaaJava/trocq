@@ -21,6 +21,7 @@ init :-
   declare_constraint (internal.c.graph G) [_].
 
 % link a variable parametricity class C to its Coq representation (arguments of PType)
+univ-link C M N :- coq.say "[univ-link]" C "<->" M N, fail.
 univ-link C M N :- var C, var M, var N, !,
   declare_constraint (internal.c.univ-link? C M N) [_].
 univ-link C M N :- var C, !,
@@ -136,7 +137,7 @@ func c.link? param-class, class-id.
 func c.link- param-class, class-id.
 
 func link? param-class -> class-id.
-link? C ID :- var C, !, declare_constraint (c.link? C ID) [_].
+link? C ID :- var C, !, coq.say "[link]" C "?", declare_constraint (c.link? C ID) [_].
 link? _ (-1). % when the class is constant, it does not exist in the graph, default value is -1
 func link- param-class -> class-id.
 link- C ID :- declare_constraint (c.link- C ID) [_].
@@ -150,6 +151,7 @@ constraint c.link c.link? c.link- {
   rule \ (c.link C ID) (c.link- C' ID) <=> (C' = C).
   % both are unknown, create the fresh node
   rule \ (c.link? C ID') <=> (
+    coq.say "[link]" C "new",
     vars? IDs,
     new_int ID,
     prune C [],

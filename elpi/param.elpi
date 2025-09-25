@@ -38,7 +38,7 @@ pred fresh-type.
 
 % TrocqConv + TrocqConst
 param (aglobal GR _) AT' Tm' GrefR :- !,
-  logging.debug (coq.say "[param/const]" GR "@" AT),
+  logging.debug (coq.say "[param/const]" GR "@" AT'),
   if (fresh-type) (
     % T' already comes from a call to annot.typecheck in the case for app
     % subtyping will be handled there
@@ -52,17 +52,17 @@ param (aglobal GR _) AT' Tm' GrefR :- !,
     std.do![
       annot.typecheck (aglobal GR _) AT,
       annot.sub-type AT AT',
+      weakening AT AT' (wfun W),
       aterm->former-term AT T,
       aterm->former-term AT' T',
       cstr.dep-gref GR T Tm' GRR,
-      weakening T T' (wfun W),
       GrefR = (W (pglobal GRR _))
     ]
   ).
 
 % universe-polymorphic case
 param (apglobal GR UI _) AT' Tm' GrefR :- !,
-  logging.debug (coq.say "[param/const]" GR "@" AT),
+  logging.debug (coq.say "[param/const]" GR "@" AT'),
   if (fresh-type) (
     aterm->former-term AT' T',
     cstr.dep-gref GR T' Tm' GRR,
@@ -70,10 +70,10 @@ param (apglobal GR UI _) AT' Tm' GrefR :- !,
   ) (
     annot.typecheck (apglobal GR UI _) AT,
     annot.sub-type AT AT',
+    weakening AT AT' (wfun W),
     aterm->former-term AT T,
     aterm->former-term AT' T',
     cstr.dep-gref GR T Tm' GRR,
-    weakening T T' (wfun W),
     GrefR = (W (pglobal GRR UI))
   ).
 
@@ -83,9 +83,7 @@ param X AT' X' Wout :- name X, !,
   param.store X AT X' XR, !,
   logging.trace (coq.say "[param/var] found" X "@" AT "~" X' "by" XR),
   annot.sub-type AT AT', !,
-  aterm->former-term AT T,
-  aterm->former-term AT' T',
-  weakening T T' (wfun W),
+  weakening AT AT' (wfun W),
   Wout = W XR. % XXX We do not put that directly in the predicate term, because it makes
   % Elpi to try to match param . . . (X a b c) against param X AT' X' (W XR)
   % which reduces to (W XR) = (X a b c) rasing a unification outside pattern fragment error
@@ -214,8 +212,7 @@ param
     coq.say "Will typecheck" A0 "to" Ty,
     std.assert-ok! (coq.typecheck A0 TyA) "[param/forall]: cannot typecheck A",
     if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
-    PTypeA = (asort PTypeSort (pc M1A M2A)),
-    param A PTypeA A' AR,
+    param A (asort PTypeSort (pc M1A M2A)) A' AR,
     cstr.univ-link CB M1BT M2BT, !,
     trocq.db.term->map-class M1BT M1B,
     trocq.db.term->map-class M2BT M2B,
@@ -260,9 +257,7 @@ pred param.args i:aterm, i:aterm, i:list aterm, o:list term, o:list term, o:term
 param.args AT AB [] [] [] W :- std.do! [
   logging.trace (coq.say "[param/app/args]" AT "<=" AB),
   annot.sub-type AT AB,
-  aterm->former-term AT T,
-  aterm->former-term AB B,
-  weakening T B (wfun W)].
+  weakening AT AB (wfun W)].
 param.args FunTy AB [X|Xs] [X'|Xs'] [TX, X', XR|XsR] W :- !,
   %XXX Removed this line for non-unifying equality
   %std.assert-ok! (coq.unify-eq FunTy (prod _ T TF)) {std.string.concat " "
@@ -282,33 +277,39 @@ param X T _ _ :-
 % ad hoc inductive type to represent the suspension in the definition of weakening, see the article
 kind weakening type.
 type wfun (term -> term) -> weakening.
-type wsuspend (term -> term) -> (term -> term) -> weakening.
+type wsuspend (aterm -> aterm) -> (aterm -> aterm) -> weakening.
 
 % generate the weakening function from a type to a sub-type
 % cf definition of weakening in the paper
-pred weakening i:term, i:term, o:weakening.
-weakening (app [pglobal (const PType) _, M, N]) (app [pglobal (const PType) _, M', N']) W :-
-  (trocq.db.ptype PType; trocq.db.pprop PType), !,
+pred weakening i:aterm, i:aterm, o:weakening.
+weakening (asort S (pc M N)) (asort S' (pc M' N')) W :-
+  !, 
+  trocq.db.map-class->term M MT,
+  trocq.db.map-class->term N NT,
+  trocq.db.map-class->term M' MT',
+  trocq.db.map-class->term N' NT',
   trocq.db.weaken Weaken,
   prune UI [],
   prune Ty [],
   % as M, N, M', N' are not known yet, we put a Coq placeholder (see Weaken in Param.v)
-  W = wfun (xR\ app [pglobal (const Weaken) UI, M, N, M', N', Ty, xR]).
-weakening (prod N A B) (prod _ A' B') W :- !,
+  W = wfun (xR\ app [pglobal (const Weaken) UI, MT, NT, MT', NT', Ty, xR]).
+weakening (aprod N A B) (aprod _ A' B') W :- !,
   coq.name-suffix N "'" N',
   coq.name-suffix N "R" NR,
   weakening A' A (wfun WA),
-  pi xR a a' aR\
-    weakening (B a) (B' a') (wfun (WB a a')),
+  pi xR ax x ax' x' aR\ (
+    [aterm->decl ax x, aterm->decl ax' x'] =>
+    weakening (B ax) (B' ax') (wfun (WB x x'))),
   prune AR [],
   prune A2 [],
-  W = wfun (xR\ fun N A a\ fun N' A2 a'\ fun NR AR aR\ WB a a' (app [xR, a, a', WA aR])).
-weakening (app [F|_]) (app [_F'|_]) (wfun (xR\ xR)) :- (name F ; F = global _ ; F = pglobal _ _), !.
-weakening (app [F, X|Xs]) (app [F', X'|Xs']) W :- !,
+  aterm->term A A0,
+  W = wfun (xR\ fun N A0 a\ fun N' A2 a'\ fun NR AR aR\ WB a a' (app [xR, a, a', WA aR])).
+weakening (aapp [F|_]) (aapp [_F'|_]) (wfun (xR\ xR)) :- (name F ; F = aglobal _ _ ; F = apglobal _ _ _), !.
+weakening (aapp [F, AX|Xs]) (aapp [F', AX'|Xs']) W :- !,
   weakening F F' (wsuspend WF WF'),
-  weakening {coq.mk-app (WF X) Xs} {coq.mk-app (WF' X') Xs'} W.
-weakening (fun _ _ F) (fun _ _ F') (wsuspend F F') :- !.
-weakening X _ (wfun (xR\ xR)) :- (name X ; X = global _ ; X = pglobal _ _), !.
+  weakening {aterm.mk-app (WF X) Xs} {aterm.mk-app (WF' X') Xs'} W.
+weakening (afun _ _ F) (afun _ _ F') (wsuspend F F') :- !.
+weakening X _ (wfun (xR\ xR)) :- (name X ; X = aglobal _ _ ; X = apglobal _ _ _), !.
 weakening T _ _ :- coq.error "weakening:" T.
 
 % replace Weaken placeholders with real weakening functions
