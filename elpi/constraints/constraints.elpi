@@ -16,6 +16,9 @@
 
 typeabbrev class-id int.
 
+%XXX weird to put this here, but constraints.elpi is added before annot.elpi
+kind aterm type.
+
 namespace cstr {
 
 pred init.
@@ -33,7 +36,7 @@ pred dep-arrow i:param-class, o:param-class, o:param-class.
 pred dep-type i:param-class, i:param-class.
 
 % D_K(C, C_1, ..., C_n)
-pred dep-gref i:gref, i:term, o:term, o:gref.
+pred dep-gref i:gref, i:aterm, o:term, o:gref.
 
 % C >= C'
 pred geq i:param-class, i:param-class.

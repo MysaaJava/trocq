@@ -38,7 +38,7 @@ kind constraint-type type.
 type ct.pi constraint-type.
 type ct.arrow constraint-type.
 type ct.type constraint-type.
-type ct.gref gref -> term -> term -> gref -> constraint-type.
+type ct.gref gref -> aterm -> term -> gref -> constraint-type.
 type ct.geq constraint-type.
 
 typeabbrev
@@ -75,7 +75,7 @@ add-dep-type ID IDR (constraint-graph G) (constraint-graph G') :-
 % the constraint is represented here by one node from C to all the C_i
 % we store information in the node about K, its type, and the output variables
 func add-dep-gref
-  class-id, gref, term, term, gref, list class-id, constraint-graph -> constraint-graph.
+  class-id, gref, aterm, term, gref, list class-id, constraint-graph -> constraint-graph.
 add-dep-gref ID GR T Tm' GRR IDs (constraint-graph G) (constraint-graph G') :-
   % the classes C_i (IDs) are not really "higher" than the output class C (ID)
   % here, higher is a way to say that they must be instantiated later than the output class
@@ -163,15 +163,20 @@ instantiate.aux ID Class (node.var ct.type [IDR]) G G' :- std.do![
     (util.map.update IDR (internal.add-lower-node (node.const (pc map4 map4))) G1 G')
     (G' = G1)
 ].
-instantiate.aux ID Class (node.var (ct.gref GR T Tm' GRR) IDs) G G' :- std.do! [
+instantiate.aux ID Class (node.var (ct.gref GR T Tm' GRR) IDs) G G' :- 
+  !, coq.say "Instatiating" ID "with class" Class "for node gref" GR "type" T,
+  std.do! [
   std.fold {std.filter IDs (id\ id > 0)} G (id\ g\ g'\
     util.map.update id (internal.remove-lower-node (node.var (ct.gref _ _ _ _) [ID])) g g')
       G1,
+  coq.say "Trying to get classes of" T,
   annot.classes T TCs _,
+  coq.say "Got classes" TCs "for aterm" T,
   % find the output constant and proof, as well as the required classes Cs
   trocq.db.gref GR Class Cs GR' GRR, !,
   coq.env.global GR' Tm',
   % make sure the classes are consistent
+  coq.say "XXXXXXXX" IDs "--" TCs "bob" Cs,
   instantiate.gref IDs TCs Cs G1 G'
   ].
 pred instantiate.gref

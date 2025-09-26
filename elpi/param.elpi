@@ -44,8 +44,7 @@ param (aglobal GR _) AT' Tm' GrefR :- !,
     % subtyping will be handled there
     % (we do not want to annot.typecheck several times a same constant, because it creates
     %  fresh class variables twice, which would split the information)
-    aterm->former-term AT' T',
-    cstr.dep-gref GR T' Tm' GRR,
+    cstr.dep-gref GR AT' Tm' GRR,
     GrefR = pglobal GRR _
   ) (
     coq.say "Not fresh type WWWWW",
@@ -53,9 +52,7 @@ param (aglobal GR _) AT' Tm' GrefR :- !,
       annot.typecheck (aglobal GR _) AT,
       annot.sub-type AT AT',
       weakening AT AT' (wfun W),
-      aterm->former-term AT T,
-      aterm->former-term AT' T',
-      cstr.dep-gref GR T Tm' GRR,
+      cstr.dep-gref GR AT Tm' GRR,
       GrefR = (W (pglobal GRR _))
     ]
   ).
@@ -64,16 +61,13 @@ param (aglobal GR _) AT' Tm' GrefR :- !,
 param (apglobal GR UI _) AT' Tm' GrefR :- !,
   logging.debug (coq.say "[param/const]" GR "@" AT'),
   if (fresh-type) (
-    aterm->former-term AT' T',
-    cstr.dep-gref GR T' Tm' GRR,
+    cstr.dep-gref GR AT' Tm' GRR,
     GrefR = pglobal GRR UI
   ) (
     annot.typecheck (apglobal GR UI _) AT,
     annot.sub-type AT AT',
     weakening AT AT' (wfun W),
-    aterm->former-term AT T,
-    aterm->former-term AT' T',
-    cstr.dep-gref GR T Tm' GRR,
+    cstr.dep-gref GR AT Tm' GRR,
     GrefR = (W (pglobal GRR UI))
   ).
 
@@ -226,7 +220,7 @@ param
     logging.trace (coq.say "[param/forall] db CA RA"), !,
     prune UIA [],
     Args =
-      [ {aterm->term A}, A', AR, fun N {aterm->term A} {atermaterm-termterm B}, fun N' A' B',
+      [ {aterm->term A}, A', AR, fun N {aterm->term A} {atermaterm->termterm B}, fun N' A' B',
         fun N {aterm->term A} a\ fun N' A' a'\ fun NR (app [pglobal (const RA) UIA, {aterm->term A}, A', AR, a, a']) aR\
           BR a a' aR ],
     trocq.db.param-forall C ParamForall,

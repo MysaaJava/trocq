@@ -18,7 +18,6 @@
 :before "subst-fun:fail"
 coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 
-kind aterm type.
 type asort    sort -> param-class -> aterm.
 type aglobal  gref -> string -> aterm.
 type apglobal gref -> univ-instance -> string -> aterm.
@@ -58,9 +57,9 @@ pred aterm->term i:aterm o:term.
 aterm->term AT T :- !, aterm->type AT T. %XXX Choose a name
 
 pred atermaterm->termterm i:aterm -> aterm o:term -> term.
-atermaterm-termterm AF F :-
-  pi x\ (term->aterm x AX =>
-    aterm->term (AF AX) (F x)).
+atermaterm->termterm AF F :- !, 
+  pi ax x\ (aterm->decl ax x =>
+    aterm->term (AF ax) (F x)).
 
 % Get the relation of the aterm 〚R〛: |R| -> |R| -> □ 
 pred aterm->rel  i:aterm o:term.
@@ -70,8 +69,8 @@ aterm->rel T _ :-
 
 % Create variables for every term
 pred term->aterm i:term o:aterm.
-term->aterm (sort S) (asort S Alpha).
-term->aterm (sort (typ U)) (asort (typ U') Alpha_) :-
+term->aterm (sort S) (asort S Alpha_).
+term->aterm (sort (typ _ as S)) (asort (typ _ as S') Alpha_) :-
   %coq.say "Trying to unify" S "and" S',
   %coq.say "Universe constraints",
   %coq.univ.print,
@@ -124,7 +123,7 @@ aterm->former-term (aprod N AT AF) (prod N T F) :-
   pi ay\ pi y\ aterm->former-term ay y => (aterm->former-term (AF ay) (F y)).
 aterm->former-term (aapp AL) (app L) :-
   std.map AL aterm->former-term L.
-aterm->former-term AT T :- name AT, !,
+aterm->former-term AT _ :- name AT, !,
   coq.error "[aterm->former-term] Cannot annotate undeclared 'name'" AT.
 aterm->former-term AT T :- var AT, !,
   declare_constraint (aterm->former-term AT T) [AT].
@@ -211,10 +210,10 @@ sub-type (afun N AT AF) (afun _ AT AF') :- !,
 sub-type (aapp [AF|AXs]) (aapp [AF'|AXs']) :-
   sub-type AF AF',
   std.forall2 AXs AXs' eq.
-sub-type (aglobal X Str) (aglobal X Str') :-
-  Str = Str'. %XXX For now, no check
-sub-type (apglobal X U Str) (apglobal X P Str') :-
-  Str = Str'. %XXX For now, no check
+sub-type (aglobal X _Str) (aglobal X _Str') :-
+  true. %XXX For now, no check
+sub-type (apglobal X U _Str) (apglobal X U _Str') :-
+  true. %XXX For now, no check
 % SubConv
 sub-type X Y :- name X, !, X = Y.
 %XXX We disable the unification equal not working on aterms
@@ -250,39 +249,58 @@ eq _ _ :- fail.
 % of the output type of T, as an option basically returning some (A,B) for an output type PType A B,
 % and none for output types that are not sorts, because it means values of type T are not type
 % constructors, so their translation will be made at class (0,0)
-pred classes i:term, o:list param-class, o:option param-class.
-classes T Cs' Out :- std.do! [
-  all-classes T Cs,
-  out-class T Out,
+% XXX fusing all-classes and out-class into one function
+pred classes i:aterm, o:list param-class, o:option param-class.
+classes AT Cs' Out :- std.do! [
+  all-classes AT Cs,
+  out-class AT Out,
+  coq.say "[classes] Checking" Cs "with" Out,
   if (not (Cs = []), Out = some C, std.last Cs LastC, LastC == C) (
     std.drop-last 1 Cs Cs'
   ) (
     Cs' = Cs
-  )].
+  ),
+  coq.say "[classes] Classes of" AT "are" Cs' "with output" Out,
+  ].
 
-pred all-classes i:term, o:list param-class.
-all-classes (app [PCst, M, N]) [C] :- trocq.db.ptype-or-pprop PCst _, !,
-  cstr.univ-link C M N.
+pred all-classes i:aterm, o:list param-class.
+all-classes (asort _Sort CC) [C] :- !,
+  CC = pc M N,
+  trocq.db.map-class->term M MT,
+  trocq.db.map-class->term N NT,
+  cstr.univ-link C MT NT.
 all-classes X L :- var X,
   declare_constraint (all-classes X L) [X].
-all-classes X Cs :- (X = prod _ T F ; X = fun _ T F), !,
+all-classes X Cs :- (X = aprod _ T F ; X = afun _ T F), !,
   pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
-all-classes (app L) Cs :- !,
+all-classes (aapp L) Cs :- !,
   std.flatten {std.map L all-classes} Cs.
-all-classes X [] :- (name X ; X = global _ ; X = pglobal _ _), !.
+all-classes X [] :- (name X ; X = aglobal _ _; X = apglobal _ _ _), !.
 all-classes X _ :- coq.error "all-classes:" X.
 
+% XXX better place for this ?
+func aterm.subst-fun list aterm, aterm -> aterm.
+aterm.subst-fun [] T T :- !.
+aterm.subst-fun [X|XS] (afun _ _ F) T :- !, aterm.subst-fun XS (F X) T.
+% XXX wait for let to be implemented
+% aterm.subst-fun XS (alet _ _ X F) T :- !, aterm.subst-fun XS (F X) T.
+aterm.subst-fun [_|_] T _ :- !,
+  std.fatal-error-w-data "subst-fun: not a lambda" T. 
+
+
 % output class of a term
-pred out-class i:term, o:option param-class.
-out-class (app [PCst, M, N]) (some C) :- trocq.db.ptype-or-pprop PCst _, !,
-  cstr.univ-link C M N.
-out-class (prod _ _ F) Out :- !, pi x\ out-class (F x) Out.
-out-class (fun _ _ _) none :- !.
-out-class (app [F|Xs]) Out :- !,
-  coq.subst-fun Xs F App,
-  if (App = app [F|Xs]) (Out = none) (out-class App Out).
+pred out-class i:aterm, o:option param-class.
+out-class (asort _Sort (pc M N)) (some C) :- !,
+  trocq.db.map-class->term M MT,
+  trocq.db.map-class->term N NT,
+  cstr.univ-link C MT NT.
+out-class (aprod _ _ F) Out :- !, pi x\ out-class (F x) Out.
+out-class (afun _ _ _) none :- !.
+out-class (aapp [F|Xs]) Out :- !,
+  aterm.subst-fun Xs F App,
+  if (App = aapp [F|Xs]) (Out = none) (out-class App Out).
 out-class X C :- var X, !, declare_constraint (out-class X C) [X].
-out-class X none :- (name X ; X = global _ ; X = pglobal _ _), !.
+out-class X none :- (name X ; X = aglobal _ _; X = apglobal _ _ _), !.
 out-class X _ :- coq.error "out-class:" X.
 
 } % annot
@@ -295,3 +313,5 @@ aterm.mk-app (afun _ _ F) [A|Args] R :- !, aterm.mk-app (F A) Args R.
 %XXX enable when let is enabled
 %aterm.mk-app (alet _ _ A F) Args R :- !, aterm.mk-app (F A) Args R.
 aterm.mk-app HD Args (aapp [HD|Args]).
+
+

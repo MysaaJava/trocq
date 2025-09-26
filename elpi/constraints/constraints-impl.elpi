@@ -70,13 +70,13 @@ dep-type C CR :-
     (geq CR (pc map4 map4)).
 
 % D_K(C, C_1, ..., C_n)
-dep-gref GR T Tm' GRR :-
-  annot.classes T TCs OutOpt,
+dep-gref GR AT Tm' GRR :-
+  annot.classes AT TCs OutOpt,
   util.option.value OutOpt (pc map0 map0) Out,
   if (var Out) (
     internal.link? Out ID,
     std.map TCs internal.link? IDs,
-    declare_constraint (internal.c.dep-gref ID GR T Tm' GRR IDs) [_]
+    declare_constraint (internal.c.dep-gref ID GR AT Tm' GRR IDs) [_]
   ) (
     trocq.db.gref GR Out Cs GR' GRR, !,
     coq.env.global GR' Tm', !,
@@ -197,7 +197,7 @@ func c.db list prop.
 func c.dep-pi class-id, class-id, class-id.
 func c.dep-arrow class-id, class-id, class-id.
 func c.dep-type class-id, class-id.
-func c.dep-gref class-id, gref, term, term, gref, list class-id.
+func c.dep-gref class-id, gref, aterm, term, gref, list class-id.
 func c.geq or class-id param-class, or class-id param-class.
 
 % trigger reduction of the graph
