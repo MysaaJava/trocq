@@ -155,9 +155,19 @@ pred sub-type i:aterm, i:aterm.
 sub-type AT AT' :-
   coq.say "[sub-type] Checking wether" AT "<=" AT', fail.
 % SubSort
-sub-type (asort S C) (asort S C') :- !,
+% XXX 158
+% With aterm, we are able to check wether the sort is indeed the same
+% former sub-type only checked wether both sides were changed to PType or both to PProp
+% But this stricter check fails with some examples.
+% Should elpi instantiate the universe levels ?
+% Can we make a failing example for this one ?
+sub-type (asort prop C) (asort prop C') :- !,
   cstr.geq C C'.
-sub-type (asort S C) (asort S' C') :-
+sub-type (asort (typ _) C) (asort (typ _) C') :- !,
+  cstr.geq C C'.
+sub-type (asort S C) (asort S C') :- !, % XXX Disabled by the remark above
+  cstr.geq C C'.
+sub-type (asort S C) (asort S' C') :- % XXX Disabled by the remark above
   coq.unify-eq (sort S) (sort S') ok,
   sub-type (asort S C) (asort S C').
 % SubPi
@@ -222,7 +232,7 @@ classes X L O :- var X,
   declare_constraint (classes X L O) [X].
 classes (aprod _ T F) Cs Out :- !,
   pi x\ (
-    classes T LT _,
+    all-classes T LT,
     classes (F x) LF Out,
     std.append LT LF Cs
   ).

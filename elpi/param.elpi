@@ -37,8 +37,8 @@ pred fresh-type.
 % ==================================================================================================
 
 % TrocqConv + TrocqConst
-param (aglobal GR _) AT' Tm' GrefR :- !,
-  logging.debug (coq.say "[param/const]" GR "@" AT'),
+param (aglobal GR _ as T) AT' Tm' GrefR :- !,
+  logging.debug (coq.say "[param] Rule const :" T "@" AT'),
   if (fresh-type) (
     % T' already comes from a call to annot.typecheck in the case for app
     % subtyping will be handled there
@@ -47,7 +47,6 @@ param (aglobal GR _) AT' Tm' GrefR :- !,
     cstr.dep-gref GR AT' Tm' GRR,
     GrefR = pglobal GRR _
   ) (
-    coq.say "Not fresh type WWWWW",
     std.do![
       annot.typecheck (aglobal GR _) AT,
       annot.sub-type AT AT',
@@ -58,8 +57,8 @@ param (aglobal GR _) AT' Tm' GrefR :- !,
   ).
 
 % universe-polymorphic case
-param (apglobal GR UI _) AT' Tm' GrefR :- !,
-  logging.debug (coq.say "[param/const]" GR "@" AT'),
+param (apglobal GR UI _ as T) AT' Tm' GrefR :- !,
+  logging.debug (coq.say "[param] Rule pconst :" T "@" AT'),
   if (fresh-type) (
     cstr.dep-gref GR AT' Tm' GRR,
     GrefR = pglobal GRR UI
@@ -73,7 +72,7 @@ param (apglobal GR UI _) AT' Tm' GrefR :- !,
 
 % TrocqConv + TrocqVar
 param X AT' X' Wout :- name X, !,
-  logging.debug (coq.say "[param/var]" X "@" AT'),
+  logging.debug (coq.say "[param] Rule var :" X "@" AT'),
   param.store X AT X' XR, !,
   logging.trace (coq.say "[param/var] found" X "@" AT "~" X' "by" XR),
   annot.sub-type AT AT', !,
@@ -84,10 +83,11 @@ param X AT' X' Wout :- name X, !,
 
 % TrocqSort
 param
-  (asort S CR)
-  (asort S' C)
+  (asort S CR as T)
+  (asort S' C as AT)
   (sort S)
   (app [pglobal (const PParamType) UI1|Args]) :-
+    logging.debug (coq.say "[param] Rule sort :" T "@" AT),
     coq.unify-eq (sort S) (sort S') ok, %XXX We should check that we do it for the same sorts
     !,
     std.do! [
@@ -115,8 +115,8 @@ param
 %     so that Coq can fill them in the end
 
 % TrocqLam
-param (afun N T F) FunTy (fun N' T' F') FunR :- !,
-  logging.debug (coq.say "[param/fun]" N ":" T "@" FunTy),
+param (afun N T F as T0) FunTy (fun N' T' F') FunR :- !,
+  logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
   %XXX Removed this line for non-unifying equality
   %std.assert-ok! (coq.unify-eq FunTy (prod _ T TF)) {std.string.concat " "
   %  ["type not convertible to Π:", {coq.term->string FunTy}]},
@@ -137,10 +137,10 @@ param (afun N T F) FunTy (fun N' T' F') FunR :- !,
 
 % TrocqArrow
 param
-  (aprod _ A (_\ B )) (asort (typ _) C)
+  (aprod _ A (_\ B ) as T) (asort Sort C as AT)
   (prod `_` A' (_\ B')) (app [pglobal (const ParamArrow) UI|Args]) :-
     (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do! [
-      logging.debug (coq.say "[param/arrow]" A "->" B "@" M N),
+      logging.debug (coq.say "[param] Rule arrow :" T "@" AT),
 
       cstr.dep-arrow C CA CB,
       logging.trace (coq.say "[param/arrow] added dep-arrow from" C "to" CA "and" CB),
@@ -148,7 +148,7 @@ param
       if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
       PTypeA = (asort PTypeSort CA),
       param A PTypeA A' AR,
-      param B (asort (typ _U) CB) B' BR, % XXX le U sort de nul part
+      param B (asort Sort CB) B' BR,
       logging.trace (coq.say "[param/arrow]" B "@" CB "~" B' "by" BR),
       trocq.db.param-arrow C ParamArrow,
       prune UI [],
@@ -165,8 +165,9 @@ param
 
 % TrocqPi
 param
-  (aprod N A B) (asort Sort C)
+  (aprod N A B as T) (asort Sort C as AT)
   (prod N' A' B') (app [pglobal (const ParamForall) UI|Args']) :-
+    logging.debug (coq.say "[param] Rule pi :" T "@" AT),
     (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do![
     logging.debug (coq.say "[param/forall]" N ":" A "," B "@" M1 M2),
     coq.name-suffix N "'" N',
@@ -204,8 +205,8 @@ param
     ].
 
 % TrocqConv for F (argument B in param.args) + TrocqApp
-param (aapp [F|Xs]) B (app [F'|Xs']) Wout :- !, std.do! [
-  logging.debug (coq.say "[param/app]" F Xs "@" B),
+param (aapp [F|Xs] as T) B (app [F'|Xs']) Wout :- !, std.do! [
+  logging.debug (coq.say "[param] Rule app :" T "@" B),
   annot.typecheck F FTy,
   fresh-type => param F FTy F' FR,
   logging.trace (coq.say "[param/app]" F "@" FTy "~" F' "by" FR),
@@ -248,8 +249,10 @@ type wsuspend (aterm -> aterm) -> (aterm -> aterm) -> weakening.
 % cf definition of weakening in the paper
 pred weakening i:aterm, i:aterm, o:weakening.
 weakening (asort S C) (asort S' C') W :-
-  !, 
-  coq.unify-eq (sort S) (sort S') ok, % XXX We check that we weaken the same sort to the same sort
+  !,
+  % XXX Same probleme here as XXX 158
+  ((S = prop, S' = prop);(S = typ _, S' = typ _)), % XXX Possibly a better way to state that (helper coq-util function ?)
+  % coq.unify-eq (sort S) (sort S') ok, % XXX We check that we weaken the same sort to the same sort
   coq.say "Converting from" C ";" C',
   trocq.db.param-class->terms C MT NT,
   trocq.db.param-class->terms C' MT' NT',
