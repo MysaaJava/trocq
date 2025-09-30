@@ -18,8 +18,10 @@ pred map->class o:map-class, o:gref.
 pred map-class->indc-class o:map-class, o:gref.
 
 pred map-class->term i:map-class, o:term.
+map-class->term C T :- 
+  coq.say "[map-class->term]" C "->" T, fail. %XXX Debug
 map-class->term Class Term :- var Class, !,
-  declare_constraint (map-class->term Class Term) [Class]. % XXX Is there a more common way to do this ?
+  declare_constraint (map-class->term Class Term) [Class]. % XXX Is there a more common way to do this ? + not sure it should be there
 map-class->term Class (pglobal Map UI) :- std.do! [
   map-class->indc-class Class Map, coq.univ-instance UI [] ].
 map-class->term C _ :-

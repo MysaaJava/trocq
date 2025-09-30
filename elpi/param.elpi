@@ -88,6 +88,7 @@ param
   (asort S' (pc M N))
   (sort S)
   (app [pglobal (const PParamType) UI1|Args]) :-
+    coq.unify-eq (sort S) (sort S') ok, %XXX We should check that we do it for the same sorts
     (trocq.db.ptype PType; trocq.db.pprop PType), !,
     std.do! [
     trocq.db.map-class->term MR MRT,
@@ -135,8 +136,8 @@ param (afun N T F) FunTy (fun N' T' F') FunR :- !,
   logging.trace (coq.say "[param/fun]" AT "@ 0,0 ~" T' "by" TR),
   (@param-pi-decl N AT ax\ AT\ pi x' xR\ param.store ax AT x' xR => (
     logging.trace (coq.say "[param/fun] introducing" ax "@" AT "~" x' "by" xR),
-    param (F ax) (ATF ax) (F' x') (FR {aterm->term x} x' xR),
-    logging.trace (coq.say "[param/fun]" (F ax) "@" (ATF ax) "~" (F' x') "by" (FR {aterm->term x} x' xR))
+    param (F ax) (ATF ax) (F' x') (FR {aterm->term ax} x' xR),
+    logging.trace (coq.say "[param/fun]" (F ax) "@" (ATF ax) "~" (F' x') "by" (FR {aterm->term ax} x' xR))
   )),
   trocq.db.r (pc map0 map0) R,
   prune UI [],
@@ -203,7 +204,6 @@ param
     trocq.db.term->map-class M2AT M2A,
     logging.trace (coq.say "[param/forall]" M1A M2A "is linked to" CA),
     aterm->term A A0,
-    coq.say "Will typecheck" A0 "to" Ty,
     std.assert-ok! (coq.typecheck A0 TyA) "[param/forall]: cannot typecheck A",
     if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
     param A (asort PTypeSort (pc M1A M2A)) A' AR,
@@ -278,6 +278,7 @@ type wsuspend (aterm -> aterm) -> (aterm -> aterm) -> weakening.
 pred weakening i:aterm, i:aterm, o:weakening.
 weakening (asort S (pc M N)) (asort S' (pc M' N')) W :-
   !, 
+  coq.unify-eq (sort S) (sort S') ok, % XXX We check that we weaken the same sort to the same sort
   trocq.db.map-class->term M MT,
   trocq.db.map-class->term N NT,
   trocq.db.map-class->term M' MT',
@@ -301,7 +302,7 @@ weakening (aprod N A B) (aprod _ A' B') W :- !,
 weakening (aapp [F|_]) (aapp [_F'|_]) (wfun (xR\ xR)) :- (name F ; F = aglobal _ _ ; F = apglobal _ _ _), !.
 weakening (aapp [F, AX|Xs]) (aapp [F', AX'|Xs']) W :- !,
   weakening F F' (wsuspend WF WF'),
-  weakening {aterm.mk-app (WF X) Xs} {aterm.mk-app (WF' X') Xs'} W.
+  weakening {aterm.mk-app (WF AX) Xs} {aterm.mk-app (WF' AX') Xs'} W.
 weakening (afun _ _ F) (afun _ _ F') (wsuspend F F') :- !.
 weakening X _ (wfun (xR\ xR)) :- (name X ; X = aglobal _ _ ; X = apglobal _ _ _), !.
 weakening T _ _ :- coq.error "weakening:" T.
