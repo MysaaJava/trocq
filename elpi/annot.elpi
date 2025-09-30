@@ -131,36 +131,6 @@ aterm->former-term T _ :-
   coq.error "[aterm->former-term] Unsupported aterm" T.
 
 
-
-% annotate a term
-% NB: the output type is term because the annotations are encoded directly in Coq
-% see PType in Param.v
-pred term->annot-term i:term, o:term.
-term->annot-term (app [pglobal (const PPropGR) _, M, N] as P) P :-
-  trocq.db.pprop PPropGR, !,
-  cstr.univ-link _ M N.
-term->annot-term (app [pglobal (const PTypeGR) _, M, N] as P) P :-
-  trocq.db.ptype PTypeGR, !,
-  cstr.univ-link _ M N.
-term->annot-term (sort prop) (app [PProp , M, N]) :-
-  trocq.db.pprop PPropGR, !,
-  coq.env.global (const PPropGR) PProp, !,
-  cstr.univ-link _ M N.
-term->annot-term (sort (typ U)) (app [pglobal (const PTypeGR) UI, M, N]) :-
-  trocq.db.ptype PTypeGR, !,
-  coq.univ-instance UI [{coq.univ.variable U}],
-  cstr.univ-link _ M N.
-term->annot-term (fun N T F) (fun N T' F') :- !,
-  term->annot-term T T', !,
-  pi x\ term->annot-term (F x) (F' x).
-term->annot-term (prod N T F) (prod N T' F') :- !,
-  term->annot-term T T', !,
-  pi x\ term->annot-term (F x) (F' x).
-term->annot-term (app L) (app L') :- !,
-  std.map L term->annot-term L'.
-term->annot-term X X :- (name X ; X = global _ ; X = pglobal _ _), !.
-term->annot-term T _ :- coq.error "term->annot-term:" T.
-
 macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax. %XXX Weird thing going on here
 
 namespace annot {
@@ -185,17 +155,8 @@ pred sub-type i:aterm, i:aterm.
 sub-type AT AT' :-
   coq.say "[sub-type] Checking wether" AT "<=" AT', fail.
 % SubSort
-sub-type (asort S C) (asort S C') :- !, std.do![
-  C = pc M1 N1,
-  C' = pc M2 N2,
-  trocq.db.map-class->term M1 M1T,
-  trocq.db.map-class->term N1 N1T,
-  trocq.db.map-class->term M2 M2T,
-  trocq.db.map-class->term N2 N2T,
-  cstr.univ-link C1 M1T N1T,
-  cstr.univ-link C2 M2T N2T,
-  cstr.geq C1 C2
-].
+sub-type (asort S C) (asort S C') :- !,
+  cstr.geq C C'.
 sub-type (asort S C) (asort S' C') :-
   coq.unify-eq (sort S) (sort S') ok,
   sub-type (asort S C) (asort S C').
@@ -226,13 +187,7 @@ sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 pred eq i:aterm, i:aterm.
 eq AT AT' :-
   coq.say "[eq] Checking equality" AT "==" AT', fail.
-eq (asort (typ U) (pc M1 N1)) (asort (typ U) (pc M2 N2)) :- %XXX U comes out of nowhere
-  trocq.db.map-class->term M1 M1T,
-  trocq.db.map-class->term N1 N1T,
-  trocq.db.map-class->term M2 M2T,
-  trocq.db.map-class->term N2 N2T,
-  cstr.univ-link C1 M1T N1T,
-  cstr.univ-link C2 M2T N2T,
+eq (asort (typ U) C1) (asort (typ U) C2) :- %XXX U comes out of nowhere
   cstr.eq C1 C2.
 eq (aprod _ AT AF) (aprod _ AT' AF') :- !,
   eq AT AT', !,
@@ -262,11 +217,7 @@ all-classes T Cz :-
   if (OC = some C) (Cz = C :: Cs) (Cz = Cs). % XXX is it wrong order ?
 out-class T Out :- classes T _ Out.
 
-classes (asort _Sort CC) [] (some C) :- !,
-  CC = pc M N,
-  trocq.db.map-class->term M MT,
-  trocq.db.map-class->term N NT,
-  cstr.univ-link C MT NT.
+classes (asort _Sort C) [] (some C) :- !.
 classes X L O :- var X,
   declare_constraint (classes X L O) [X].
 classes (aprod _ T F) Cs Out :- !,

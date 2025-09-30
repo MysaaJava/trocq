@@ -20,16 +20,6 @@ init :-
   declare_constraint (internal.c.vars []) [_],
   declare_constraint (internal.c.graph G) [_].
 
-% link a variable parametricity class C to its Coq representation (arguments of PType)
-univ-link C M N :- coq.say "[univ-link]" C "<->" M N, fail.
-univ-link C M N :- var C, var M, var N, !,
-  declare_constraint (internal.c.univ-link? C M N) [_].
-univ-link C M N :- var C, !,
-  C = pc {trocq.db.term->map-class M} {trocq.db.term->map-class N}.
-univ-link (pc M' N') M N :-
-  trocq.db.map-class->term M' M,
-  trocq.db.map-class->term N' N.
-
 % Printers
 dep-pi C CA CB :- 
   logging.trace (coq.say "[dep-pi]" C "to" CA CB), fail.
@@ -162,31 +152,6 @@ constraint c.link c.link? c.link- {
   rule \ (c.link- _ _).
 }
 
-% link a class C to a pair of Coq map classes
-func c.univ-link  param-class, term, term.
-func c.univ-link? param-class, term, term.
-func c.univ-link- param-class, term, term.
-
-func univ-link- param-class, term, term.
-univ-link- C M N :- declare_constraint (c.univ-link- C M N) [_].
-
-constraint c.univ-link c.univ-link? c.univ-link- {
-  % we know the class, we need the Coq values
-  rule (c.univ-link C M N) \ (c.univ-link? C M' N') <=> (M' = M, N' = N).
-  rule \ (c.univ-link C M N) (c.univ-link- C M' N') <=> (M' = M, N' = N).
-  % we know the Coq values, we need the class
-  rule (c.univ-link C M N) \ (c.univ-link? C' M N) <=> (C' = C).
-  rule \ (c.univ-link C M N) (c.univ-link- C' M N) <=> (C' = C).
-  % both are unknown, create the fresh link and loop
-  rule (c.univ-link? C M N) <=> (
-    link? C _,
-    prune M [],
-    prune N [],
-    declare_constraint (c.univ-link C M N) [_]
-  ).
-  rule \ (c.univ-link- _ _ _).
-}
-
 % store the constraint graph in the Elpi constraint store
 func c.graph constraint-graph.
 
@@ -263,9 +228,6 @@ pred instantiate-coq i:pair class-id param-class.
 instantiate-coq (pr ID (pc M0 N0)) :- std.do! [
   logging.trace (coq.say "instantiating" ID "with" (pc M0 N0)),
   link- C ID,
-  univ-link- C M N,
-  trocq.db.map-class->term M0 M,
-  trocq.db.map-class->term N0 N,
   C = pc M0 N0
 ].
 

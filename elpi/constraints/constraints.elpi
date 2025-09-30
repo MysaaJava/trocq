@@ -23,9 +23,6 @@ namespace cstr {
 
 pred init.
 
-% link a variable parametricity class C to its Coq representation (arguments of PType)
-pred univ-link o:param-class, o:term, o:term.
-
 % D_π(C, C_A, C_B)
 pred dep-pi i:param-class, o:param-class, o:param-class.
 
