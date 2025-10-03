@@ -52,7 +52,8 @@ param (aglobal GR _ as T) AT' Tm' GrefR :- !,
       annot.sub-type AT AT',
       weakening AT AT' (wfun W),
       cstr.dep-gref GR AT Tm' GRR,
-      GrefR = (W (pglobal GRR _))
+      GrefR = (W (pglobal GRR _)),
+      coq.say "[param/pconst] out" GrefR
     ]
   ).
 
@@ -67,7 +68,8 @@ param (apglobal GR UI _ as T) AT' Tm' GrefR :- !,
     annot.sub-type AT AT',
     weakening AT AT' (wfun W),
     cstr.dep-gref GR AT Tm' GRR,
-    GrefR = (W (pglobal GRR UI))
+    GrefR = (W (pglobal GRRa UI)),
+    coq.say "[param/pconst] out" GrefR
   ).
 
 % TrocqConv + TrocqVar

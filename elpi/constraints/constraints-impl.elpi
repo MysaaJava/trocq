@@ -69,6 +69,7 @@ dep-gref GR AT Tm' GRR :-
     declare_constraint (internal.c.dep-gref ID GR AT Tm' GRR IDs) [_]
   ) (
     trocq.db.gref GR Out Cs GR' GRR, !,
+    coq.say "[gref] Found " GRR "for term" GR "with out" Out "and classes" Cs,
     coq.env.global GR' Tm', !,
     coq.say "Dep GREF on " TCs "vs" Cs,
     std.forall2 TCs Cs eq

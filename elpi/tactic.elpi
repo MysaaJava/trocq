@@ -91,6 +91,7 @@ translate-goal DB Ty G (pc M N) G' GR' :- DB => std.do! [
     coq.say "after reduction:",
     coq.say "goal:" {coq.term->string G'},
     coq.say "proof:" {coq.term->string GR'},
+    coq.say "proof moche:" GR',
     coq.say "***********************************************************************************"
   )
   % no need to remove the remaining annotations because they are invisible modulo conversion
