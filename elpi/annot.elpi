@@ -219,7 +219,7 @@ pred classes i:aterm, o:list param-class, o:option param-class.
 pred all-classes i:aterm, o:list param-class.
 pred out-class i:aterm, o:option param-class. %XXX remove those two predicates ?
 
-classes X L O :-
+classes X _ _ :-
   coq.say "[classes]" X, fail.
 
 all-classes T Cz :-

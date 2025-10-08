@@ -55,7 +55,8 @@ param (aglobal GR _ as T) AT' Tm' GrefR :- !,
       GrefR = (W (pglobal GRR _)),
       coq.say "[param/pconst] out" GrefR
     ]
-  ).
+  ),
+  logging.debug (coq.say "[param] Out rule const :" Tm' "∵" GrefR).
 
 % universe-polymorphic case
 param (apglobal GR UI _ as T) AT' Tm' GrefR :- !,
@@ -68,9 +69,10 @@ param (apglobal GR UI _ as T) AT' Tm' GrefR :- !,
     annot.sub-type AT AT',
     weakening AT AT' (wfun W),
     cstr.dep-gref GR AT Tm' GRR,
-    GrefR = (W (pglobal GRRa UI)),
+    GrefR = (W (pglobal GRR UI)),
     coq.say "[param/pconst] out" GrefR
-  ).
+  ),
+  logging.debug (coq.say "[param] Out rule pconst :" Tm' "∵" GrefR).
 
 % TrocqConv + TrocqVar
 param X AT' X' Wout :- name X, !,
@@ -79,16 +81,17 @@ param X AT' X' Wout :- name X, !,
   logging.trace (coq.say "[param/var] found" X "@" AT "~" X' "by" XR),
   annot.sub-type AT AT', !,
   weakening AT AT' (wfun W),
-  Wout = W XR. % XXX We do not put that directly in the predicate term, because it makes
+  Wout = W XR, % XXX We do not put that directly in the predicate term, because it makes
   % Elpi to try to match param . . . (X a b c) against param X AT' X' (W XR)
   % which reduces to (W XR) = (X a b c) rasing a unification outside pattern fragment error
+  logging.debug (coq.say "[param] Out rule var :" X' "∵" Wout).
 
 % TrocqSort
 param
   (asort S CR as T)
   (asort S' C as AT)
-  (sort S)
-  (app [pglobal (const PParamType) UI1|Args]) :-
+  (sort S as T')
+  (app [pglobal (const PParamType) UI1|Args] as RT) :-
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
     coq.unify-eq (sort S) (sort S') ok, %XXX We should check that we do it for the same sorts
     !,
@@ -110,14 +113,15 @@ param
           (coq.say "[param/type] resuming proof on" C "(univalence not needed)"),
         Args = [MRT, NRT]
       )
-    ].
+    ],
+    logging.debug (coq.say "[param] Out rule sort :" T' "∵" RT).
 
 % NB: the calls prune UI [] make sure the universe instance UI does not depend on bound variables
 %     it makes sure they remain fresh variables and Coq-Elpi does not fail for technical reasons
 %     so that Coq can fill them in the end
 
 % TrocqLam
-param (afun N T F as T0) FunTy (fun N' T' F') FunR :- !,
+param (afun N T F as T0) FunTy (fun N' T' F' as T') FunR :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
   %XXX Removed this line for non-unifying equality
   %std.assert-ok! (coq.unify-eq FunTy (prod _ T TF)) {std.string.concat " "
@@ -134,14 +138,14 @@ param (afun N T F as T0) FunTy (fun N' T' F') FunR :- !,
   )),
   trocq.db.r (pc map0 map0) R,
   prune UI [],
-  FunR =
-    fun N {aterm->term T} x\ fun N' T' x'\ fun NR (app [pglobal (const R) UI, {aterm->term T}, T', TR, x, x']) xR\ FR x x' xR.
+  (FunR = fun N {aterm->term T} x\ fun N' T' x'\ fun NR (app [pglobal (const R) UI, {aterm->term T}, T', TR, x, x']) xR\ FR x x' xR),
+  logging.debug (coq.say "[param] Out rule lam :" T' "∵" FunR).
 
 % TrocqArrow
 param
   (aprod _ A (_\ B ) as T) (asort Sort C as AT)
-  (prod `_` A' (_\ B')) (app [pglobal (const ParamArrow) UI|Args]) :-
-    (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do! [
+  (prod `_` A' (_\ B') as T') (app [pglobal (const ParamArrow) UI|Args] as TR) :- !,
+   std.do! [
       logging.debug (coq.say "[param] Rule arrow :" T "@" AT),
 
       cstr.dep-arrow C CA CB,
@@ -162,16 +166,16 @@ param
       ) (
         logging.trace (coq.say "[param/arrow] resuming proof on" C "(funext not needed)"),
         Args = [{aterm->term A}, A', AR, {aterm->term B}, B', BR]
-      )
+      ),
+      logging.debug (coq.say "[param] Out rule arrow :" T' "∵" TR)
     ].
 
 % TrocqPi
 param
   (aprod N A B as T) (asort Sort C as AT)
-  (prod N' A' B') (app [pglobal (const ParamForall) UI|Args']) :-
+  (prod N' A' B' as T') (app [pglobal (const ParamForall) UI|Args'] as TR) :-
     logging.debug (coq.say "[param] Rule pi :" T "@" AT),
-    (trocq.db.ptype PType; trocq.db.pprop PType), !, std.do![
-    logging.debug (coq.say "[param/forall]" N ":" A "," B "@" M1 M2),
+    !, std.do![
     coq.name-suffix N "'" N',
     coq.name-suffix N "R" NR,
 
@@ -204,10 +208,11 @@ param
       logging.trace (coq.say "[param/forall] resuming proof on" C "(funext not needed)"),
       Args' = Args
     )
-    ].
+    ],
+    logging.debug (coq.say "[param] Out rule pi :" T' "∵" TR).
 
 % TrocqConv for F (argument B in param.args) + TrocqApp
-param (aapp [F|Xs] as T) B (app [F'|Xs']) Wout :- !, std.do! [
+param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Wout :- !, std.do! [
   logging.debug (coq.say "[param] Rule app :" T "@" B),
   annot.typecheck F FTy,
   fresh-type => param F FTy F' FR,
@@ -215,6 +220,7 @@ param (aapp [F|Xs] as T) B (app [F'|Xs']) Wout :- !, std.do! [
   param.args FTy B Xs Xs' XsR W,
   coq.subst-fun XsR FR AppR,
   Wout = W AppR, % XXX Same as for TrocqVar
+  logging.debug (coq.say "[param] Out rule app :" T' "∵" Wout)
 ].
 
 pred param.args i:aterm, i:aterm, i:list aterm, o:list term, o:list term, o:term -> term.
@@ -235,7 +241,7 @@ param.args FunTy AB [X|Xs] [X'|Xs'] [TX, X', XR|XsR] W :- !,
   aterm->term X TX.
 
 param.args FunTy AB L _ _ _ :-
-  coq.error "[param.args] unsupported combination:" FunTy "&" AP "&" L.
+  coq.error "[param.args] unsupported combination:" FunTy "&" AB "&" L.
 
 param X T _ _ :-
   coq.error "[param] unsupported combination:" X "@" T.
