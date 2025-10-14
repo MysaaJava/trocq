@@ -21,7 +21,7 @@ coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 % traversing a binder should give information for both typechecking and annotation
 % XXX: New line: we Create the variables for the variable here
 % XXX WWWT -> Change the name to T and it breaks :shrug:
-macro @param-pi-decl N AT F :- aterm->term AT WWWT, pi ax\ pi x\ [aterm->decl ax x, annot.adecl ax N AT, decl x N WWWT] => (
+macro @param-pi-decl N AT F :- aterm->term AT WWWT, pi ax\ pi x\ [aterm->term ax x, term->aterm x ax, annot.adecl ax N AT, decl x N WWWT] => (
   logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" WWWT "with annotated version" ax),
   F ax AT).
 
@@ -96,7 +96,7 @@ param
     coq.unify-eq (sort S) (sort S') ok, %XXX We should check that we do it for the same sorts
     !,
     std.do! [
-      param-class->terms CR MRT NRT,
+      trocq.db.param-class->terms CR MRT NRT,
       cstr.dep-type C CR,
       logging.trace (coq.say "[param/type] added dep-type from" C "to" CR),
       coq.univ-instance _UI [L], % XXX Why am i discarding this ?

@@ -15,31 +15,25 @@ namespace trocq.db {
 
 pred map->class o:map-class, o:gref.
 
-pred map-class->indc-class o:map-class, o:gref.
+func map-class->gref map-class -> gref.
+func gref->map-class gref -> map-class.
 
-pred map-class->term i:map-class, o:term. %XXX Should be removed
-map-class->term C T :- 
-  coq.say "[map-class->term]" C "->" T, fail. %XXX Debug
-map-class->term Class (pglobal Map UI) :- std.do! [
-  map-class->indc-class Class Map, coq.univ-instance UI [] ].
-map-class->term C _ :-
-  coq.error "Could not find term associated with map class" M.
-
-pred param-class->terms i:param-class o:term o:term.
-param-class->terms C T1 T2 :- var C, !,
+func param-class->terms param-class -> term, term.
+param-class->terms (uvar as C) T1 T2 :- var C, !,
   declare_constraint (param-class->terms C T1 T2) [C].
-param-class->terms C T1 T2 :- C = pc M N, (var M; var N), !,
-  declare_constraint (param-class->terms C T1 T2) [M,N].
+param-class->terms (pc (uvar as M) (uvar as N)) T1 T2 :- !,
+  declare_constraint (param-class->terms (pc M N) T1 T2) [M,N].
 param-class->terms (pc M N) (pglobal MT UIM) (pglobal NT UIN) :- !,
-  map-class->indc-class M MT,
-  map-class->indc-class N NT,
+  map-class->gref M MT,
+  map-class->gref N NT,
   coq.univ-instance UIM [],
   coq.univ-instance UIN []. % XXX Should i put the same universe instance ?
+
 
 pred term->map-class i:term, o:map-class.
 term->map-class M Class :-
   M = pglobal Map _, % XXX This should disappear when map terms are evaluated in the end
-  map-class->indc-class Class Map, !.
+  gref->map-class Map Class, !.
 term->map-class M _ :-
   coq.error "Could not find map class associated with term" M.
 

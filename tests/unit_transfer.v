@@ -31,7 +31,7 @@ Section Transfer.
         admit.
     Admitted.
     Trocq Use Rpe.
-
+    
     Goal forall (m : I), pe m m.
     Proof.
     trocq.

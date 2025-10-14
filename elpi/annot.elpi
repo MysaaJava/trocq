@@ -29,36 +29,26 @@ type amatch   aterm -> aterm -> list aterm -> aterm.              % match t p [b
 type afix     name -> int -> aterm -> (term -> aterm) -> aterm.  % fix name rno ty bo
 type aprimitive primitive-value -> aterm.
 
-pred aterm->decl o:aterm o:term.
-
 % Get the type of the aterm |R|
-pred aterm->type i:aterm o:term.
-aterm->type (asort Sort _) (sort Sort) :- !.
-aterm->type (aglobal GRef _) (global GRef) :- !.
-aterm->type (apglobal GRef Universe _) (pglobal GRef Universe) :- !.
-aterm->type (afun N AT AF) (fun N T F) :-
-  aterm->type AT T,
-  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y), !.
-aterm->type (aprod N AT AF) (prod N T F) :-
-  aterm->type AT T,
-  pi ay\ pi y \ aterm->type ay y => aterm->type (AF ay) (F y), !.
-aterm->type (aapp AL) (app L) :-
-  std.map AL aterm->type L, !.
-aterm->type AT T :- name AT, !, 
-  (aterm->decl AT T , !;
-  coq.error "[aterm->type] Cannot unannotate undeclared 'name'" AT "to" T).
-aterm->type AT T :- var AT, !,
-  declare_constraint (aterm->type AT T) [AT].
+func aterm->term aterm -> term.
+aterm->term (asort Sort _) (sort Sort) :- !.
+aterm->term (aglobal GRef _) (global GRef) :- !.
+aterm->term (apglobal GRef Universe _) (pglobal GRef Universe) :- !.
+aterm->term (afun N AT AF) (fun N T F) :-
+  aterm->term AT T,
+  pi ay\ pi y \ aterm->term ay y => aterm->term (AF ay) (F y), !.
+aterm->term (aprod N AT AF) (prod N T F) :- !,
+  aterm->term AT T,
+  pi ay\ pi y \ aterm->term ay y => aterm->term (AF ay) (F y), !.
+aterm->term (aapp AL) (app L) :-
+  std.map AL aterm->term L, !.
+aterm->term (uvar as AT) T :- !,
+  declare_constraint (aterm->term AT T) [AT].
 %TODO implement the other constructors
-aterm->type AT T :-
-  coq.error "[aterm->type] Unsupported aterm" AT "to" T.
-
-pred aterm->term i:aterm o:term.
-aterm->term AT T :- !, aterm->type AT T. %XXX Choose a name
 
 pred atermaterm->termterm i:aterm -> aterm o:term -> term.
 atermaterm->termterm AF F :- !, 
-  pi ax x\ (aterm->decl ax x =>
+  pi ax x\ ([aterm->term ax x, term->aterm x ax] =>
     aterm->term (AF ax) (F x)).
 
 % Get the relation of the aterm 〚R〛: |R| -> |R| -> □ 
@@ -68,9 +58,9 @@ aterm->rel T _ :-
   coq.error "[aterm->rel] Unsupported aterm" T.
 
 % Create variables for every term
-pred term->aterm i:term o:aterm.
-term->aterm (sort S) (asort S Alpha_).
-term->aterm (sort (typ _ as S)) (asort (typ _ as S') Alpha_) :-
+func term->aterm term -> aterm.
+term->aterm (sort S) (asort S Alpha_) :- !.
+term->aterm (sort (typ _ as S)) (asort (typ _ as S') Alpha_) :- !,
   %coq.say "Trying to unify" S "and" S',
   %coq.say "Universe constraints",
   %coq.univ.print,
@@ -87,48 +77,9 @@ term->aterm (app L) (aapp AL) :-
   std.map L term->aterm AL.
 %TODO implement the other constructors
 % XXX Written but sholud be useless ? i guess
-term->aterm T AT :- var T, !,
+term->aterm (uvar as T) AT :- !,
   % We wait for resolution on T so we can resolve the conversion
   declare_constraint (term->aterm T AT) [T].
-term->aterm T AT :- name T, !,
-  (aterm->decl AT T, !; coq.error "[term->aterm] Cannot annotate undeclared 'name'" T).
-term->aterm T _ :-
-  coq.error "[term->aterm] Unsupported term" T.
-
-
-% Make a aterm into a former «anotated term», for test purposes
-% XXX remove this
-pred aterm->former-term i:aterm, o:term.
-aterm->former-term A FT :-
-  coq.say "[aterm->former-term] Making former term from" A "to" FT, fail.
-aterm->former-term (asort prop Alpha) (app [PProp, MT, NT]) :-
-  Alpha = pc M N, % XXX Why doesn't this work in the one-line declaration ?
-  trocq.db.pprop PPropGR,
-  trocq.db.map-class->term M MT,
-  trocq.db.map-class->term N NT,
-  coq.env.global (const PPropGR) PProp.
-aterm->former-term (asort (typ U) Alpha) (app [pglobal (const PTypeGR) UI, MT, NT]) :- !,
-  Alpha = pc M N, % XXX Why doesn't this work in the one-line declaration ?
-  trocq.db.ptype PTypeGR,
-  trocq.db.map-class->term M MT,
-  trocq.db.map-class->term N NT,
-  coq.univ-instance UI [{coq.univ.variable U}].
-aterm->former-term (aglobal GRef _) (global GRef).
-aterm->former-term (apglobal GRef Universe _) (pglobal GRef Universe).
-aterm->former-term (afun N AT AF) (fun N T F) :-
-  aterm->former-term AT T,
-  pi ay\ pi y\ aterm->former-term ay y => (aterm->former-term (AF ay) (F y)).
-aterm->former-term (aprod N AT AF) (prod N T F) :-
-  aterm->former-term AT T,
-  pi ay\ pi y\ aterm->former-term ay y => (aterm->former-term (AF ay) (F y)).
-aterm->former-term (aapp AL) (app L) :-
-  std.map AL aterm->former-term L.
-aterm->former-term AT _ :- name AT, !,
-  coq.error "[aterm->former-term] Cannot annotate undeclared 'name'" AT.
-aterm->former-term AT T :- var AT, !,
-  declare_constraint (aterm->former-term AT T) [AT].
-aterm->former-term T _ :-
-  coq.error "[aterm->former-term] Unsupported aterm" T.
 
 
 macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax. %XXX Weird thing going on here
@@ -139,7 +90,7 @@ namespace annot {
 % calling term->annot-term on it will add fresh annotations
 % if we want to typecheck a variable several times and get the same type everytime, we need to
 % add some memory, which is the purpose of adecl
-pred adecl i:aterm, o:name, o:aterm.
+func adecl aterm -> name, aterm.
 
 pred typecheck i:aterm, o:aterm.
 typecheck T ATy :- adecl T _ ATy, !.
