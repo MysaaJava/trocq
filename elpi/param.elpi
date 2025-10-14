@@ -21,7 +21,7 @@ coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 % traversing a binder should give information for both typechecking and annotation
 % XXX: New line: we Create the variables for the variable here
 % XXX WWWT -> Change the name to T and it breaks :shrug:
-macro @param-pi-decl N AT F :- aterm->term AT WWWT, pi ax\ pi x\ [aterm->term ax x, term->aterm x ax, annot.adecl ax N AT, decl x N WWWT] => (
+macro @param-pi-decl N AT F :- aterm->term AT WWWT, pi ax\ pi x\ [aterm->term ax x, term->aterm x ax, (annot.classes ax [] none :- !), annot.adecl ax N AT, decl x N WWWT] => (
   logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" WWWT "with annotated version" ax),
   F ax AT).
 
@@ -275,7 +275,7 @@ weakening (aprod N A B) (aprod _ A' B') W :- !,
   coq.name-suffix N "R" NR,
   weakening A' A (wfun WA),
   pi xR ax x ax' x' aR\ (
-    [aterm->decl ax x, aterm->decl ax' x'] =>
+    [aterm->term ax x, aterm->term ax' x'] =>
     weakening (B ax) (B' ax') (wfun (WB x x'))),
   prune AR [],
   prune A2 [],

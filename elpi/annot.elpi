@@ -166,12 +166,9 @@ eq _ _ :- fail.
 % and none for output types that are not sorts, because it means values of type T are not type
 % constructors, so their translation will be made at class (0,0)
 % XXX fusing all-classes and out-class into one function
-pred classes i:aterm, o:list param-class, o:option param-class.
-pred all-classes i:aterm, o:list param-class.
-pred out-class i:aterm, o:option param-class. %XXX remove those two predicates ?
-
-classes X _ _ :-
-  coq.say "[classes]" X, fail.
+func classes aterm -> list param-class, option param-class.
+func all-classes aterm -> list param-class.
+func out-class aterm -> option param-class. %XXX remove those two predicates ?
 
 all-classes T Cz :-
   classes T Cs OC,
@@ -179,8 +176,7 @@ all-classes T Cz :-
 out-class T Out :- classes T _ Out.
 
 classes (asort _Sort C) [] (some C) :- !.
-classes X L O :- var X,
-  declare_constraint (classes X L O) [X].
+classes (uvar as X) L O :- !, declare_constraint (classes X L O) [X].
 classes (aprod _ T F) Cs Out :- !,
   pi x\ (
     all-classes T LT,
@@ -189,12 +185,12 @@ classes (aprod _ T F) Cs Out :- !,
   ).
 classes (afun _ T F) Cs none :- !,
   pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
-classes (aapp [F|Xs]) Cs Out :-
+classes (aapp [F|Xs]) Cs Out :- !,
   std.flatten {std.map [F|Xs] all-classes} Cs,
   aterm.subst-fun Xs F App,
   if (App = aapp [F|Xs]) (Out = none) (out-class App Out).
-classes X [] none :- (name X ; X = aglobal _ _; X = apglobal _ _ _), !.
-classes X _ _ :- coq.error "[classes] Could not compute classes of" X.
+% The other cases are aglobal, apglobal, and (name X), which all leads to []
+classes _ [] none :- !.
 
 
 % XXX better place for this ?
