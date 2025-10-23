@@ -90,10 +90,10 @@ param X AT' X' Wout :- name X, !,
 param
   (asort S CR as T)
   (asort S' C as AT)
-  (sort S as T')
-  (app [pglobal (const PParamType) UI1|Args] as RT) :-
+  (sort S)
+  (app [pglobal (const PParamType) UI1|Args] as RT) :- !,
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
-    coq.unify-eq (sort S) (sort S') ok, %XXX We should check that we do it for the same sorts
+    %XXX Should we check in case we do type @ prop or other forbidden things ?
     !,
     std.do! [
       trocq.db.param-class->terms CR MRT NRT,
@@ -121,7 +121,7 @@ param
 %     so that Coq can fill them in the end
 
 % TrocqLam
-param (afun N T F as T0) FunTy (fun N' T' F' as T') FunR :- !,
+param (afun N T F as T0) FunTy Tout FunR :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
   %XXX Removed this line for non-unifying equality
   %std.assert-ok! (coq.unify-eq FunTy (prod _ T TF)) {std.string.concat " "
@@ -139,6 +139,7 @@ param (afun N T F as T0) FunTy (fun N' T' F' as T') FunR :- !,
   trocq.db.r (pc map0 map0) R,
   prune UI [],
   (FunR = fun N {aterm->term T} x\ fun N' T' x'\ fun NR (app [pglobal (const R) UI, {aterm->term T}, T', TR, x, x']) xR\ FR x x' xR),
+  Tout = fun N' T' F',
   logging.debug (coq.say "[param] Out rule lam :" T' "∵" FunR).
 
 % TrocqArrow

@@ -56,8 +56,9 @@ dep-type C CR :- var C, !, std.do![
   internal.link? CR IDR,
   declare_constraint (internal.c.dep-type ID IDR) [_]].
 dep-type C CR :-
-  util.when (param-class.requires-axiom C)
-    (geq CR (pc map4 map4)).
+  if (param-class.requires-axiom C)
+    (geq CR (pc map4 map4))
+    (geq CR (pc map0 map0)). % Any CR would do, so we add a constraint 0,0 <= CR
 
 % D_K(C, C_1, ..., C_n)
 dep-gref GR AT Tm' GRR :-
