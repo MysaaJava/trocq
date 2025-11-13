@@ -89,8 +89,8 @@ param X AT' X' Wout :- name X, !,
 % TrocqSort
 param
   (asort S CR as T)
-  (asort S' C as AT)
-  (sort S)
+  (asort _ C as AT)
+  (sort S as T')
   (app [pglobal (const PParamType) UI1|Args] as RT) :- !,
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
     %XXX Should we check in case we do type @ prop or other forbidden things ?
@@ -188,16 +188,20 @@ param
     param A (asort PTypeSort CA) A' AR,
     (@param-pi-decl N A a\ AA\ pi a' aR\ param.store a AA a' aR => std.do![
       logging.trace (coq.say "[param/forall] introducing" a "@" AA "~" a' "by" aR),
-      param (B a) (asort Sort CB) (B' a') (BR {aterm->term a} a' aR), !, % XXX U sort de nul part
-      logging.trace (coq.say "[param/forall]" (B a) "@" CB "~" (B' a') "by" (BR {aterm->term a} a' aR))
+      param (B a) (asort Sort CB) (B' a') (BR a {aterm->term a} a' aR), !, % XXX U sort de nul part
+      logging.trace (coq.say "[param/forall]" (B a) "@" CB "~" (B' a') "by" (BR a {aterm->term a} a' aR))
     ]),
+    % XXX We prune BR of its first parameter
+    logging.trace (coq.say "[param/forall] pruning BR"),
+    pi x x' xR AX\ BR AX x x' xR = BRY x x' xR,
+    logging.trace (coq.say "[param/forall] pruned BR"),
     trocq.db.r CA RA, !,
     logging.trace (coq.say "[param/forall] db CA RA"), !,
     prune UIA [],
     Args =
       [ {aterm->term A}, A', AR, fun N {aterm->term A} {atermaterm->termterm B}, fun N' A' B',
         fun N {aterm->term A} a\ fun N' A' a'\ fun NR (app [pglobal (const RA) UIA, {aterm->term A}, A', AR, a, a']) aR\
-          BR a a' aR ],
+          BRY a a' aR ],
     trocq.db.param-forall C ParamForall,
     prune UI [],
     logging.trace (coq.say "[param/forall] suspending proof on" C),

@@ -118,7 +118,7 @@ sub-type (asort (typ _) C) (asort (typ _) C') :- !,
   cstr.geq C C'.
 sub-type (asort S C) (asort S C') :- !, % XXX Disabled by the remark above
   cstr.geq C C'.
-sub-type (asort S C) (asort S' C') :- % XXX Disabled by the remark above
+sub-type (asort S C) (asort S' C') :- !, % XXX Disabled by the remark above
   coq.unify-eq (sort S) (sort S') ok,
   sub-type (asort S C) (asort S C').
 % SubPi
@@ -129,17 +129,20 @@ sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
 sub-type (afun N AT AF) (afun _ AT AF') :- !,
   @annot-pi-decl N AT x\ sub-type (AF x) (AF' x).
 % SubApp
+% TODO there is no ! here, because there was none in trocq before aterm
+% It makes sub-type fall back on coq.unify-eq if we tried to aapp two different types
+% This behaviour is necessary for some examples (unit_comm and Vector_tuple), but should be
+% implemented with a real implementation of coq unification for aterm
 sub-type (aapp [AF|AXs]) (aapp [AF'|AXs']) :-
   sub-type AF AF',
   std.forall2 AXs AXs' eq.
-sub-type (aglobal X _Str) (aglobal X _Str') :-
+sub-type (aglobal X _Str) (aglobal X _Str') :- !,
   true. %XXX For now, no check
-sub-type (apglobal X U _Str) (apglobal X U _Str') :-
+sub-type (apglobal X U _Str) (apglobal X U _Str') :- !,
   true. %XXX For now, no check
 % SubConv
 sub-type X Y :- name X, !, X = Y.
-%XXX We disable the unification equal not working on aterms
-%sub-type X Y :- coq.unify-eq X Y _.
+sub-type X Y :- coq.unify-eq {aterm->term X} {aterm->term Y} _.
 % We must add a way of setting when right hand is var
 sub-type X Y :- var Y, !, X = Y. % XXX Should not work but does the same as unify-eq, so no changes i guess
 sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
