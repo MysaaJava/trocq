@@ -22,24 +22,29 @@ coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 % XXX: New line: we Create the variables for the variable here
 % XXX WWWT -> Change the name to T and it breaks :shrug:
 % We traverse a binder with name N having annotated type AT
-% Then we call F with parameters 1) the new aterm variable 2) The annotated term AT
+% Then we call F with parameters ax x' xR
+% We add the rule ax @ AT ~ x' ∵ xR
 macro @param-pi-decl N AT F :- 
   aterm->term AT LocalT, % We prefix the variable with 'Local' to avoir collision with another name
-  pi ax\ pi x\ [
+  pi ax x\ [
     aterm->term ax x,
     term->aterm x ax,
     annot.adecl ax N AT,
-    decl x N LocalT
-  ] => (
-    logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" LocalT "with annotated version" ax),
-    F ax AT
+    decl x N LocalT,
+  ] => (pi x' xR\ [
+    param.store ax AT x' xR 
+    ] => (
+      logging.trace (coq.say "[param/decl] aterm->term" ax x),
+      logging.trace (coq.say "[param/decl] New rule in context:" ax "@" AT "~" x' "∵" xR),
+      F ax x' xR
+    )
   ).
 
 % param X T X' XR translates X at annotated type T, to X' with witness XR
 pred param i:aterm, i:aterm, o:term, o:term.
 
 % locally remember the translation of bound variables
-pred param.store o:aterm, o:aterm, o:term, o:term.
+func param.store aterm -> aterm, term, term.
 
 % used in order not to typecheck+annotate twice the same term
 pred fresh-type.
@@ -141,10 +146,8 @@ param (afun N T F as T0) FunTy Tout FunR :- !,
   % (λx:A, F) @ Pi(x:A, ATF) (A = A ensured by unify-eq)
   % the sort in asort has to be type (because we have x : A : S)
   logging.trace (coq.say "[param/fun]" AT "@ 0,0 ~" T' "by" TR),
-  (@param-pi-decl N AT ax\ AT\ pi x' xR\ param.store ax AT x' xR => (
-    logging.trace (coq.say "[param/fun] introducing" ax "@" AT "~" x' "by" xR),
-    param (F ax) (ATF ax) (F' x') (FR {aterm->term ax} x' xR),
-    logging.trace (coq.say "[param/fun]" (F ax) "@" (ATF ax) "~" (F' x') "by" (FR {aterm->term ax} x' xR))
+  (@param-pi-decl N AT (ax\ x'\ xR\ 
+    param (F ax) (ATF ax) (F' x') (FR {aterm->term ax} x' xR)
   )),
   trocq.db.r (pc map0 map0) R,
   prune UI [],
@@ -196,14 +199,14 @@ param
     std.assert-ok! (coq.typecheck A0 TyA) "[param/forall]: cannot typecheck A",
     if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
     param A (asort PTypeSort CA) A' AR,
-    (@param-pi-decl N A a\ AA\ pi a' aR\ param.store a AA a' aR => std.do![
-      logging.trace (coq.say "[param/forall] introducing" a "@" AA "~" a' "by" aR),
-      param (B a) (asort Sort CB) (B' a') (BR a {aterm->term a} a' aR), !, % XXX U sort de nul part
-      logging.trace (coq.say "[param/forall]" (B a) "@" CB "~" (B' a') "by" (BR a {aterm->term a} a' aR))
-    ]),
+    (@param-pi-decl N A (ax\ x'\ xR\
+      param (B ax) (asort Sort CB) (B' x') (BR ax {aterm->term ax} x' xR) % XXX U sort de nul part
+      % XXX ax should not be used by BR, that's why we prune it afterwards
+      % We must check why it is used, and if we can avoid it
+    )),
     % XXX We prune BR of its first parameter
     logging.trace (coq.say "[param/forall] pruning BR"),
-    pi x x' xR AX\ BR AX x x' xR = BRY x x' xR,
+    pi x x' xR at\ BR at x x' xR = BRY x x' xR,
     logging.trace (coq.say "[param/forall] pruned BR"),
     trocq.db.r CA RA, !,
     logging.trace (coq.say "[param/forall] db CA RA"), !,
