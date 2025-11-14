@@ -62,7 +62,7 @@ dep-type C CR :-
 
 % D_K(C, C_1, ..., C_n)
 dep-gref GR AT Tm' GRR :-
-  annot.classes AT TCs OutOpt,
+  aterm.util.classes AT TCs OutOpt,
   util.option.value OutOpt (pc map0 map0) Out,
   if (var Out) (
     internal.link? Out ID,
@@ -70,9 +70,7 @@ dep-gref GR AT Tm' GRR :-
     declare_constraint (internal.c.dep-gref ID GR AT Tm' GRR IDs) [_]
   ) (
     trocq.db.gref GR Out Cs GR' GRR, !,
-    coq.say "[gref] Found " GRR "for term" GR "with out" Out "and classes" Cs,
     coq.env.global GR' Tm', !,
-    coq.say "Dep GREF on " TCs "vs" Cs,
     std.forall2 TCs Cs eq
   ).
 

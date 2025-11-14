@@ -140,36 +140,7 @@ eq (aapp AL) (aapp AL') :- !,
 eq X X :- (name X ; X = aglobal _ _Str ; X = apglobal _ _ _Str'), !. %XXX For now we don't check Str = Str' in the graph
 eq _ _ :- fail.
 
-% get all the annotations in a type T, as well as the "output class", i.e., the parametricity class
-% of the output type of T, as an option basically returning some (A,B) for an output type PType A B,
-% and none for output types that are not sorts, because it means values of type T are not type
-% constructors, so their translation will be made at class (0,0)
-% XXX fusing all-classes and out-class into one function
-func classes aterm -> list param-class, option param-class.
-func all-classes aterm -> list param-class.
-func out-class aterm -> option param-class. %XXX remove those two predicates ?
 
-all-classes T Cz :-
-  classes T Cs OC,
-  if (OC = some C) (Cz = C :: Cs) (Cz = Cs). % XXX is it wrong order ?
-out-class T Out :- classes T _ Out.
-
-classes (asort _Sort C) [] (some C) :- !.
-classes (uvar as X) L O :- !, declare_constraint (classes X L O) [X].
-classes (aprod _ T F) Cs Out :- !,
-  pi x\ (
-    all-classes T LT,
-    classes (F x) LF Out,
-    std.append LT LF Cs
-  ).
-classes (afun _ T F) Cs none :- !,
-  pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
-classes (aapp [F|Xs]) Cs Out :- !,
-  std.flatten {std.map [F|Xs] all-classes} Cs,
-  aterm.util.mk-app F Xs App,
-  if (App = aapp [F|Xs]) (Out = none) (out-class App Out).
-% The other cases are aglobal, apglobal, and (name X), which all leads to []
-classes _ [] none :- !.
 
 
 func unify-eq aterm, aterm -> diagnostic.
@@ -196,4 +167,32 @@ namespace aterm.util {
   mk-app (alet _ _ X F) XS T :- !, mk-app (F X) XS T.
   mk-app (aapp L) XS (aapp L') :- !, std.append L XS L'.
   mk-app T XS (aapp [T|XS]) :- !.
+
+  % classes returns a list of all non-output param classes of an aterm and the _potential_ output param class
+  % all-classes returns a list of all param-classes in an aterm (potential output included)
+  func classes aterm -> list param-class, option param-class.
+  func all-classes aterm -> list param-class.
+
+  all-classes T Cz :-
+    classes T Cs OC,
+    if (OC = some C) (Cz = C :: Cs) (Cz = Cs).
+
+  classes (asort _ C) [] (some C) :- !.
+  classes (uvar as X) L O :- !, declare_constraint (classes X L O) [X].
+  classes (aprod _ T F) Cs Out :- !,
+    pi x\ (
+      all-classes T LT,
+      classes (F x) LF Out,
+      std.append LT LF Cs
+    ).
+  classes (afun _ T F) Cs none :- !,
+    pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
+  classes (aapp [F|Xs]) Cs Out :- !,
+    std.flatten {std.map [F|Xs] all-classes} Cs,
+    mk-app F Xs App,
+    % XXX Here, we include «output class» in Cs. I'm not sure of why we do that
+    % Is there a formal definiton of «output class» ? and of «other classes» ?
+    if (App = aapp [F|Xs]) (Out = none) (classes App _ Out).
+  % The other cases are aglobal, apglobal, and (name X), which all leads to []
+  classes _ [] none :- !.
 }

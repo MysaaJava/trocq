@@ -169,15 +169,11 @@ instantiate.aux ID Class (node.var (ct.gref GR T Tm' GRR) IDs) G G' :-
   std.fold {std.filter IDs (id\ id > 0)} G (id\ g\ g'\
     util.map.update id (internal.remove-lower-node (node.var (ct.gref _ _ _ _) [ID])) g g')
       G1,
-  coq.say "Trying to get classes of" T,
-  annot.classes T TCs _,
-  coq.say "Got classes" TCs "for aterm" T,
+  aterm.util.classes T TCs _,
   % find the output constant and proof, as well as the required classes Cs
   trocq.db.gref GR Class Cs GR' GRR, !,
-  coq.say "[gref] Found " GRR "for term" GR "with out" Class "and classes" Cs,
   coq.env.global GR' Tm',
   % make sure the classes are consistent
-  coq.say "XXXXXXXX" IDs "--" TCs "bob" Cs,
   instantiate.gref IDs TCs Cs G1 G'
   ].
 pred instantiate.gref
