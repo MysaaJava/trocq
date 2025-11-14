@@ -14,10 +14,6 @@
 % annotated type theory
 % -----------------------------------------------------------------------------
 
-% this allows to easily make sure an application is beta-reduced
-:before "subst-fun:fail"
-coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
-
 type asort    sort -> param-class -> aterm.
 type aglobal  gref -> string -> aterm.
 type apglobal gref -> univ-instance -> string -> aterm.
@@ -170,7 +166,7 @@ classes (afun _ T F) Cs none :- !,
   pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
 classes (aapp [F|Xs]) Cs Out :- !,
   std.flatten {std.map [F|Xs] all-classes} Cs,
-  aterm.util.subst-fun Xs F App,
+  aterm.util.mk-app F Xs App,
   if (App = aapp [F|Xs]) (Out = none) (out-class App Out).
 % The other cases are aglobal, apglobal, and (name X), which all leads to []
 classes _ [] none :- !.
@@ -193,21 +189,11 @@ namespace aterm.util {
     pi ax x\ aterm->term ax x => aterm->term (AF ax) (F x).
 
   % {mk-app F Args} outputs a term corresponding to (app [F | Args])
-  % applying β-reduction when possible
-  % Copied from https://github.com/LPCIC/coq-elpi/blob/8aac553c4a8ed90b801a5e940936f34a07496fd3/elpi/coq-lib.elpi#L69
+  % With some β-reductions
   func mk-app aterm, list aterm -> aterm.
-  mk-app HD [] HD :- !.
-  mk-app (aapp L) Args (aapp LArgs) :- !, std.append L Args LArgs.
-  mk-app (afun _ _ F) [A|Args] R :- !, mk-app (F A) Args R.
-  mk-app (alet _ _ A F) Args R :- !, mk-app (F A) Args R.
-  mk-app HD Args (aapp [HD|Args]).
-
-  % {subst-fun Args F} outputs a term corresponding to 
-  % Copied from https://github.com/LPCIC/coq-elpi/blob/8aac553c4a8ed90b801a5e940936f34a07496fd3/elpi/coq-lib.elpi#L32
-  func subst-fun list aterm, aterm -> aterm.
-  subst-fun [] T T :- !.
-  subst-fun [X|XS] (afun _ _ F) T :- !, subst-fun XS (F X) T.
-  subst-fun XS (alet _ _ X F) T :- !, subst-fun XS (F X) T.
-  subst-fun Args F (aapp [F|Args]) :- !.
-  
+  mk-app T [] T :- !.
+  mk-app (afun _ _ F) [X|XS] T :- !, mk-app (F X) XS T.
+  mk-app (alet _ _ X F) XS T :- !, mk-app (F X) XS T.
+  mk-app (aapp L) XS (aapp L') :- !, std.append L XS L'.
+  mk-app T XS (aapp [T|XS]) :- !.
 }
