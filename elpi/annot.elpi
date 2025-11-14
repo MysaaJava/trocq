@@ -196,6 +196,7 @@ classes (aapp [F|Xs]) Cs Out :- !,
 classes _ [] none :- !.
 
 
+
 % XXX better place for this ?
 func aterm.subst-fun list aterm, aterm -> aterm.
 aterm.subst-fun [] T T :- !.
@@ -204,6 +205,11 @@ aterm.subst-fun [X|XS] (afun _ _ F) T :- !, aterm.subst-fun XS (F X) T.
 % aterm.subst-fun XS (alet _ _ X F) T :- !, aterm.subst-fun XS (F X) T.
 aterm.subst-fun Args F (aapp [F|Args]) :- !.
 
+func unify-eq aterm, aterm -> diagnostic.
+% TODO this should implement rocq unification algorithm and create equalities for param classes
+% along the way.
+% This is not implemented right now, and is replaced with term equality
+unify-eq AT AT' ok :- !, AT = AT'.
 
 
 } % annot

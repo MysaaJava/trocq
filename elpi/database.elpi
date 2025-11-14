@@ -53,6 +53,8 @@ pred rel o:param-class, o:gref, o:gref, o:gref, o:gref, o:gref.
 pred gref->class i:gref, o:param-class.
 gref->class Rel Class :- trocq.db.rel Class Rel _ _ _ _.
 
+% Given the class (M, N), obtain {{ParamMN.Rel}}, the projection of the
+% relation inside a ParamMN
 func r param-class -> constant.
 :name "default-r"
 r C R :- var C, !,

@@ -21,9 +21,19 @@ coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
 % traversing a binder should give information for both typechecking and annotation
 % XXX: New line: we Create the variables for the variable here
 % XXX WWWT -> Change the name to T and it breaks :shrug:
-macro @param-pi-decl N AT F :- aterm->term AT WWWT, pi ax\ pi x\ [aterm->term ax x, term->aterm x ax, (annot.classes ax [] none :- !), annot.adecl ax N AT, decl x N WWWT] => (
-  logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" WWWT "with annotated version" ax),
-  F ax AT).
+% We traverse a binder with name N having annotated type AT
+% Then we call F with parameters 1) the new aterm variable 2) The annotated term AT
+macro @param-pi-decl N AT F :- 
+  aterm->term AT LocalT, % We prefix the variable with 'Local' to avoir collision with another name
+  pi ax\ pi x\ [
+    aterm->term ax x,
+    term->aterm x ax,
+    annot.adecl ax N AT,
+    decl x N LocalT
+  ] => (
+    logging.trace (coq.say "[param/decl] New variable" x "@" AT "with real type" LocalT "with annotated version" ax),
+    F ax AT
+  ).
 
 % param X T X' XR translates X at annotated type T, to X' with witness XR
 pred param i:aterm, i:aterm, o:term, o:term.
@@ -123,13 +133,13 @@ param
 % TrocqLam
 param (afun N T F as T0) FunTy Tout FunR :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
-  %XXX Removed this line for non-unifying equality
-  %std.assert-ok! (coq.unify-eq FunTy (prod _ T TF)) {std.string.concat " "
-  %  ["type not convertible to Π:", {coq.term->string FunTy}]},
-  FunTy = aprod _ AT ATF,
+  annot.unify-eq FunTy (aprod _ AT ATF) ok,
   coq.name-suffix N "'" N',
   coq.name-suffix N "R" NR,
-  param AT (asort (typ _U) (pc map0 map0)) T' TR, !, %XXX U is arbitrary. Why not prop
+  % TODO change (pc map0 map0) to a predicate annot.bottom 
+  param AT (asort (typ _U) (pc map0 map0)) T' TR, !, %XXX We have term
+  % (λx:A, F) @ Pi(x:A, ATF) (A = A ensured by unify-eq)
+  % the sort in asort has to be type (because we have x : A : S)
   logging.trace (coq.say "[param/fun]" AT "@ 0,0 ~" T' "by" TR),
   (@param-pi-decl N AT ax\ AT\ pi x' xR\ param.store ax AT x' xR => (
     logging.trace (coq.say "[param/fun] introducing" ax "@" AT "~" x' "by" xR),
