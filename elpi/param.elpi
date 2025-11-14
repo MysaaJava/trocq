@@ -187,9 +187,9 @@ param
 % TrocqPi
 param
   (aprod N A B as T) (asort Sort C as AT)
-  (prod N' A' B' as T') (app [pglobal (const ParamForall) UI|Args'] as TR) :-
+  (prod N' A' B' as T')
+  (app [pglobal (const ParamForall) UI|Args'] as TR) :- !, std.do![
     logging.debug (coq.say "[param] Rule pi :" T "@" AT),
-    !, std.do![
     coq.name-suffix N "'" N',
     coq.name-suffix N "R" NR,
 
@@ -198,9 +198,10 @@ param
     aterm->term A A0,
     std.assert-ok! (coq.typecheck A0 TyA) "[param/forall]: cannot typecheck A",
     if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
+    % XXX U sort de nul part
     param A (asort PTypeSort CA) A' AR,
     (@param-pi-decl N A (ax\ x'\ xR\
-      param (B ax) (asort Sort CB) (B' x') (BR ax {aterm->term ax} x' xR) % XXX U sort de nul part
+      param (B ax) (asort Sort CB) (B' x') (BR ax {aterm->term ax} x' xR) 
       % XXX ax should not be used by BR, that's why we prune it afterwards
       % We must check why it is used, and if we can avoid it
     )),
@@ -212,7 +213,7 @@ param
     logging.trace (coq.say "[param/forall] db CA RA"), !,
     prune UIA [],
     Args =
-      [ {aterm->term A}, A', AR, fun N {aterm->term A} {atermaterm->termterm B}, fun N' A' B',
+      [ {aterm->term A}, A', AR, fun N {aterm->term A} {aterm.util.atermfun->termfun B}, fun N' A' B',
         fun N {aterm->term A} a\ fun N' A' a'\ fun NR (app [pglobal (const RA) UIA, {aterm->term A}, A', AR, a, a']) aR\
           BRY a a' aR ],
     trocq.db.param-forall C ParamForall,
@@ -225,9 +226,9 @@ param
     ) (
       logging.trace (coq.say "[param/forall] resuming proof on" C "(funext not needed)"),
       Args' = Args
-    )
-    ],
-    logging.debug (coq.say "[param] Out rule pi :" T' "∵" TR).
+    ),
+    logging.debug (coq.say "[param] Out rule pi :" T' "∵" TR)
+  ].
 
 % TrocqConv for F (argument B in param.args) + TrocqApp
 param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Wout :- !, std.do! [
@@ -302,7 +303,7 @@ weakening (aprod N A B) (aprod _ A' B') W :- !,
 weakening (aapp [F|_]) (aapp [_F'|_]) (wfun (xR\ xR)) :- (name F ; F = aglobal _ _ ; F = apglobal _ _ _), !.
 weakening (aapp [F, AX|Xs]) (aapp [F', AX'|Xs']) W :- !,
   weakening F F' (wsuspend WF WF'),
-  weakening {aterm.mk-app (WF AX) Xs} {aterm.mk-app (WF' AX') Xs'} W.
+  weakening {aterm.util.mk-app (WF AX) Xs} {aterm.util.mk-app (WF' AX') Xs'} W.
 weakening (afun _ _ F) (afun _ _ F') (wsuspend F F') :- !.
 weakening X _ (wfun (xR\ xR)) :- (name X ; X = aglobal _ _ ; X = apglobal _ _ _), !.
 weakening T _ _ :- coq.error "weakening:" T.
