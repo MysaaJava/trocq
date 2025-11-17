@@ -52,7 +52,7 @@ pred fresh-type.
 % ==================================================================================================
 
 % TrocqConv + TrocqConst
-param (aglobal GR _ as T) AT' Tm' GrefR :- !,
+param (aglobal GR as T) AT' Tm' GrefR :- !,
   logging.debug (coq.say "[param] Rule const :" T "@" AT'),
   if (fresh-type) (
     % T' already comes from a call to annot.typecheck in the case for app
@@ -63,7 +63,7 @@ param (aglobal GR _ as T) AT' Tm' GrefR :- !,
     GrefR = pglobal GRR _
   ) (
     std.do![
-      annot.typecheck (aglobal GR _) AT,
+      annot.typecheck (aglobal GR) AT,
       annot.sub-type AT AT',
       weakening AT AT' (wfun W),
       cstr.dep-gref GR AT Tm' GRR,
@@ -74,13 +74,13 @@ param (aglobal GR _ as T) AT' Tm' GrefR :- !,
   logging.debug (coq.say "[param] Out rule const :" Tm' "∵" GrefR).
 
 % universe-polymorphic case
-param (apglobal GR UI _ as T) AT' Tm' GrefR :- !,
+param (apglobal GR UI as T) AT' Tm' GrefR :- !,
   logging.debug (coq.say "[param] Rule pconst :" T "@" AT'),
   if (fresh-type) (
     cstr.dep-gref GR AT' Tm' GRR,
     GrefR = pglobal GRR UI
   ) (
-    annot.typecheck (apglobal GR UI _) AT,
+    annot.typecheck (apglobal GR UI) AT,
     annot.sub-type AT AT',
     weakening AT AT' (wfun W),
     cstr.dep-gref GR AT Tm' GRR,
@@ -300,12 +300,12 @@ weakening (aprod N A B) (aprod _ A' B') W :- !,
   prune A2 [],
   aterm->term A A0,
   W = wfun (xR\ fun N A0 a\ fun N' A2 a'\ fun NR AR aR\ WB a a' (app [xR, a, a', WA aR])).
-weakening (aapp [F|_]) (aapp [_F'|_]) (wfun (xR\ xR)) :- (name F ; F = aglobal _ _ ; F = apglobal _ _ _), !.
+weakening (aapp [F|_]) (aapp [_F'|_]) (wfun (xR\ xR)) :- (name F ; F = aglobal _ ; F = apglobal _ _), !.
 weakening (aapp [F, AX|Xs]) (aapp [F', AX'|Xs']) W :- !,
   weakening F F' (wsuspend WF WF'),
   weakening {aterm.util.mk-app (WF AX) Xs} {aterm.util.mk-app (WF' AX') Xs'} W.
 weakening (afun _ _ F) (afun _ _ F') (wsuspend F F') :- !.
-weakening X _ (wfun (xR\ xR)) :- (name X ; X = aglobal _ _ ; X = apglobal _ _ _), !.
+weakening X _ (wfun (xR\ xR)) :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
 weakening T _ _ :- coq.error "weakening:" T.
 
 % replace Weaken placeholders with real weakening functions

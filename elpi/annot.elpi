@@ -15,8 +15,8 @@
 % -----------------------------------------------------------------------------
 
 type asort    sort -> param-class -> aterm.
-type aglobal  gref -> string -> aterm.
-type apglobal gref -> univ-instance -> string -> aterm.
+type aglobal  gref -> aterm.
+type apglobal gref -> univ-instance -> aterm.
 type afun     name -> aterm -> (aterm -> aterm) -> aterm.     % fun x : t =>
 type aprod    name -> aterm -> (aterm -> aterm) -> aterm.         % forall x : t,
 type alet     name -> aterm -> aterm -> (aterm -> aterm) -> aterm. % let x : T := v in
@@ -28,8 +28,8 @@ type aprimitive primitive-value -> aterm.
 % Forgets the term annotations of a term
 func aterm->term aterm -> term.
 aterm->term (asort Sort _) (sort Sort) :- !.
-aterm->term (aglobal GRef _) (global GRef) :- !.
-aterm->term (apglobal GRef Universe _) (pglobal GRef Universe) :- !.
+aterm->term (aglobal GRef) (global GRef) :- !.
+aterm->term (apglobal GRef Universe) (pglobal GRef Universe) :- !.
 aterm->term (afun N AT AF) (fun N T F) :-
   aterm->term AT T,
   pi ay\ pi y \ aterm->term ay y => aterm->term (AF ay) (F y), !.
@@ -45,8 +45,8 @@ aterm->term (uvar as AT) T :- !,
 % Adds fresh annotation variable on every sort inside a term
 func term->aterm term -> aterm.
 term->aterm (sort S) (asort S Alpha_) :- !.
-term->aterm (global GRef) (aglobal GRef Str_) :- !.
-term->aterm (pglobal GRef U) (apglobal GRef U Str_) :- !.
+term->aterm (global GRef) (aglobal GRef) :- !.
+term->aterm (pglobal GRef U) (apglobal GRef U) :- !.
 term->aterm (fun Name T F) (afun Name AT AF) :- !,
   term->aterm T AT,
   pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
@@ -112,15 +112,9 @@ sub-type (afun N AT AF) (afun _ AT AF') :- !,
 sub-type (aapp [AF|AXs]) (aapp [AF'|AXs']) :-
   sub-type AF AF',
   std.forall2 AXs AXs' eq.
-sub-type (aglobal X _Str) (aglobal X _Str') :- !,
-  true. %XXX For now, no check
-sub-type (apglobal X U _Str) (apglobal X U _Str') :- !,
-  true. %XXX For now, no check
 % SubConv
-sub-type X Y :- name X, !, X = Y.
-sub-type X Y :- coq.unify-eq {aterm->term X} {aterm->term Y} _.
-% We must add a way of setting when right hand is var
-sub-type X Y :- var Y, !, X = Y. % XXX Should not work but does the same as unify-eq, so no changes i guess
+sub-type X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
+sub-type X Y :- unify-eq X Y ok.
 sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
@@ -137,17 +131,17 @@ eq (afun _ AT AF) (afun _ AT' AF') :- !,
   pi x\ eq (AF x) (AF' x).
 eq (aapp AL) (aapp AL') :- !,
   std.forall2 AL AL' eq.
-eq X X :- (name X ; X = aglobal _ _Str ; X = apglobal _ _ _Str'), !. %XXX For now we don't check Str = Str' in the graph
-eq _ _ :- fail.
+eq X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
 
 
 
-
-func unify-eq aterm, aterm -> diagnostic.
+pred unify-eq aterm, aterm -> diagnostic.
 % TODO this should implement rocq unification algorithm and create equalities for param classes
 % along the way.
 % This is not implemented right now, and is replaced with term equality
-unify-eq AT AT' ok :- !, AT = AT'.
+unify-eq AT AT' ok :- AT = AT'.
+unify-eq AT AT' ok :- coq.unify-eq {aterm->term AT} {aterm->term AT'} ok.
+unify-eq AT AT' _ :- coq.error "Could not unify" AT "with" AT'.
 
 
 } % annot
