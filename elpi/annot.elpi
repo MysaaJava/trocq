@@ -58,7 +58,7 @@ term->aterm (app L) (aapp AL) :- !,
 %TODO implement the other constructors
 
 
-macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax. %XXX Weird thing going on here
+macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax.
 
 namespace annot {
 
@@ -70,11 +70,14 @@ func adecl aterm -> name, aterm.
 
 pred typecheck i:aterm, o:aterm.
 typecheck T ATy :- adecl T _ ATy, !.
+% XXX We should recode this function in order to intelligently typecheck
+% λ x : AT, t' ==> AT' -> _ with AT' <= AT
+% For now, new annotations are created, so AT is discarded
+% Before, we relied on rocq copying the lambda annotation and we had AT -> _
 typecheck AT ATy :-
   aterm->term AT T,
   coq.typecheck T Ty ok,
-  term->aterm Ty ATy,
-  coq.say "Produced term" Ty "->" ATy. %XXX Should i check the annotations for something ?
+  term->aterm Ty ATy.
 
 
 % sub-typing predicate following the sub-typing rules in the article
@@ -82,21 +85,13 @@ pred sub-type i:aterm, i:aterm.
 sub-type AT AT' :-
   coq.say "[sub-type] Checking wether" AT "<=" AT', fail.
 % SubSort
-% XXX 158
-% With aterm, we are able to check wether the sort is indeed the same
-% former sub-type only checked wether both sides were changed to PType or both to PProp
-% But this stricter check fails with some examples.
-% Should elpi instantiate the universe levels ?
-% Can we make a failing example for this one ?
-sub-type (asort prop C) (asort prop C') :- !,
+% XXX If we try to make a stricter check, for example, with
+% S = S', or with lighter coq.unify-eq S S'
+% some examples fail
+% I wanted to use coq.sort.leq S S', but i can't do that in tactic mode
+sub-type (asort S C) (asort S' C') :- !,
+  %((S = typ _, S' = typ _) ; (S = prop, S' = prop)),
   cstr.geq C C'.
-sub-type (asort (typ _) C) (asort (typ _) C') :- !,
-  cstr.geq C C'.
-sub-type (asort S C) (asort S C') :- !, % XXX Disabled by the remark above
-  cstr.geq C C'.
-sub-type (asort S C) (asort S' C') :- !, % XXX Disabled by the remark above
-  coq.unify-eq (sort S) (sort S') ok,
-  sub-type (asort S C) (asort S C').
 % SubPi
 sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
   sub-type AT' AT, !,
@@ -121,7 +116,7 @@ sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 pred eq i:aterm, i:aterm.
 eq AT AT' :-
   coq.say "[eq] Checking equality" AT "==" AT', fail.
-eq (asort (typ U) C1) (asort (typ U) C2) :- %XXX U comes out of nowhere
+eq (asort S C1) (asort S C2) :-
   cstr.eq C1 C2.
 eq (aprod _ AT AF) (aprod _ AT' AF') :- !,
   eq AT AT', !,

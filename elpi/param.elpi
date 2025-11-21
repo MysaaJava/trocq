@@ -15,12 +15,7 @@
 % parametricity translation
 % -----------------------------------------------------------------------------
 
-:before "subst-fun:fail"
-coq.subst-fun Args F FArgs :- !, coq.mk-app F Args FArgs.
-
 % traversing a binder should give information for both typechecking and annotation
-% XXX: New line: we Create the variables for the variable here
-% XXX WWWT -> Change the name to T and it breaks :shrug:
 % We traverse a binder with name N having annotated type AT
 % Then we call F with parameters ax x' xR
 % We add the rule ax @ AT ~ x' ∵ xR
@@ -108,13 +103,11 @@ param
   (sort S as T')
   (app [pglobal (const PParamType) UI1|Args] as RT) :- !,
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
-    %XXX Should we check in case we do type @ prop or other forbidden things ?
-    !,
     std.do! [
       trocq.db.param-class->terms CR MRT NRT,
       cstr.dep-type C CR,
       logging.trace (coq.say "[param/type] added dep-type from" C "to" CR),
-      coq.univ-instance _UI [L], % XXX Why am i discarding this ?
+      coq.univ-instance _UI [L], % XXX Why am idiscarding this ?
       coq.univ.variable U L,
       coq.univ-instance UI1 [L, {coq.univ.variable {coq.univ.alg-super U}}],
       trocq.db.pparam-type C PParamType,
@@ -237,7 +230,7 @@ param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Wout :- !, std.do! [
   fresh-type => param F FTy F' FR,
   logging.trace (coq.say "[param/app]" F "@" FTy "~" F' "by" FR),
   param.args FTy B Xs Xs' XsR W,
-  coq.subst-fun XsR FR AppR,
+  coq.mk-app FR XsR AppR,
   Wout = W AppR, % XXX Same as for TrocqVar
   logging.debug (coq.say "[param] Out rule app :" T' "∵" Wout)
 ].
