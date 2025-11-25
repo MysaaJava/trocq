@@ -92,3 +92,53 @@ type->classes T OutClass DepClasses GR GR' :-
   if (LastClass = [OutClass]) true (OutClass = pc map0 map0).
 
 } % param-class
+
+namespace trocq.p {
+
+  pred univalence o:term.
+  univalence T :-
+    trocq.db.univalence UG,
+    coq.env.global (const UG) T.
+  pred funext o:term.
+  funext T :-
+    trocq.db.funext UG,
+    coq.env.global (const UG) T.
+
+  %XXX Make the predicates here functional
+  pred ttype param-class, param-class -> term.
+  %ttype C T :- var C, 
+  %  coq.say "Vroum" C T,
+  %  declare_constraint (ttype C T) [C].
+  ttype CA CB T :-
+    trocq.db.param-class->terms CB MT NT,
+    trocq.db.pparam-type CA Const,
+    coq.env.global (const Const) PPi,
+    if (param-class.requires-axiom CA)
+      (T = app [PPi, MT, NT, {univalence}])
+      (T = app [PPi, MT, NT]).
+  
+  pred arrow param-class -> term.
+  %arrow C T :- !, var C, 
+  %  coq.say "EVroum" C T,
+  %  declare_constraint (arrow C T) [C].
+  arrow C T :-
+    trocq.db.param-arrow C Const,
+    coq.env.global (const Const) PArr,
+    if (param-class.requires-axiom C)
+      (T = app [PArr, {funext}])
+      (T = PArr).
+
+  pred forall param-class -> term.
+  forall C T :-
+    trocq.db.param-forall C Const,
+    coq.env.global (const Const) PPi,
+    if (param-class.requires-axiom C)
+      (T = app [PPi, {funext}])
+      (T = PPi).
+
+  pred r param-class -> term.
+  r C T :-
+    trocq.db.r C Const,
+    coq.env.global (const Const) T.
+
+} % trocq.p

@@ -91,9 +91,7 @@ param X AT' X' Wout :- name X, !,
   logging.trace (coq.say "[param/var] found" X "@" AT "~" X' "by" XR),
   annot.sub-type AT AT', !,
   weakening AT AT' (wfun W),
-  Wout = W XR, % XXX We do not put that directly in the predicate term, because it makes
-  % Elpi to try to match param . . . (X a b c) against param X AT' X' (W XR)
-  % which reduces to (W XR) = (X a b c) rasing a unification outside pattern fragment error
+  Wout = W XR,
   logging.debug (coq.say "[param] Out rule var :" X' "∵" Wout).
 
 % TrocqSort
@@ -101,35 +99,19 @@ param
   (asort S CR as T)
   (asort _ C as AT)
   (sort S as T')
-  (app [pglobal (const PParamType) UI1|Args] as RT) :- !,
+  RT :- !, std.do! [
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
-    std.do! [
-      trocq.db.param-class->terms CR MRT NRT,
-      cstr.dep-type C CR,
-      logging.trace (coq.say "[param/type] added dep-type from" C "to" CR),
-      coq.univ-instance _UI [L], % XXX Why am idiscarding this ?
-      coq.univ.variable U L,
-      coq.univ-instance UI1 [L, {coq.univ.variable {coq.univ.alg-super U}}],
-      trocq.db.pparam-type C PParamType,
-      logging.trace (coq.say "[param/type] suspending proof on" C),
-      util.if-suspend C (param-class.requires-axiom C) (
-        logging.trace (coq.say "[param/type] resuming proof on" C "(univalence needed)"),
-        coq.univ-instance UI0 [],
-        Args = [MRT, NRT, pglobal (const {trocq.db.univalence}) UI0]
-      ) (
-        logging.trace
-          (coq.say "[param/type] resuming proof on" C "(univalence not needed)"),
-        Args = [MRT, NRT]
-      )
-    ],
-    logging.debug (coq.say "[param] Out rule sort :" T' "∵" RT).
+    cstr.dep-type C CR,
+    trocq.p.ttype C CR RT,
+    logging.debug (coq.say "[param] Out rule sort :" T' "∵" RT),
+  ].
 
 % NB: the calls prune UI [] make sure the universe instance UI does not depend on bound variables
 %     it makes sure they remain fresh variables and Coq-Elpi does not fail for technical reasons
 %     so that Coq can fill them in the end
 
 % TrocqLam
-param (afun N T F as T0) FunTy Tout FunR :- !,
+param (afun N T F as T0) FunTy Tout Witness :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
   annot.unify-eq FunTy (aprod _ AT ATF) ok,
   coq.name-suffix N "'" N',
@@ -142,19 +124,21 @@ param (afun N T F as T0) FunTy Tout FunR :- !,
   (@param-pi-decl N AT (ax\ x'\ xR\ 
     param (F ax) (ATF ax) (F' x') (FR {aterm->term ax} x' xR)
   )),
-  trocq.db.r (pc map0 map0) R,
-  prune UI [],
-  (FunR = fun N {aterm->term T} x\ fun N' T' x'\ fun NR (app [pglobal (const R) UI, {aterm->term T}, T', TR, x, x']) xR\ FR x x' xR),
+  Witness = (
+    fun N {aterm->term T} x\
+    fun N' T' x'\
+    fun NR (app [{trocq.p.r (pc map0 map0)}, {aterm->term T}, T', TR, x, x']) xR\
+      FR x x' xR
+  ),
   Tout = fun N' T' F',
-  logging.debug (coq.say "[param] Out rule lam :" T' "∵" FunR).
+  logging.debug (coq.say "[param] Out rule lam :" T' "∵" Witness).
 
 % TrocqArrow
 param
   (aprod _ A (_\ B ) as T) (asort Sort C as AT)
-  (prod `_` A' (_\ B') as T') (app [pglobal (const ParamArrow) UI|Args] as TR) :- !,
+  (prod `_` A' (_\ B') as T') Witness :- !,
    std.do! [
       logging.debug (coq.say "[param] Rule arrow :" T "@" AT),
-
       cstr.dep-arrow C CA CB,
       logging.trace (coq.say "[param/arrow] added dep-arrow from" C "to" CA "and" CB),
       std.assert-ok! (coq.typecheck {aterm->term A} TyA) "[param/arrow] cannot typecheck A",
@@ -162,26 +146,15 @@ param
       PTypeA = (asort PTypeSort CA),
       param A PTypeA A' AR,
       param B (asort Sort CB) B' BR,
-      logging.trace (coq.say "[param/arrow]" B "@" CB "~" B' "by" BR),
-      trocq.db.param-arrow C ParamArrow,
-      prune UI [],
-      logging.trace (coq.say "[param/arrow] suspending proof on" C),
-      util.if-suspend C (param-class.requires-axiom C) (
-        logging.trace (coq.say "[param/arrow] resuming proof on" C "(funext needed)"),
-        coq.univ-instance UI0 [],
-        Args = [pglobal (const {trocq.db.funext}) UI0, {aterm->term A}, A', AR, {aterm->term B}, B', BR]
-      ) (
-        logging.trace (coq.say "[param/arrow] resuming proof on" C "(funext not needed)"),
-        Args = [{aterm->term A}, A', AR, {aterm->term B}, B', BR]
-      ),
-      logging.debug (coq.say "[param] Out rule arrow :" T' "∵" TR)
+      coq.mk-app {trocq.p.arrow C} [{aterm->term A}, A', AR, {aterm->term B}, B', BR] Witness,
+      logging.debug (coq.say "[param] Out rule arrow :" T' "∵" Witness)
     ].
 
 % TrocqPi
 param
   (aprod N A B as T) (asort Sort C as AT)
   (prod N' A' B' as T')
-  (app [pglobal (const ParamForall) UI|Args'] as TR) :- !, std.do![
+  Witness :- !, std.do![
     logging.debug (coq.say "[param] Rule pi :" T "@" AT),
     coq.name-suffix N "'" N',
     coq.name-suffix N "R" NR,
@@ -202,25 +175,16 @@ param
     logging.trace (coq.say "[param/forall] pruning BR"),
     pi x x' xR at\ BR at x x' xR = BRY x x' xR,
     logging.trace (coq.say "[param/forall] pruned BR"),
-    trocq.db.r CA RA, !,
-    logging.trace (coq.say "[param/forall] db CA RA"), !,
-    prune UIA [],
-    Args =
-      [ {aterm->term A}, A', AR, fun N {aterm->term A} {aterm.util.atermfun->termfun B}, fun N' A' B',
-        fun N {aterm->term A} a\ fun N' A' a'\ fun NR (app [pglobal (const RA) UIA, {aterm->term A}, A', AR, a, a']) aR\
-          BRY a a' aR ],
-    trocq.db.param-forall C ParamForall,
-    prune UI [],
-    logging.trace (coq.say "[param/forall] suspending proof on" C),
-    util.if-suspend C (param-class.requires-axiom C) (
-      logging.trace (coq.say "[param/forall] resuming proof on" C "(funext needed)"),
-      coq.univ-instance UI0 [],
-      Args' = [pglobal (const {trocq.db.funext}) UI0|Args]
-    ) (
-      logging.trace (coq.say "[param/forall] resuming proof on" C "(funext not needed)"),
-      Args' = Args
-    ),
-    logging.debug (coq.say "[param] Out rule pi :" T' "∵" TR)
+    coq.mk-app {trocq.p.forall C}
+      [ {aterm->term A}, A', AR,
+        fun N {aterm->term A} {aterm.util.atermfun->termfun B},
+        fun N' A' B',
+        fun N {aterm->term A} a\
+         fun N' A' a'\
+         fun NR (app [{trocq.p.r CA}, {aterm->term A}, A', AR, a, a']) aR\
+          BRY a a' aR
+      ] Witness,
+    logging.debug (coq.say "[param] Out rule pi :" T' "∵" Witness)
   ].
 
 % TrocqConv for F (argument B in param.args) + TrocqApp

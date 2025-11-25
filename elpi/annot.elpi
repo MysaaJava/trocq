@@ -85,12 +85,10 @@ pred sub-type i:aterm, i:aterm.
 sub-type AT AT' :-
   coq.say "[sub-type] Checking wether" AT "<=" AT', fail.
 % SubSort
-% XXX If we try to make a stricter check, for example, with
-% S = S', or with lighter coq.unify-eq S S'
-% some examples fail
-% I wanted to use coq.sort.leq S S', but i can't do that in tactic mode
+% We don't check wether S and S' are related.
+% We need to think this again when algebraic types will be added to Rocq
 sub-type (asort S C) (asort S' C') :- !,
-  %((S = typ _, S' = typ _) ; (S = prop, S' = prop)),
+  %XXX ((S = typ _, S' = typ _) ; (S = prop, S' = prop)),
   cstr.geq C C'.
 % SubPi
 sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
