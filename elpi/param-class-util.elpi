@@ -16,6 +16,9 @@
 
 namespace param-class {
 
+pred bottom o:param-class.
+bottom (pc map0 map0).
+
 % generate a weakening function from a parametricity class to another, by forgetting fields 1 by 1
 pred forget i:param-class, i:param-class, o:univ-instance -> term -> term -> term -> term.
 forget (pc M N) (pc M' N') _ :- not (map-class.geq M M', map-class.geq N N'), !,

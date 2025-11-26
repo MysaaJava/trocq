@@ -106,28 +106,20 @@ param
     logging.debug (coq.say "[param] Out rule sort :" T' "∵" RT),
   ].
 
-% NB: the calls prune UI [] make sure the universe instance UI does not depend on bound variables
-%     it makes sure they remain fresh variables and Coq-Elpi does not fail for technical reasons
-%     so that Coq can fill them in the end
-
 % TrocqLam
 param (afun N T F as T0) FunTy Tout Witness :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
   annot.unify-eq FunTy (aprod _ AT ATF) ok,
   coq.name-suffix N "'" N',
   coq.name-suffix N "R" NR,
-  % TODO change (pc map0 map0) to a predicate annot.bottom 
-  param AT (asort (typ _U) (pc map0 map0)) T' TR, !, %XXX We have term
-  % (λx:A, F) @ Pi(x:A, ATF) (A = A ensured by unify-eq)
-  % the sort in asort has to be type (because we have x : A : S)
-  logging.trace (coq.say "[param/fun]" AT "@ 0,0 ~" T' "by" TR),
+  param AT (asort (typ _U) {param-class.bottom}) T' TR, !,
   (@param-pi-decl N AT (ax\ x'\ xR\ 
     param (F ax) (ATF ax) (F' x') (FR {aterm->term ax} x' xR)
   )),
   Witness = (
     fun N {aterm->term T} x\
     fun N' T' x'\
-    fun NR (app [{trocq.p.r (pc map0 map0)}, {aterm->term T}, T', TR, x, x']) xR\
+    fun NR (app [{trocq.p.r {param-class.bottom}}, {aterm->term T}, T', TR, x, x']) xR\
       FR x x' xR
   ),
   Tout = fun N' T' F',
@@ -140,11 +132,8 @@ param
    std.do! [
       logging.debug (coq.say "[param] Rule arrow :" T "@" AT),
       cstr.dep-arrow C CA CB,
-      logging.trace (coq.say "[param/arrow] added dep-arrow from" C "to" CA "and" CB),
-      std.assert-ok! (coq.typecheck {aterm->term A} TyA) "[param/arrow] cannot typecheck A",
-      if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
-      PTypeA = (asort PTypeSort CA),
-      param A PTypeA A' AR,
+      (annot.typecheck A (asort SortA _ as TyA); coq.error "[param/arrow] Cannot typecheck A with a sort"),
+      param A (asort SortA CA) A' AR,
       param B (asort Sort CB) B' BR,
       coq.mk-app {trocq.p.arrow C} [{aterm->term A}, A', AR, {aterm->term B}, B', BR] Witness,
       logging.debug (coq.say "[param] Out rule arrow :" T' "∵" Witness)
@@ -159,22 +148,17 @@ param
     coq.name-suffix N "'" N',
     coq.name-suffix N "R" NR,
 
-    cstr.dep-pi C CA CB, !,
-    logging.trace (coq.say "[param/forall] added dep-pi from" C "to" CA "and" CB),
-    aterm->term A A0,
-    std.assert-ok! (coq.typecheck A0 TyA) "[param/forall]: cannot typecheck A",
-    if (TyA = sort prop) (PTypeSort = prop) (PTypeSort = typ _U), % XXX Not sur of the else option
-    % XXX U sort de nul part
-    param A (asort PTypeSort CA) A' AR,
+    cstr.dep-pi C CA CB,
+
+    (annot.typecheck A (asort SortA _); coq.error "[param/forall] Cannot typecheck A with a sort"),
+    param A (asort SortA CA) A' AR,
     (@param-pi-decl N A (ax\ x'\ xR\
       param (B ax) (asort Sort CB) (B' x') (BR ax {aterm->term ax} x' xR) 
       % XXX ax should not be used by BR, that's why we prune it afterwards
       % We must check why it is used, and if we can avoid it
     )),
     % XXX We prune BR of its first parameter
-    logging.trace (coq.say "[param/forall] pruning BR"),
     pi x x' xR at\ BR at x x' xR = BRY x x' xR,
-    logging.trace (coq.say "[param/forall] pruned BR"),
     coq.mk-app {trocq.p.forall C}
       [ {aterm->term A}, A', AR,
         fun N {aterm->term A} {aterm.util.atermfun->termfun B},
