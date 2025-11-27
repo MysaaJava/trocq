@@ -63,7 +63,6 @@ param (aglobal GR as T) AT' Tm' GrefR :- !,
       weakening AT AT' (wfun W),
       cstr.dep-gref GR AT Tm' GRR,
       GrefR = (W (pglobal GRR _)),
-      coq.say "[param/pconst] out" GrefR
     ]
   ),
   logging.debug (coq.say "[param] Out rule const :" Tm' "∵" GrefR).
@@ -85,14 +84,13 @@ param (apglobal GR UI as T) AT' Tm' GrefR :- !,
   logging.debug (coq.say "[param] Out rule pconst :" Tm' "∵" GrefR).
 
 % TrocqConv + TrocqVar
-param X AT' X' Wout :- name X, !,
+param X T2 X' Witness :- name X, !,
   logging.debug (coq.say "[param] Rule var :" X "@" AT'),
-  param.store X AT X' XR, !,
-  logging.trace (coq.say "[param/var] found" X "@" AT "~" X' "by" XR),
-  annot.sub-type AT AT', !,
-  weakening AT AT' (wfun W),
-  Wout = W XR,
-  logging.debug (coq.say "[param] Out rule var :" X' "∵" Wout).
+  param.store X T1 X' XR, !,
+  annot.sub-type T1 T2, !,
+  weakening T1 T2 (wfun W),
+  Witness = W XR,
+  logging.debug (coq.say "[param] Out rule var :" X' "∵" Witness).
 
 % TrocqSort
 param
@@ -107,14 +105,13 @@ param
   ].
 
 % TrocqLam
-param (afun N T F as T0) FunTy Tout Witness :- !,
+param (afun N T F as T0) (aprod _ TT FT) (fun N' T' F') Witness :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
-  annot.unify-eq FunTy (aprod _ AT ATF) ok,
-  coq.name-suffix N "'" N',
+  coq.name-suffix N "'" N', 
   coq.name-suffix N "R" NR,
-  param AT (asort (typ _U) {param-class.bottom}) T' TR, !,
-  (@param-pi-decl N AT (ax\ x'\ xR\ 
-    param (F ax) (ATF ax) (F' x') (FR {aterm->term ax} x' xR)
+  param TT (asort (typ _U) {param-class.bottom}) T' TR, !,
+  (@param-pi-decl N TT (ax\ x'\ xR\ 
+    param (F ax) (FT ax) (F' x') (FR {aterm->term ax} x' xR)
   )),
   Witness = (
     fun N {aterm->term T} x\
@@ -122,7 +119,6 @@ param (afun N T F as T0) FunTy Tout Witness :- !,
     fun NR (app [{trocq.p.r {param-class.bottom}}, {aterm->term T}, T', TR, x, x']) xR\
       FR x x' xR
   ),
-  Tout = fun N' T' F',
   logging.debug (coq.say "[param] Out rule lam :" T' "∵" Witness).
 
 % TrocqArrow
@@ -172,33 +168,24 @@ param
   ].
 
 % TrocqConv for F (argument B in param.args) + TrocqApp
-param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Wout :- !, std.do! [
+param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Witness :- !, std.do! [
   logging.debug (coq.say "[param] Rule app :" T "@" B),
-  annot.typecheck F FTy,
-  fresh-type => param F FTy F' FR,
-  logging.trace (coq.say "[param/app]" F "@" FTy "~" F' "by" FR),
-  param.args FTy B Xs Xs' XsR W,
+  annot.typecheck F TF,
+  fresh-type => param F TF F' FR,
+  param.args TF B Xs Xs' XsR Weakening,
   coq.mk-app FR XsR AppR,
-  Wout = W AppR, % XXX Same as for TrocqVar
-  logging.debug (coq.say "[param] Out rule app :" T' "∵" Wout)
+  Witness = Weakening AppR,
+  logging.debug (coq.say "[param] Out rule app :" T' "∵" Witness)
 ].
 
-pred param.args i:aterm, i:aterm, i:list aterm, o:list term, o:list term, o:term -> term.
-param.args AT AB [] [] [] W :- std.do! [
-  logging.trace (coq.say "[param/app/args]" AT "<=" AB),
-  annot.sub-type AT AB,
-  coq.say "[param/app/args] Subtyping successfull",
-  weakening AT AB (wfun W)].
-param.args FunTy AB [X|Xs] [X'|Xs'] [TX, X', XR|XsR] W :- !,
-  %XXX Removed this line for non-unifying equality
-  %std.assert-ok! (coq.unify-eq FunTy (prod _ T TF)) {std.string.concat " "
-  %  ["type not convertible to Π:", {coq.term->string FunTy}]}, !,
-  FunTy = aprod _ AT ATF,
-  logging.trace (coq.say "[param/app/args]" AT "->" ATF "applied" X),
-  % XXX Anotating here for no reason ?
-  param X AT X' XR, !,
-  param.args (ATF X) AB Xs Xs' XsR W,
-  aterm->term X TX.
+pred param.args i:aterm, o:aterm, i:list aterm, o:list term, o:list term, o:term -> term.
+param.args B0 B [] [] [] Weakening :- std.do! [
+  annot.sub-type B0 B,
+  weakening B0 B (wfun Weakening)].
+param.args (aprod _ T Bk) B [X|Xs] [X'|Xs'] [X_T, X', XR|XRs] Weakening :- !,
+  param X T X' XR, !,
+  param.args (Bk X) B Xs Xs' XRs Weakening,
+  aterm->term X X_T.
 
 param.args FunTy AB L _ _ _ :-
   coq.error "[param.args] unsupported combination:" FunTy "&" AB "&" L.
@@ -207,6 +194,17 @@ param X T _ _ :-
   coq.error "[param] unsupported combination:" X "@" T.
 
 % ==================================================================================================
+
+% weaken-sort C C' is of type ParamC.Rel -> ParamC'.Rel
+pred weaken-sort i:param-class i:param-class o:term.
+% weaken A A' t t' is ⇓^A_A' t = t'
+pred weaken i:aterm i:aterm i:term o:term.
+weaken (asort S C) (asort S' C') TR TR' :- !,
+  weaken-sort C C' Weakener,
+  coq.mk-app _ [TR] TR'.
+weaken (aprod N1 A1 B1) (aprod N2 A2 B2) TR TR' :- !.
+
+
 
 % ad hoc inductive type to represent the suspension in the definition of weakening, see the article
 kind weakening type.
