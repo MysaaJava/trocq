@@ -19,7 +19,7 @@ func map-class->gref map-class -> gref.
 func gref->map-class gref -> map-class.
 
 func param-class->terms param-class -> term, term.
-param-class->terms (uvar as C) T1 T2 :- var C, !,
+param-class->terms (uvar as C) T1 T2 :- !,
   declare_constraint (param-class->terms C T1 T2) [C].
 param-class->terms (pc (uvar as M) (uvar as N)) T1 T2 :- !,
   declare_constraint (param-class->terms (pc M N) T1 T2) [M,N].
@@ -129,11 +129,11 @@ namespace trocq.db {
 % If an axiom has not been declared, the associated database is empty,
 % and the predicate fails to tell the user that translation cannot happen.
 
-pred univalence o:constant.
+func univalence o:constant.
 :name "default-univalence"
 univalence _ :- coq.error "univalence axiom required".
 
-pred funext o:constant.
+func funext o:constant.
 :name "default-funext"
 funext _ :- coq.error "function extensionality axiom required".
 

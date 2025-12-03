@@ -98,21 +98,23 @@ type->classes T OutClass DepClasses GR GR' :-
 
 namespace trocq.p {
 
-  pred univalence o:term.
+  func univalence o:term.
   univalence T :-
     trocq.db.univalence UG,
     coq.env.global (const UG) T.
-  pred funext o:term.
+  func funext o:term.
   funext T :-
     trocq.db.funext UG,
     coq.env.global (const UG) T.
 
-  %XXX Make the predicates here functional
-  pred ttype param-class, param-class -> term.
-  %ttype C T :- var C, 
-  %  coq.say "Vroum" C T,
-  %  declare_constraint (ttype C T) [C].
-  ttype CA CB T :-
+  func ttype param-class, param-class -> term.
+  ttype (uvar as CA) (uvar as CB) T :- !, 
+    declare_constraint (ttype CA CB T) [CA,CB].
+  ttype (uvar as CA) (pc MB NB) T :- !, 
+    declare_constraint (ttype CA (pc MB NB) T) [CA].
+  ttype (pc MA NA) (uvar as CB) T :- !, 
+    declare_constraint (ttype (pc MA NA) CB T) [CB].
+  ttype (pc _ _ as CA) (pc _ _ as CB) T :- !,
     trocq.db.param-class->terms CB MT NT,
     trocq.db.pparam-type CA Const,
     coq.env.global (const Const) PPi,
@@ -120,18 +122,19 @@ namespace trocq.p {
       (T = app [PPi, MT, NT, {univalence}])
       (T = app [PPi, MT, NT]).
   
-  pred arrow param-class -> term.
-  %arrow C T :- !, var C, 
-  %  coq.say "EVroum" C T,
-  %  declare_constraint (arrow C T) [C].
-  arrow C T :-
+  func arrow param-class -> term.
+  arrow (uvar as C) T :- !,
+    declare_constraint (arrow C T) [C].
+  arrow (pc _ _ as C) T :- !,
     trocq.db.param-arrow C Const,
     coq.env.global (const Const) PArr,
     if (param-class.requires-axiom C)
       (T = app [PArr, {funext}])
       (T = PArr).
 
-  pred forall param-class -> term.
+  func forall param-class -> term.
+  forall (uvar as C) T :- !,
+    declare_constraint (forall C T) [C].
   forall C T :-
     trocq.db.param-forall C Const,
     coq.env.global (const Const) PPi,
@@ -139,7 +142,9 @@ namespace trocq.p {
       (T = app [PPi, {funext}])
       (T = PPi).
 
-  pred r param-class -> term.
+  func r param-class -> term.
+  r (uvar as C) T :- !,
+    declare_constraint (r C T) [C].
   r C T :-
     trocq.db.r C Const,
     coq.env.global (const Const) T.

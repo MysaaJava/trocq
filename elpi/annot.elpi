@@ -87,7 +87,7 @@ sub-type AT AT' :-
 % SubSort
 % We don't check wether S and S' are related.
 % We need to think this again when algebraic types will be added to Rocq
-sub-type (asort S C) (asort S' C') :- !,
+sub-type (asort _S C) (asort _S' C') :- !,
   %XXX ((S = typ _, S' = typ _) ; (S = prop, S' = prop)),
   cstr.geq C C'.
 % SubPi

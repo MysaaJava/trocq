@@ -85,7 +85,7 @@ param (apglobal GR UI as T) AT' Tm' GrefR :- !,
 
 % TrocqConv + TrocqVar
 param X T2 X' Witness :- name X, !,
-  logging.debug (coq.say "[param] Rule var :" X "@" AT'),
+  logging.debug (coq.say "[param] Rule var :" X "@" T2),
   param.store X T1 X' XR, !,
   annot.sub-type T1 T2, !,
   weakening T1 T2 (wfun W),
@@ -105,8 +105,8 @@ param
   ].
 
 % TrocqLam
-param (afun N T F as T0) (aprod _ TT FT) (fun N' T' F') Witness :- !,
-  logging.debug (coq.say "[param] Rule lam :" T0 "@" FunTy),
+param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F') Witness :- !,
+  logging.debug (coq.say "[param] Rule lam :" T0 "@" AT),
   coq.name-suffix N "'" N', 
   coq.name-suffix N "R" NR,
   param TT (asort (typ _U) {param-class.bottom}) T' TR, !,
@@ -196,13 +196,13 @@ param X T _ _ :-
 % ==================================================================================================
 
 % weaken-sort C C' is of type ParamC.Rel -> ParamC'.Rel
-pred weaken-sort i:param-class i:param-class o:term.
+%pred weaken-sort i:param-class i:param-class o:term.
 % weaken A A' t t' is ⇓^A_A' t = t'
-pred weaken i:aterm i:aterm i:term o:term.
-weaken (asort S C) (asort S' C') TR TR' :- !,
-  weaken-sort C C' Weakener,
-  coq.mk-app _ [TR] TR'.
-weaken (aprod N1 A1 B1) (aprod N2 A2 B2) TR TR' :- !.
+%pred weaken i:aterm i:aterm i:term o:term.
+%weaken (asort S C) (asort S' C') TR TR' :- !,
+%  weaken-sort C C' Weakener,
+%  coq.mk-app _ [TR] TR'.
+%weaken (aprod N1 A1 B1) (aprod N2 A2 B2) TR TR' :- !.
 
 
 
