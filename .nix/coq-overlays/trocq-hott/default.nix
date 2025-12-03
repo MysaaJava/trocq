@@ -12,6 +12,7 @@ mkCoqDerivation {
 
   buildFlags = [ "hott" ];
 
+  doCheck = true;
   checkTarget = [ "test-hott" ];
 
   installTargets = [ "install-hott" ];
