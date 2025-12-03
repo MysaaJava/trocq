@@ -98,16 +98,14 @@ sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
 sub-type (afun N AT AF) (afun _ AT AF') :- !,
   @annot-pi-decl N AT x\ sub-type (AF x) (AF' x).
 % SubApp
-% TODO there is no ! here, because there was none in trocq before aterm
-% It makes sub-type fall back on coq.unify-eq if we tried to aapp two different types
-% This behaviour is necessary for some examples (unit_comm and Vector_tuple), but should be
-% implemented with a real implementation of coq unification for aterm
-sub-type (aapp [AF|AXs]) (aapp [AF'|AXs']) :-
-  sub-type AF AF',
+sub-type (aapp [ (afun _ AT AF),AX1|AXs]) (aapp [(afun _ AT' AF'),AX1'|AXs']) :-
+  % We beta-reduce
+  sub-type (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']).
+sub-type (aapp [X|AXs] as T) (aapp [X'|AXs'] as T') :- !,
+  (name X ; X = aglobal _ ; X = apglobal _ _ ; coq.error "[sub-type] Input" T "is not a type"), !,
   std.forall2 AXs AXs' eq.
 % SubConv
 sub-type X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
-sub-type X Y :- unify-eq X Y ok.
 sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
@@ -122,6 +120,12 @@ eq (aprod _ AT AF) (aprod _ AT' AF') :- !,
 eq (afun _ AT AF) (afun _ AT' AF') :- !,
   eq AT AT', !,
   pi x\ eq (AF x) (AF' x).
+% XXX Rewrite eq so that it can only take types as input + write its code
+% XXX Below is the former comment about sub-type
+% It makes sub-type fall back on coq.unify-eq if we tried to aapp two different types
+% This behaviour is necessary for some examples (unit_comm and Vector_tuple), but should be
+% implemented with a real implementation of coq unification for aterm
+eq X Y :- unify-eq X Y ok.
 eq (aapp AL) (aapp AL') :- !,
   std.forall2 AL AL' eq.
 eq X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
