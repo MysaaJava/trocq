@@ -20,24 +20,20 @@ pred bottom o:param-class.
 bottom (pc map0 map0).
 
 % generate a weakening function from a parametricity class to another, by forgetting fields 1 by 1
-pred forget i:param-class, i:param-class, o:univ-instance -> term -> term -> term -> term.
+func forget i:param-class, i:param-class, o:univ-instance -> term -> term -> term -> term.
 forget (pc M N) (pc M' N') _ :- not (map-class.geq M M', map-class.geq N N'), !,
   coq.error "Cannot forget fields from" (pc M N) "to" (pc M' N').
 forget (pc M N) (pc M N) (_\ _\ _\ r\ r) :- !.
 forget (pc M N) (pc M N') ForgetF :- !,
   std.mem {map-class.weakenings-from N} N1,
   forget (pc M N1) (pc M N') ForgetF', !,
-  map-class.to_string M MStr,
-  coq.locate
-    {calc ("forget_" ^ MStr ^ {map-class.to_string N} ^ "_" ^ MStr ^ {map-class.to_string N1})} Forget1,
-  ForgetF = (ui\ a\ b\ r\ ForgetF' ui a b (app [pglobal Forget1 ui, a, b, r])).
+  trocq.db.forget (pc M N) (pc M N1) Forget1,
+  ForgetF = (ui\ a\ b\ r\ ForgetF' ui a b (app [pglobal (const Forget1) ui, a, b, r])).
 forget (pc M N) (pc M' N') ForgetF :-
   std.mem {map-class.weakenings-from M} M1,
   forget (pc M1 N) (pc M' N') ForgetF', !,
-  map-class.to_string N NStr,
-  coq.locate
-    {calc ("forget_" ^ {map-class.to_string M} ^ NStr ^ "_" ^ {map-class.to_string M1} ^ NStr)} Forget1,
-  ForgetF = (ui\ a\ b\ r\ ForgetF' ui a b (app [pglobal Forget1 ui, a, b, r])).
+  trocq.db.forget (pc M N) (pc M1 N) Forget1,
+  ForgetF = (ui\ a\ b\ r\ ForgetF' ui a b (app [pglobal (const Forget1) ui, a, b, r])).
 
 % weaking of the out class of a gref.
 % e.g. if GR has type `forall A B, R A B -> Param21 X Y`
