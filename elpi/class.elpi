@@ -72,7 +72,7 @@ cofields map3  ["comap", "comap_in_R", "R_in_comap"].
 cofields map4  ["comap", "comap_in_R", "R_in_comap", "R_in_comapK"].
 
 % lower/higher levels at distance 1 from a given level
-pred weakenings-from i:map-class, o:list map-class.
+func weakenings-from i:map-class, o:list map-class.
 weakenings-from map0  [].
 weakenings-from map1  [map0].
 weakenings-from map2a [map1].
@@ -80,7 +80,7 @@ weakenings-from map2b [map1].
 weakenings-from map3  [map2a, map2b].
 weakenings-from map4  [map3].
 
-pred weakenings-to i:map-class, o:list map-class.
+func weakenings-to i:map-class, o:list map-class.
 weakenings-to map0  [map1].
 weakenings-to map1  [map2a, map2b].
 weakenings-to map2a [map3].

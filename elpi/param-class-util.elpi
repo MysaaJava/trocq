@@ -19,22 +19,6 @@ namespace param-class {
 pred bottom o:param-class.
 bottom (pc map0 map0).
 
-% generate a weakening function from a parametricity class to another, by forgetting fields 1 by 1
-func forget i:param-class, i:param-class, o:univ-instance -> term -> term -> term -> term.
-forget (pc M N) (pc M' N') _ :- not (map-class.geq M M', map-class.geq N N'), !,
-  coq.error "Cannot forget fields from" (pc M N) "to" (pc M' N').
-forget (pc M N) (pc M N) (_\ _\ _\ r\ r) :- !.
-forget (pc M N) (pc M N') ForgetF :- !,
-  std.mem {map-class.weakenings-from N} N1,
-  forget (pc M N1) (pc M N') ForgetF', !,
-  trocq.db.forget (pc M N) (pc M N1) Forget1,
-  ForgetF = (ui\ a\ b\ r\ ForgetF' ui a b (app [pglobal (const Forget1) ui, a, b, r])).
-forget (pc M N) (pc M' N') ForgetF :-
-  std.mem {map-class.weakenings-from M} M1,
-  forget (pc M1 N) (pc M' N') ForgetF', !,
-  trocq.db.forget (pc M N) (pc M1 N) Forget1,
-  ForgetF = (ui\ a\ b\ r\ ForgetF' ui a b (app [pglobal (const Forget1) ui, a, b, r])).
-
 % weaking of the out class of a gref.
 % e.g. if GR has type `forall A B, R A B -> Param21 X Y`
 % then `weaken-out (pc map1 map0) GR T`
@@ -145,4 +129,45 @@ namespace trocq.p {
     trocq.db.r C Const,
     coq.env.global (const Const) T.
 
+  % {forget0 C1 C2} is the weakening function from C1 to C2
+  % If C1 > C2 and C1 and C2 only are «one step away» from each other
+  func forget0 param-class, param-class -> term.
+  forget0 (uvar as CA) (uvar as CB) T :- !, 
+    declare_constraint (forget0 CA CB T) [CA,CB].
+  forget0 (uvar as CA) (pc MB NB) T :- !, 
+    declare_constraint (forget0 CA (pc MB NB) T) [CA].
+  forget0 (pc MA NA) (uvar as CB) T :- !, 
+    declare_constraint (forget0 (pc MA NA) CB T) [CB].
+  forget0 CA CB T :- !,
+    coq.env.global (const {trocq.db.forget CA CB}) T.
+
+  % {forget.aux C1 C2} is the list of weakening functions to apply to get
+  % a weakening from C1 to C2. Works if C1 >= C2
+  func forget.aux param-class, param-class -> list term.
+  forget.aux C C [] :- !.
+  forget.aux (pc MA N as CA) (pc MB N as CB) [W0|Ws] :- !,
+    % CA >= CC >= CB
+    std.mem {map-class.weakenings-from MA} MC, !,
+    forget0 CA (pc MC N) W0,
+    forget.aux (pc MC N) CB Ws.
+  forget.aux (pc MA NA as CA) (pc MB NB as CB) [W0|Ws] :- !,
+    std.mem {map-class.weakenings-from NA} NC, !,
+    forget0 CA (pc MA NC) W0,
+    forget.aux (pc MA NC) CB Ws.
+
+  % {forget C1 C2} is the weakening function from C1 to C2 if C1 >= C2
+  func forget param-class, param-class -> term.
+  forget CA CB W :- !,
+    forget.aux CA CB Ws,
+    pi t t' tr\ (
+      std.fold Ws tr (w0\ wx\ wx'\ coq.mk-app w0 [t,t',wx] wx') (WF t t' tr)
+    ),
+    W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ WF t t' tr.
+
 } % trocq.p
+
+%XXX For compatibliity, should replace this with trocq.p.forget when used
+func param-class.forget i:param-class, i:param-class, o:univ-instance -> term -> term -> term -> term.
+param-class.forget CA CB ForgetF :-
+  trocq.p.forget CA CB W,
+  ForgetF = (_\ t\ t'\ tr\ {coq.mk-app W [t,t',tr]}).
