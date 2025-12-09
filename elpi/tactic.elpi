@@ -85,7 +85,8 @@ translate-goal DB Ty G (pc M N) G' GR' :- DB => std.do! [
   cstr.reduce-graph,
   % now we can remove the weaken placeholders and replace them with real weakening functions
   % or nothing if it is weaken α α
-  param.subst-weaken GR GR',
+  logging.debug (coq.say "[translate-goal] Beta-reducing proof" GR),
+  coq.reduction.lazy.bi-norm GR GR',
   logging.debug (
     coq.say "***********************************************************************************",
     coq.say "after reduction:",

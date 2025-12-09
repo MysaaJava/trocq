@@ -83,7 +83,7 @@ typecheck AT ATy :-
 % sub-typing predicate following the sub-typing rules in the article
 pred sub-type i:aterm, i:aterm.
 sub-type AT AT' :-
-  coq.say "[sub-type] Checking wether" AT "<=" AT', fail.
+  logging.trace (coq.say "[sub-type] Checking wether" AT "<=" AT'), fail.
 % SubSort
 % We don't check wether S and S' are related.
 % We need to think this again when algebraic types will be added to Rocq
@@ -98,7 +98,7 @@ sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
 sub-type (afun N AT AF) (afun _ AT AF') :- !,
   @annot-pi-decl N AT x\ sub-type (AF x) (AF' x).
 % SubApp
-sub-type (aapp [ (afun _ AT AF),AX1|AXs]) (aapp [(afun _ AT' AF'),AX1'|AXs']) :-
+sub-type (aapp [ (afun _ AT AF),AX1|AXs]) (aapp [(afun _ AT' AF'),AX1'|AXs']) :- !,
   % We beta-reduce
   sub-type (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']).
 sub-type (aapp [X|AXs] as T) (aapp [X'|AXs'] as T') :- !,
@@ -111,7 +111,7 @@ sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
 pred eq i:aterm, i:aterm.
 eq AT AT' :-
-  coq.say "[eq] Checking equality" AT "==" AT', fail.
+  logging.trace (coq.say "[eq] Checking equality" AT "==" AT'), fail.
 eq (asort S C1) (asort S C2) :-
   cstr.eq C1 C2.
 eq (aprod _ AT AF) (aprod _ AT' AF') :- !,

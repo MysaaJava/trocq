@@ -82,6 +82,7 @@ namespace trocq.p {
   univalence T :-
     trocq.db.univalence UG,
     coq.env.global (const UG) T.
+  
   func funext o:term.
   funext T :-
     trocq.db.funext UG,
@@ -132,12 +133,6 @@ namespace trocq.p {
   % {forget0 C1 C2} is the weakening function from C1 to C2
   % If C1 > C2 and C1 and C2 only are «one step away» from each other
   func forget0 param-class, param-class -> term.
-  forget0 (uvar as CA) (uvar as CB) T :- !, 
-    declare_constraint (forget0 CA CB T) [CA,CB].
-  forget0 (uvar as CA) (pc MB NB) T :- !, 
-    declare_constraint (forget0 CA (pc MB NB) T) [CA].
-  forget0 (pc MA NA) (uvar as CB) T :- !, 
-    declare_constraint (forget0 (pc MA NA) CB T) [CB].
   forget0 CA CB T :- !,
     coq.env.global (const {trocq.db.forget CA CB}) T.
 
@@ -145,21 +140,27 @@ namespace trocq.p {
   % a weakening from C1 to C2. Works if C1 >= C2
   func forget.aux param-class, param-class -> list term.
   forget.aux C C [] :- !.
-  forget.aux (pc MA N as CA) (pc MB N as CB) [W0|Ws] :- !,
+  forget.aux (pc MA N as CA) (pc _ N as CB) [W0|Ws] :- !,
     % CA >= CC >= CB
     std.mem {map-class.weakenings-from MA} MC, !,
     forget0 CA (pc MC N) W0,
     forget.aux (pc MC N) CB Ws.
-  forget.aux (pc MA NA as CA) (pc MB NB as CB) [W0|Ws] :- !,
+  forget.aux (pc MA NA as CA) (pc _ _ as CB) [W0|Ws] :- !,
     std.mem {map-class.weakenings-from NA} NC, !,
     forget0 CA (pc MA NC) W0,
     forget.aux (pc MA NC) CB Ws.
 
   % {forget C1 C2} is the weakening function from C1 to C2 if C1 >= C2
   func forget param-class, param-class -> term.
+  forget (uvar as CA) (uvar as CB) T :- !, 
+    declare_constraint (forget CA CB T) [CA,CB].
+  forget (uvar as CA) (pc MB NB) T :- !, 
+    declare_constraint (forget CA (pc MB NB) T) [CA].
+  forget (pc MA NA) (uvar as CB) T :- !, 
+    declare_constraint (forget (pc MA NA) CB T) [CB].
   forget CA CB W :- !,
     forget.aux CA CB Ws,
-    pi t t' tr\ (
+    (pi t t' tr\ 
       std.fold Ws tr (w0\ wx\ wx'\ coq.mk-app w0 [t,t',wx] wx') (WF t t' tr)
     ),
     W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ WF t t' tr.
