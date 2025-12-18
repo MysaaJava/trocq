@@ -44,16 +44,16 @@ generate-param-arrow (pc M N as Class) Ui Uj Li Lj Lk :-
   ParamSymA = const {trocq.db.param-sym (pc MA NA)},
   ParamSymB = const {trocq.db.param-sym (pc MB NB)},
   % build functions doing several weakenings at once
-  param-class.forget ClassA (pc map0 map0) ForgetA0F,
-  param-class.forget ClassB (pc map0 map0) ForgetB0F,
-  param-class.forget ClassA ClassAM ForgetADepMF,
-  param-class.forget ClassB ClassBM ForgetBDepMF,
-  param-class.forget {param-class.negate ClassA} NegClassAN ForgetADepNF,
-  param-class.forget {param-class.negate ClassB} NegClassBN ForgetBDepNF,
+  trocq.p.forget ClassA (pc map0 map0) ForgetA0F,
+  trocq.p.forget ClassB (pc map0 map0) ForgetB0F,
+  trocq.p.forget ClassA ClassAM ForgetADepMF,
+  trocq.p.forget ClassB ClassBM ForgetBDepMF,
+  trocq.p.forget {param-class.negate ClassA} NegClassAN ForgetADepNF,
+  trocq.p.forget {param-class.negate ClassB} NegClassBN ForgetBDepNF,
   % we cut the proof into multiple parts for readability
   RArrowF = (a\ a'\ aR\ b\ b'\ bR\
     app [pglobal RArrow UIij,
-      a, a', ForgetA0F UIi a a' aR, b, b', ForgetB0F UIj b b' bR]
+      a, a', {coq.mk-app ForgetA0F [a,a',aR]}, b, b', {coq.mk-app ForgetB0F [b,b',bR]}]
   ),
   EqMapR1F = (a\ a'\ aR\ b\ b'\ bR\
     fun `f'` (prod `_` a' _\ b') f'\
@@ -80,11 +80,11 @@ generate-param-arrow (pc M N as Class) Ui Uj Li Lj Lk :-
   % there is one call to MapM_arrow and one on MapN_arrow on the symmetric
   % relation; both can need funext depending on M and N
   MapMArgsF = (a\ a'\ aR\ b\ b'\ bR\ [
-    a, a', ForgetADepMF UIi a a' aR, b, b', ForgetBDepMF UIj b b' bR
+    a, a', {coq.mk-app ForgetADepMF [a,a',aR]}, b, b', {coq.mk-app ForgetBDepMF [b,b',bR]}
   ]),
   MapNArgsF = (a\ a'\ aR\ b\ b'\ bR\ [
-    a', a, ForgetADepNF UIi a' a (app [pglobal ParamSymA UIi, a, a', aR]),
-    b', b, ForgetBDepNF UIj b' b (app [pglobal ParamSymB UIj, b, b', bR])
+    a', a, {coq.mk-app ForgetADepNF [a',a,(app [pglobal ParamSymA UIi, a, a', aR])]},
+    b', b, {coq.mk-app ForgetBDepNF [b',b,(app [pglobal ParamSymB UIj, b, b', bR])]}
   ]),
   if (std.mem! [map2b, map3, map4] M) (
     FunextDecl = true,

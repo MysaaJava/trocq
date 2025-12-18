@@ -166,9 +166,3 @@ namespace trocq.p {
     W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ WF t t' tr.
 
 } % trocq.p
-
-%XXX For compatibliity, should replace this with trocq.p.forget when used
-func param-class.forget i:param-class, i:param-class, o:univ-instance -> term -> term -> term -> term.
-param-class.forget CA CB ForgetF :-
-  trocq.p.forget CA CB W,
-  ForgetF = (_\ t\ t'\ tr\ {coq.mk-app W [t,t',tr]}).
