@@ -27,7 +27,7 @@ func adecl aterm -> name, aterm.
 
 pred typecheck i:aterm, o:aterm.
 typecheck T ATy :- adecl T _ ATy, !.
-% XXX We should recode this function in order to intelligently typecheck
+% TODO We should recode this function in order to intelligently typecheck
 % λ x : AT, t' ==> AT' -> _ with AT' <= AT
 % For now, new annotations are created, so AT is discarded
 % Before, we relied on rocq copying the lambda annotation and we had AT -> _
@@ -65,6 +65,7 @@ sub-type X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
 sub-type X Y :- coq.error "[annot/sub-type] " X "vs" Y.
 
 % syntactic term equality, taking care of adding annotation equalities in the constraint graph
+% This should only be called between two types
 pred eq i:aterm, i:aterm.
 eq AT AT' :-
   logging.trace (coq.say "[eq] Checking equality" AT "==" AT'), fail.
@@ -76,11 +77,6 @@ eq (aprod _ AT AF) (aprod _ AT' AF') :- !,
 eq (afun _ AT AF) (afun _ AT' AF') :- !,
   eq AT AT', !,
   pi x\ eq (AF x) (AF' x).
-% XXX Rewrite eq so that it can only take types as input + write its code
-% XXX Below is the former comment about sub-type
-% It makes sub-type fall back on coq.unify-eq if we tried to aapp two different types
-% This behaviour is necessary for some examples (unit_comm and Vector_tuple), but should be
-% implemented with a real implementation of coq unification for aterm
 eq X Y :- unify-eq X Y ok.
 eq (aapp AL) (aapp AL') :- !,
   std.forall2 AL AL' eq.
@@ -102,11 +98,11 @@ unify-eq AT AT' _ :- coq.error "Could not unify" AT "with" AT'.
 namespace aterm.util {
 
   % Forgets the term annotations of a function aterm->term
-  pred atermfun->termfun i:aterm -> aterm o:term -> term.
+  func atermfun->termfun i:aterm -> aterm o:term -> term.
   atermfun->termfun AF F :- !, 
     pi ax x\ aterm->term ax x => aterm->term (AF ax) (F x).
 
-  % {mk-app F Args} outputs a term corresponding to (app [F | Args])
+  % {mk-app F Args} outputs a term corresponding to (aapp [F | Args])
   % With some β-reductions
   func mk-app aterm, list aterm -> aterm.
   mk-app T [] T :- !.
@@ -124,8 +120,8 @@ namespace aterm.util {
     classes T Cs OC,
     if (OC = some C) (Cz = C :: Cs) (Cz = Cs).
 
-  classes (asort _ C) [] (some C) :- !.
   classes (uvar as X) L O :- !, declare_constraint (classes X L O) [X].
+  classes (asort _ C) [] (some C) :- !.
   classes (aprod _ T F) Cs Out :- !,
     pi x\ (
       all-classes T LT,
@@ -135,11 +131,9 @@ namespace aterm.util {
   classes (afun _ T F) Cs none :- !,
     pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
   classes (aapp [F|Xs]) Cs Out :- !,
-    std.flatten {std.map [F|Xs] all-classes} Cs,
-    mk-app F Xs App,
-    % XXX Here, we include «output class» in Cs. I'm not sure of why we do that
-    % Is there a formal definiton of «output class» ? and of «other classes» ?
-    if (App = aapp [F|Xs]) (Out = none) (classes App _ Out).
+    std.flatten {std.map Xs all-classes} XCs,
+    classes F FCs Out,
+    std.append FCs XCs Cs.
   % The other cases are aglobal, apglobal, and (name X), which all leads to []
   classes _ [] none :- !.
 }

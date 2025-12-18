@@ -201,10 +201,6 @@ weakener (aprod NA A P as PiAP) (aprod NB B Q as PiBQ) Weakener :- !,
     util.mk-app tr [x,x',XRWeakened] TRWeakened,
     util.mk-app {weakener (P ax) (Q ax')} [app [t, x],app [t', x'],TRWeakened] (WeakenerF t t' tr x x' xr)
   ),
-  %aterm->term PiAP PiAPTerm,
-  %aterm->term B BTerm,
-  % XXX We have t : |PiAP| and x: |B| that we could put, but we can't right now as Weakener
-  % is pruned from any variable, including those that might appear in PiAP or B
   Weakener = (fun _ _ t\ fun _ _ t'\ fun _ _ tr\ fun _ _ x\ fun _ _ x'\ fun _ _ xr\ 
     WeakenerF t t' tr x x' xr
   ).
@@ -224,8 +220,6 @@ weakener X _ _ :- !,
 
 % weaken A A' t t' tr tr' is ⇓^A_A' {t} {t'} tr = tr'
 pred weaken i:aterm i:aterm i:term i:term i:term o:term.
-% XXX Implement this shortcut to work
-%weaken A A T T' TR TR :- !.
 weaken A B T T' TR TR' :- !,
   logging.trace (coq.say "[weaken] Weakening from" A "to" B "term" T "~" T' "∵" TR),
   prune W [], % Weakening does not depend on context

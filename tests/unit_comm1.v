@@ -31,7 +31,6 @@ Section N.
     Trocq Use NR.
     Definition NS {n n': N} (Rr : NR n n'): NR (S n) (S n'). admit. Admitted.
     Trocq Use NS. 
-    (* TODO : Changer nommage n n' *)
     Definition Nad {n n' m m' : N} (Rr : NR n n') (Rr' : NR m m'): NR (ad n m) (ad n' m'). admit. Admitted.
     Trocq Use Nad. 
 
