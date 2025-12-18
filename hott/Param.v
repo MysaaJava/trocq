@@ -75,9 +75,9 @@ Elpi Accumulate File constraints.
 Elpi Accumulate File annot.
 Elpi Accumulate File constraint_graph.
 Elpi Accumulate File constraints_impl.
+Elpi Accumulate File util_rocq.
 Elpi Accumulate File param_class_util.
 Elpi Accumulate File param.
-Elpi Accumulate File util_rocq.
 Elpi Accumulate File tactic.
 
 Tactic Notation "trocq" ident_list(l) := elpi trocq ltac_string_list:(l).

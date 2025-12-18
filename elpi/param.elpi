@@ -208,13 +208,15 @@ weakener (aprod NA A P as PiAP) (aprod NB B Q as PiBQ) Weakener :- !,
   Weakener = (fun _ _ t\ fun _ _ t'\ fun _ _ tr\ fun _ _ x\ fun _ _ x'\ fun _ _ xr\ 
     WeakenerF t t' tr x x' xr
   ).
-weakener (aapp [ (afun _ AT AF),AX1|AXs]) (aapp [(afun _ AT' AF'),AX1'|AXs']) W :- !,
+weakener (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) W :- !,
   % We beta-reduce
   weakener (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']) W.
-weakener (aapp [X|AXs] as T) (aapp [X'|AXs'] as T') W :- !,
+weakener (aapp [X|_] as T) (aapp [X'|_] as T') W :- !,
   (name X ; X = aglobal _ ; X = apglobal _ _ ; coq.error "[weakener] Input" T "is not a type"), !,
+  % because sub-type T T', we have that eq AXs AXs', and as names and globals are not annotated, all annotations are the same
   W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ tr.
-weakener X X' W :- (name X ; X = aglobal _ ; X = apglobal _ _ ), !,
+weakener X _ W :- (name X ; X = aglobal _ ; X = apglobal _ _ ), !,
+  % names and globals are not annotated, so weakener is identity
   W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ tr.
 weakener X _ _ :- !,
   coq.error "[weakener] Cannot weaken" X.
