@@ -23,19 +23,11 @@ param-class->terms (uvar as C) T1 T2 :- !,
   declare_constraint (param-class->terms C T1 T2) [C].
 param-class->terms (pc (uvar as M) (uvar as N)) T1 T2 :- !,
   declare_constraint (param-class->terms (pc M N) T1 T2) [M,N].
-param-class->terms (pc M N) (pglobal MT UIM) (pglobal NT UIN) :- !,
+param-class->terms (pc M N) MM NN :- !,
   map-class->gref M MT,
   map-class->gref N NT,
-  coq.univ-instance UIM [],
-  coq.univ-instance UIN []. % XXX Should i put the same universe instance ?
-
-
-pred term->map-class i:term, o:map-class.
-term->map-class M Class :-
-  M = pglobal Map _, % XXX This should disappear when map terms are evaluated in the end
-  gref->map-class Map Class, !.
-term->map-class M _ :-
-  coq.error "Could not find map class associated with term" M.
+  coq.env.global MT MM,
+  coq.env.global NT NN.
 
 % Given the class M, obtain {{Id_MapM}}
 pred id-map o:map-class, o:constant.

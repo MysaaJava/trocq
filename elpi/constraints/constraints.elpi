@@ -16,9 +16,6 @@
 
 typeabbrev class-id int.
 
-%XXX weird to put this here, but constraints.elpi is added before annot.elpi
-kind aterm type.
-
 namespace cstr {
 
 pred init.
