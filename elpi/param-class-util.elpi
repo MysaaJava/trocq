@@ -69,10 +69,65 @@ type->classes.main X [] Class GR GR' :- !,
     std.rev Ts [T', T | _],
     coq.term->gref T GR, coq.term->gref T' GR'.
 
+% XXX Why can't i put this macro in aterm.elpi ?
+macro @pi-adecl2 N T F :- pi ax x\ [decl x N T, term->aterm x ax, aterm->term ax x] => F ax x.
+
+% XXX workaround of https://rocq-prover.zulipchat.com/#narrow/channel/253928-Elpi-users-.26-devs/topic/mk-app.20can.20produce.20ill-formed.20terms/near/563531879
+pred fold-double-head-app i:term o:term.
+fold-double-head-app (app [(app L)|L']) (app LL) :- !,
+  std.append L L' LL.
+fold-double-head-app T T :- !.
+
+pred extract-classes i:term o:aterm o:term o:term.
+extract-classes T _ _ _ :- coq.say "[extract-classes]" T, fail.
+extract-classes (prod N A (a\ prod N' A' (a'\ prod NR (AR a a') (ar\ B a a' ar)))) (aprod N AA AB) T T' :-
+  (@pi-adecl2 N A aa\ a\ @pi-decl N' A' a'\ extract-classes (AR a a') AA _ _), % XXX Should we check _ and _ are a and a' ?
+  @pi-adecl2 N A aa\ a\ 
+    @pi-decl N A' a'\
+      @pi-decl NR (AR a a') ar\
+        extract-classes (B a a' ar) (AB aa) (T0 a) (T0' a').
+
+extract-classes (app [Global,T,T']) AA T T' :- 
+  (Global = global RelG ; Global = pglobal RelG _),
+  (
+    trocq.db.gref->class RelG C, !, AA = (asort _ C); % XXX Shouldn't we guess the sort ?
+    coq.typecheck Global (prod _ GAR _\ (prod _ _ _\ sort _)) ok, (
+      GAR = global GA, !, AA = aglobal GA;
+      GAR = pglobal GA U, !, AA = apglobal GA U
+    )
+  ).
+extract-classes (app [pglobal (const RG) _, A, A', AR, T, T']) AA T T' :-
+  trocq.db.paramrel RG, !, % We want RelG to be Param00.R aka "rel", the projection from ParamMN to M -> N -> Type
+  (
+    name A, !, term->aterm A AA;
+    A = global G, !, AA = aglobal G; % XXX there is no check that AR is the right relation i.e. the one that trocq will associate to G
+    A = pglobal G U, !, AA = apglobal G U; % XXX Same as above
+    coq.say "Annoooottt" A "--" AA, term->aterm A AA,coq.say "pouf" % XXX Quick fix, should be removed as we drop some annotations this way (see file list_option.v)
+  ).
+
+% XXX This is purely to solve stuck.v where the structure is hidden behind const «binop_param».
+% Either we want to get rid of this way of doing examples, or we want to rationalize this
+extract-classes (app [pglobal (const G) _ | Args]) AA T T' :-
+  % We try to unfold G
+  coq.env.const G (some Bo) _,
+  coq.mk-app Bo Args NewTerm,
+  fold-double-head-app NewTerm NewTerm',
+  extract-classes NewTerm' AA T T'.
+
+extract-classes T _ _ _ :-
+  coq.error "Could not extract annotated term from" T.
+
+
 pred type->classes i:term, o:param-class, o:list param-class, o:gref, o:gref.
 type->classes T OutClass DepClasses GR GR' :-
   type->classes.main T DepClasses LastClass GR GR',
-  if (LastClass = [OutClass]) true (OutClass = pc map0 map0).
+  if (LastClass = [OutClass]) true (OutClass = pc map0 map0),
+  coq.say "BBB" T,
+  extract-classes T _ _ _,
+  coq.say "TYPE->CLASSES",
+  coq.say T "->" OutClass,
+  coq.say "//" DepClasses "from" GR "to" GR',
+  coq.say "END TYPE->CLASSES".
 
 } % param-class
 
