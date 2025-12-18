@@ -72,6 +72,7 @@ func forget param-class, param-class -> constant.
 pred ptype o:constant.
 pred pprop o:constant.
 pred weaken o:constant.
+pred paramrel o:constant.
 
 % remark: to allow for conditional polymorphicity, `paths` is a predicate
 % outputing a term given a universe instance.

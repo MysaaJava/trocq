@@ -17,6 +17,7 @@ Require Export Database.
 Require Import Hierarchy.
 Require Export Param_Type Param_arrow Param_forall.
 
+From Trocq.Elpi Extra Dependency "aterm.elpi" as aterm.
 From Trocq.Elpi Extra Dependency "annot.elpi" as annot.
 From Trocq.Elpi Extra Dependency "util-rocq.elpi" as util_rocq.
 From Trocq.Elpi Extra Dependency "class.elpi" as class.
@@ -55,6 +56,7 @@ Elpi Query lp:{{
 
 Elpi Tactic trocq.
 Elpi Accumulate Db trocq.db.
+Elpi Accumulate File aterm.
 Elpi Accumulate File simple_graph.
 Elpi Accumulate File constraints.
 Elpi Accumulate File annot.

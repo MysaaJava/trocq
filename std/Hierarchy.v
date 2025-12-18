@@ -98,6 +98,7 @@ Register Map3.Has as trocq.map3.
 Register Map4.Has as trocq.map4.
 Elpi Query lp:{{register-map-classes}}.
 
+(* XXX I can remove this with aterm *)
 (* syntactic representation of annotated universes
  * useful to annotate the initial goal with fresh variables of type map_class
  * that will be mapped to variables in the constraint graph
@@ -180,7 +181,13 @@ Elpi Query lp:{{
 (* General projections *)
 
 Definition rel {A B} (R : Param00.Rel A B) := Param00.R A B R.
+Register rel as trocq.paramrel.
 Coercion rel : Param00.Rel >-> Funclass.
+
+Elpi Query lp:{{
+  {{:gref lib:trocq.paramrel}} = const Rel,
+  coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.paramrel Rel)).
+}}.
 
 Definition map {A B} (R : Param10.Rel A B) : A -> B :=
   Map1.map _ (Param10.covariant A B R).

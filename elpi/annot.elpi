@@ -14,49 +14,6 @@
 % annotated type theory
 % -----------------------------------------------------------------------------
 
-type asort    sort -> param-class -> aterm.
-type aglobal  gref -> aterm.
-type apglobal gref -> univ-instance -> aterm.
-type afun     name -> aterm -> (aterm -> aterm) -> aterm.     % fun x : t =>
-type aprod    name -> aterm -> (aterm -> aterm) -> aterm.         % forall x : t,
-type alet     name -> aterm -> aterm -> (aterm -> aterm) -> aterm. % let x : T := v in
-type aapp     list aterm -> aterm.                              % app [hd|args]
-type amatch   aterm -> aterm -> list aterm -> aterm.              % match t p [branch])
-type afix     name -> int -> aterm -> (term -> aterm) -> aterm.  % fix name rno ty bo
-type aprimitive primitive-value -> aterm.
-
-% Forgets the term annotations of a term
-func aterm->term aterm -> term.
-aterm->term (asort Sort _) (sort Sort) :- !.
-aterm->term (aglobal GRef) (global GRef) :- !.
-aterm->term (apglobal GRef Universe) (pglobal GRef Universe) :- !.
-aterm->term (afun N AT AF) (fun N T F) :-
-  aterm->term AT T,
-  pi ay\ pi y \ aterm->term ay y => aterm->term (AF ay) (F y), !.
-aterm->term (aprod N AT AF) (prod N T F) :- !,
-  aterm->term AT T,
-  pi ay\ pi y \ aterm->term ay y => aterm->term (AF ay) (F y), !.
-aterm->term (aapp AL) (app L) :-
-  std.map AL aterm->term L, !.
-aterm->term (uvar as AT) T :- !,
-  declare_constraint (aterm->term AT T) [AT].
-%TODO implement the other constructors
-
-% Adds fresh annotation variable on every sort inside a term
-func term->aterm term -> aterm.
-term->aterm (sort S) (asort S Alpha_) :- !.
-term->aterm (global GRef) (aglobal GRef) :- !.
-term->aterm (pglobal GRef U) (apglobal GRef U) :- !.
-term->aterm (fun Name T F) (afun Name AT AF) :- !,
-  term->aterm T AT,
-  pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
-term->aterm (prod Name T F) (aprod Name AT AF) :- !,
-  term->aterm T AT,
-  pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
-term->aterm (app L) (aapp AL) :- !,
-  std.map L term->aterm AL.
-%TODO implement the other constructors
-
 
 macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax.
 
@@ -88,7 +45,6 @@ sub-type AT AT' :-
 % We don't check wether S and S' are related.
 % We need to think this again when algebraic types will be added to Rocq
 sub-type (asort _S C) (asort _S' C') :- !,
-  %XXX ((S = typ _, S' = typ _) ; (S = prop, S' = prop)),
   cstr.geq C C'.
 % SubPi
 sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
