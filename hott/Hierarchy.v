@@ -160,7 +160,6 @@ Elpi Query lp:{{
 Definition rel {A B} (R : Param00.Rel A B) := Param00.R A B R.
 Coercion rel : Param00.Rel >-> Funclass.
 
-
 Definition map {A B} (R : Param10.Rel A B) : A -> B :=
   Map1.map _ (Param10.covariant A B R).
 Definition map_in_R {A B} (R : Param2a0.Rel A B) :

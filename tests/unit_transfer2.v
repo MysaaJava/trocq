@@ -29,7 +29,6 @@ Section Transfer.
         (m : I) (m' : I') (rm : Rf m m') :=
         mkParam01 (peR n m n' m' rn rm).
     Trocq Use Rpe.
-
     Goal forall (n : I), forall (m : I), pe n m.
     Proof.
     trocq.

@@ -11,7 +11,7 @@
 %                            % (see LICENSE file for the text of the license) %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -----------------------------------------------------------------------------
-% annotated type theory
+% Links annotated terms with the constraint graph
 % -----------------------------------------------------------------------------
 
 
@@ -20,7 +20,7 @@ macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax.
 namespace annot {
 
 % typechecking a term calls Coq's typechecker, which gives back a non annotated term
-% calling term->annot-term on it will add fresh annotations
+% calling term->aterm on it will add fresh annotations
 % if we want to typecheck a variable several times and get the same type everytime, we need to
 % add some memory, which is the purpose of adecl
 func adecl aterm -> name, aterm.
@@ -36,8 +36,8 @@ typecheck AT ATy :-
   coq.typecheck T Ty ok,
   term->aterm Ty ATy.
 
-
 % sub-typing predicate following the sub-typing rules in the article
+% This should only be called between two types
 pred sub-type i:aterm, i:aterm.
 sub-type AT AT' :-
   logging.trace (coq.say "[sub-type] Checking wether" AT "<=" AT'), fail.
@@ -82,8 +82,6 @@ eq (aapp AL) (aapp AL') :- !,
   std.forall2 AL AL' eq.
 eq X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
 
-
-
 pred unify-eq aterm, aterm -> diagnostic.
 % TODO this should implement rocq unification algorithm and create equalities for param classes
 % along the way.
@@ -92,48 +90,4 @@ unify-eq AT AT' ok :- AT = AT'.
 unify-eq AT AT' ok :- coq.unify-eq {aterm->term AT} {aterm->term AT'} ok.
 unify-eq AT AT' _ :- coq.error "Could not unify" AT "with" AT'.
 
-
 } % annot
-
-namespace aterm.util {
-
-  % Forgets the term annotations of a function aterm->term
-  func atermfun->termfun i:aterm -> aterm o:term -> term.
-  atermfun->termfun AF F :- !, 
-    pi ax x\ aterm->term ax x => aterm->term (AF ax) (F x).
-
-  % {mk-app F Args} outputs a term corresponding to (aapp [F | Args])
-  % With some β-reductions
-  func mk-app aterm, list aterm -> aterm.
-  mk-app T [] T :- !.
-  mk-app (afun _ _ F) [X|XS] T :- !, mk-app (F X) XS T.
-  mk-app (alet _ _ X F) XS T :- !, mk-app (F X) XS T.
-  mk-app (aapp L) XS (aapp L') :- !, std.append L XS L'.
-  mk-app T XS (aapp [T|XS]) :- !.
-
-  % classes returns a list of all non-output param classes of an aterm and the _potential_ output param class
-  % all-classes returns a list of all param-classes in an aterm (potential output included)
-  func classes aterm -> list param-class, option param-class.
-  func all-classes aterm -> list param-class.
-
-  all-classes T Cz :-
-    classes T Cs OC,
-    if (OC = some C) (Cz = C :: Cs) (Cz = Cs).
-
-  classes (uvar as X) L O :- !, declare_constraint (classes X L O) [X].
-  classes (asort _ C) [] (some C) :- !.
-  classes (aprod _ T F) Cs Out :- !,
-    pi x\ (
-      all-classes T LT,
-      classes (F x) LF Out,
-      std.append LT LF Cs
-    ).
-  classes (afun _ T F) Cs none :- !,
-    pi x\ std.append {all-classes T} {all-classes (F x)} Cs.
-  classes (aapp [F|Xs]) Cs Out :- !,
-    std.flatten {std.map Xs all-classes} XCs,
-    classes F FCs Out,
-    std.append FCs XCs Cs.
-  % The other cases are aglobal, apglobal, and (name X), which all leads to []
-  classes _ [] none :- !.
-}

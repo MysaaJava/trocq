@@ -13,21 +13,13 @@
 
 namespace trocq.db {
 
+%%% TROCQ HIERARCHY
+
+% Given the class M, obtain {{mapM}}
 pred map->class o:map-class, o:gref.
 
-func map-class->gref map-class -> gref.
-func gref->map-class gref -> map-class.
-
-func param-class->terms param-class -> term, term.
-param-class->terms (uvar as C) T1 T2 :- !,
-  declare_constraint (param-class->terms C T1 T2) [C].
-param-class->terms (pc (uvar as M) (uvar as N)) T1 T2 :- !,
-  declare_constraint (param-class->terms (pc M N) T1 T2) [M,N].
-param-class->terms (pc M N) MM NN :- !,
-  map-class->gref M MT,
-  map-class->gref N NT,
-  coq.env.global MT MM,
-  coq.env.global NT NN.
+% Given the class M, obtain {{indc_mapM}}
+pred map-class->indc-class o:map-class, o:gref.
 
 % Given the class M, obtain {{Id_MapM}}
 pred id-map o:map-class, o:constant.
@@ -40,17 +32,9 @@ pred id-map-sym o:map-class, o:constant.
 %     {{ParamMN.R}} {{ParamMN.covariant}} {{ParamMN.contravariant}}
 pred rel o:param-class, o:gref, o:gref, o:gref, o:gref, o:gref.
 
-% Given {{ParamNM.Rel}, obtain its class (M, N):
-%   gref->class {{ParamNM.Rel}} (pc M N) 
-pred gref->class i:gref, o:param-class.
-gref->class Rel Class :- trocq.db.rel Class Rel _ _ _ _.
-
 % Given the class (M, N), obtain {{ParamMN.Rel}}, the projection of the
 % relation inside a ParamMN
-func r param-class -> constant.
-:name "default-r"
-r C R :- var C, !,
-  declare_constraint (r C R) [C].
+pred r o:param-class, o:constant.
 
 % Given the class (M, N), obtain {{Id_ParamMN}}
 pred id-param o:param-class, o:constant.
@@ -59,7 +43,7 @@ pred id-param o:param-class, o:constant.
 pred param-sym o:param-class, o:constant.
 
 % Given the classes (M, N) and (M', N') obtain {{forget_MN_M'N'}}
-func forget param-class, param-class -> constant.
+pred forget o:param-class, o:param-class, o:constant.
 
 % remark: to allow for conditional polymorphicity, `paths` is a predicate
 % outputing a term given a universe instance.
@@ -83,46 +67,22 @@ pred sym-rel o:gref.
 pred param-type o:param-class, o:param-class, o:constant.
 
 % pparam-type (M,N) {{ PParamTypeMN }}
-func pparam-type param-class -> constant.
-pparam-type C _ :-
-  logging.trace (coq.say "pparam" C), fail, !.
-:name "default-pparam-type"
-pparam-type C PParamType :- var C, !,
-  declare_constraint (pparam-type C PParamType) [C].
+pred pparam-type o:param-class, o:constant.
 
 % param-arrow (M,N) {{ ParamArrowMN }}
-func param-arrow param-class -> constant.
-param-arrow C _ :-
-  logging.trace (coq.say "arrow" C), fail, !.
-:name "default-param-arrow"
-param-arrow C ParamArrow :- var C, !,
-  declare_constraint (param-arrow C ParamArrow) [C].
+pred param-arrow o:param-class, o:constant.
 
 % param-forall (M,N) {{ ParamForallMN }}
-func param-forall param-class -> constant.
-param-forall C _ :-
-  logging.trace (coq.say "forall" C), fail, !.
-:name "default-param-forall"
-param-forall C ParamForall :- var C, !,
-  declare_constraint (param-forall C ParamForall) [C].
+pred param-forall o:param-class, o:constant.
 
-} % trocq.db
 
-namespace trocq.db {
+%%% USER INPUT
 
-% Dedicated databases to store the univalence/funext axioms.
-%
-% These predicates will be called every time an axiom is required.
-% If an axiom has not been declared, the associated database is empty,
-% and the predicate fails to tell the user that translation cannot happen.
+% The univalence axiom, if one was added by `Trocq Register Univalence`
+pred univalence o:constant.
 
-func univalence o:constant.
-:name "default-univalence"
-univalence _ :- coq.error "univalence axiom required".
-
-func funext o:constant.
-:name "default-funext"
-funext _ :- coq.error "function extensionality axiom required".
+% The functional extentionality axiom, if one was added by `Trocq Register Funext`
+pred funext o:constant.
 
 } % trocq.db
 

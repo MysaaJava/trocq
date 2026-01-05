@@ -31,8 +31,7 @@ register-map-inductives :-
     Name is "lib:trocq.indc_map" ^ MStr,
 
     coq.locate Name GR,
-    coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.map-class->gref M GR)),
-    coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.gref->map-class GR M))
+    coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.map-class->indc-class M GR))
   ).
 
 % Generate a module with a record type containing:
@@ -79,7 +78,7 @@ generate-module (pc M N as Class) :-
   coq.env.global (const CR) R,
   % add record to the database for later use
   coq.elpi.accumulate _ "trocq.db"
-    (clause _ (after "default-r") (trocq.db.r Class CR)),
+    (clause _ _ (trocq.db.r Class CR)),
   coq.elpi.accumulate execution-site "trocq.db"
     (clause _ _ (trocq.db.rel Class (indt TrocqInd) (indc TrocqBuild)
       (const CR) (const CovariantProj) (const ContravariantProj))),

@@ -44,7 +44,7 @@ string->verbosity "trace" level.trace.
 
 pred log-level o:verbosity.
 :name "log-level"
-log-level level.trace.
+log-level level.info.
 
 func logging.info prop.
 logging.info P :- util.at-level level.info P.

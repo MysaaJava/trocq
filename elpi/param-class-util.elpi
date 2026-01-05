@@ -16,9 +16,6 @@
 
 namespace param-class {
 
-pred bottom o:param-class.
-bottom (pc map0 map0).
-
 % weaking of the out class of a gref.
 % e.g. if GR has type `forall A B, R A B -> Param21 X Y`
 % then `weaken-out (pc map1 map0) GR T`
@@ -37,7 +34,7 @@ replace-out-ty OutC (prod N A B) (prod N A B') :- !,
    pi x\ replace-out-ty OutC (B x) (B' x).
 replace-out-ty OutC InT OutT :- std.do! [
     coq.safe-dest-app InT HD Ts,
-    trocq.db.gref->class OutGRClass OutC,
+    trocq.db.rel OutC OutGRClass _ _ _ _,
     subst-gref HD OutGRClass HD',
     coq.mk-app HD' Ts OutT
   ].
@@ -47,7 +44,7 @@ pred type->class i:term, o:list param-class, o:list term.
 type->class X [Class] Ts :-
   coq.safe-dest-app X HD Ts,
   (do-not-fail => coq.term->gref HD GRClass),
-  trocq.db.gref->class GRClass Class.
+  trocq.db.rel Class GRClass _ _ _ _.
 type->class X [] Ts :- coq.safe-dest-app X _ Ts.
 
 pred type->classes.rec i:term, o:list param-class, o:list param-class.
@@ -79,14 +76,23 @@ type->classes T OutClass DepClasses GR GR' :-
 
 namespace trocq.p {
 
+  func pclass param-class -> term, term.
+  pclass (uvar as C) T1 T2 :- !,
+    declare_constraint (pclass C T1 T2) [C].
+  pclass (pc M N) MM NN :- !,
+    trocq.db.map-class->indc-class M MT, !,
+    trocq.db.map-class->indc-class N NT, !,
+    coq.env.global MT MM,
+    coq.env.global NT NN.
+
   func univalence o:term.
   univalence T :-
-    trocq.db.univalence UG,
+    (trocq.db.univalence UG ; coq.error "Univalence axiom required"), !,
     coq.env.global (const UG) T.
   
   func funext o:term.
   funext T :-
-    trocq.db.funext UG,
+    (trocq.db.funext UG ; coq.error "Funext axiom required"), !,
     coq.env.global (const UG) T.
 
   func ttype param-class, param-class -> term.
@@ -97,8 +103,8 @@ namespace trocq.p {
   ttype (pc MA NA) (uvar as CB) T :- !, 
     declare_constraint (ttype (pc MA NA) CB T) [CB].
   ttype (pc _ _ as CA) (pc _ _ as CB) T :- !,
-    trocq.db.param-class->terms CB MT NT,
-    trocq.db.pparam-type CA Const,
+    pclass CB MT NT,
+    trocq.db.pparam-type CA Const, !,
     coq.env.global (const Const) PPi,
     if (param-class.requires-axiom CA)
       (T = app [PPi, MT, NT, {univalence}])
@@ -108,7 +114,7 @@ namespace trocq.p {
   arrow (uvar as C) T :- !,
     declare_constraint (arrow C T) [C].
   arrow (pc _ _ as C) T :- !,
-    trocq.db.param-arrow C Const,
+    trocq.db.param-arrow C Const, !,
     coq.env.global (const Const) PArr,
     if (param-class.requires-axiom C)
       (T = app [PArr, {funext}])
@@ -118,7 +124,7 @@ namespace trocq.p {
   forall (uvar as C) T :- !,
     declare_constraint (forall C T) [C].
   forall C T :-
-    trocq.db.param-forall C Const,
+    trocq.db.param-forall C Const, !,
     coq.env.global (const Const) PPi,
     if (param-class.requires-axiom C)
       (T = app [PPi, {funext}])
@@ -128,14 +134,15 @@ namespace trocq.p {
   r (uvar as C) T :- !,
     declare_constraint (r C T) [C].
   r C T :-
-    trocq.db.r C Const,
+    trocq.db.r C Const, !,
     coq.env.global (const Const) T.
 
   % {forget0 C1 C2} is the weakening function from C1 to C2
   % If C1 > C2 and C1 and C2 only are «one step away» from each other
   func forget0 param-class, param-class -> term.
   forget0 CA CB T :- !,
-    coq.env.global (const {trocq.db.forget CA CB}) T.
+    trocq.db.forget CA CB ForgetConst, !,
+    coq.env.global (const ForgetConst) T.
 
   % {forget.aux C1 C2} is the list of weakening functions to apply to get
   % a weakening from C1 to C2. Works if C1 >= C2

@@ -15,7 +15,6 @@
 % parametricity translation
 % -----------------------------------------------------------------------------
 
-% traversing a binder should give information for both typechecking and annotation
 % We traverse a binder with name N having annotated type AT
 % Then we call F with parameters ax x' xR
 % We add the rule ax @ AT ~ x' ∵ xR

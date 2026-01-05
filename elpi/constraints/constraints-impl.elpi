@@ -20,19 +20,9 @@ init :-
   declare_constraint (internal.c.vars []) [_],
   declare_constraint (internal.c.graph G) [_].
 
-% Printers
+% D_π(C, C_A, C_B)
 dep-pi C CA CB :- 
   logging.trace (coq.say "[dep-pi]" C "to" CA CB), fail.
-dep-arrow C CA CB :- 
-  logging.trace (coq.say "[dep-arrow]" C "to" CA CB), fail.
-dep-type C CR :- 
-  logging.trace (coq.say "[dep-type]" C "to" CR), fail.
-dep-gref GR T Tm' GRR :- 
-  logging.trace (coq.say "[dep-gref]" GR "at" T "to" Tm' "with" GRR), fail.
-geq CA CB :-
-  logging.trace (coq.say "[dep-geq]" CA "<=" CB), fail.
-
-% D_π(C, C_A, C_B)
 dep-pi C CA CB :- var C, !,
   internal.link? C ID,
   internal.link? CA IDA,
@@ -42,6 +32,8 @@ dep-pi C CA CB :-
   param-class.dep-pi C CA CB.
 
 % D_->(C, C_A, C_B)
+dep-arrow C CA CB :- 
+  logging.trace (coq.say "[dep-arrow]" C "to" CA CB), fail.
 dep-arrow C CA CB :- var C, !,
   internal.link? C ID,
   internal.link? CA IDA,
@@ -51,6 +43,8 @@ dep-arrow C CA CB :-
   param-class.dep-arrow C CA CB.
 
 % D_□(C, C_R)
+dep-type C CR :- 
+  logging.trace (coq.say "[dep-type]" C "to" CR), fail.
 dep-type C CR :- var C, !, std.do![
   internal.link? C ID,
   internal.link? CR IDR,
@@ -59,8 +53,12 @@ dep-type C CR :-
   if (param-class.requires-axiom C)
     (geq CR (pc map4 map4))
     (geq CR (pc map0 map0)). % Any CR would do, so we add a constraint 0,0 <= CR
+    %TODO The fake constraint above is a hack, as the graph does not instantiate the variable when there
+    % are no constraints on it. 
 
 % D_K(C, C_1, ..., C_n)
+dep-gref GR T Tm' GRR :- 
+  logging.trace (coq.say "[dep-gref]" GR "at" T "to" Tm' "with" GRR), fail.
 dep-gref GR AT Tm' GRR :-
   aterm.util.classes AT TCs OutOpt,
   util.option.value OutOpt (pc map0 map0) Out,
@@ -75,6 +73,8 @@ dep-gref GR AT Tm' GRR :-
   ).
 
 % C >= C'
+geq CA CB :-
+  logging.trace (coq.say "[dep-geq]" CA "<=" CB), fail.
 geq C1 C2 :- var C1, var C2, !,
   internal.link? C1 ID1,
   internal.link? C2 ID2,
@@ -127,7 +127,7 @@ func c.link? param-class, class-id.
 func c.link- param-class, class-id.
 
 func link? param-class -> class-id.
-link? C ID :- var C, !, coq.say "[link]" C "?", declare_constraint (c.link? C ID) [_].
+link? C ID :- var C, !, declare_constraint (c.link? C ID) [_].
 link? _ (-1). % when the class is constant, it does not exist in the graph, default value is -1
 func link- param-class -> class-id.
 link- C ID :- declare_constraint (c.link- C ID) [_].
@@ -141,7 +141,6 @@ constraint c.link c.link? c.link- {
   rule \ (c.link C ID) (c.link- C' ID) <=> (C' = C).
   % both are unknown, create the fresh node
   rule \ (c.link? C ID') <=> (
-    coq.say "[link]" C "new",
     vars? IDs,
     new_int ID,
     prune C [],
@@ -190,21 +189,19 @@ constraint c.graph c.dep-pi c.dep-arrow c.dep-type c.dep-gref c.geq c.reduce-gra
     declare_constraint (c.graph G') [_]
   ).
   rule (c.db DB) \ (c.graph G) (c.reduce-graph) <=> (std.do! [
-    logging.trace (coq.say "final constraint graph START:"),
+    logging.trace (coq.say "[reduce-graph] final constraint graph START:"),
     vars? IDs,
     logging.trace (
-      coq.say "final constraint graph:",
+      coq.say "[reduce-graph] final constraint graph:",
       cstr-graph.pp G,
-      coq.say "***********************************************************************************"
     ),
     cstr-graph.instantiation-order IDs G SortedIDs,
     logging.trace (
-      coq.say "order:" SortedIDs,
-      coq.say "***********************************************************************************"
+      coq.say "[reduce-graph] order:" SortedIDs,
     ),
     DB => std.do! [
       reduce SortedIDs G FinalValues,
-      logging.trace (coq.say "final values:" FinalValues),
+      logging.trace (coq.say "[reduce-graph] final values:" FinalValues),
       std.forall FinalValues instantiate-coq
     ]
   ]).
@@ -216,9 +213,9 @@ pred reduce i:list class-id, i:constraint-graph, o:list (pair class-id param-cla
 reduce [] _ [].
 reduce [ID|IDs] ConstraintGraph [pr ID MinClass|FinalValues] :- std.do! [
   cstr-graph.minimal-class ID ConstraintGraph MinClass,
-  logging.trace (coq.say "min value" MinClass "for" ID),
+  logging.trace (coq.say "[reduce] min value" MinClass "for" ID),
   cstr-graph.maximal-class ID ConstraintGraph MaxClass,
-  logging.trace (coq.say "max value" MaxClass "for" ID),
+  logging.trace (coq.say "[reduce] max value" MaxClass "for" ID),
   util.unless (param-class.geq MaxClass MinClass) (coq.error "no solution for variable" ID),
   reduce IDs {cstr-graph.instantiate ID MinClass ConstraintGraph} FinalValues
 ].
@@ -226,7 +223,7 @@ reduce [ID|IDs] ConstraintGraph [pr ID MinClass|FinalValues] :- std.do! [
 % now instantiate for real
 pred instantiate-coq i:pair class-id param-class.
 instantiate-coq (pr ID (pc M0 N0)) :- std.do! [
-  logging.trace (coq.say "instantiating" ID "with" (pc M0 N0)),
+  logging.trace (coq.say "[instantiate-coq] instantiating" ID "with" (pc M0 N0)),
   link- C ID,
   C = pc M0 N0
 ].

@@ -130,7 +130,7 @@ add-named-coe _ GR1 GR2 _ :-
 
 func mk-app term, list term -> term.
 mk-app HD [] HD :- !.
-mk-app (app L) Args R :- !, append L Args LArgs, R = app LArgs.
+mk-app (app L) Args R :- !, std.append L Args LArgs, R = app LArgs.
 mk-app HD Args (app [HD|Args]).
 
 } % util

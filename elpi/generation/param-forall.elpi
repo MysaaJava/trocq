@@ -165,6 +165,5 @@ generate-param-forall (pc M N as Class) Ui Uj Li Lj Lk :-
   std.assert-ok! (coq.typecheck Decl _) "generate-param-forall: Decl is ill-typed",
   (@udecl! [Li, Lj, Lk] ff [le Li Lk, le Lj Lk] tt =>
     coq.env.add-const ParamForall Decl _ @transparent! Const),
-  coq.elpi.accumulate _ "trocq.db" (clause _ (after "default-param-forall")
-    (trocq.db.param-forall Class Const)).
+  coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.param-forall Class Const)).
 
