@@ -60,7 +60,7 @@ term->aterm (app L) (aapp AL) :- !,
 
 namespace aterm.util {
   % Forgets the term annotations of a function aterm -> aterm
-  func atermfun->termfun i:aterm -> aterm o:term -> term.
+  func atermfun->termfun (aterm -> aterm) -> (term -> term).
   atermfun->termfun AF F :- !, 
     pi ax x\ aterm->term ax x => aterm->term (AF ax) (F x).
 

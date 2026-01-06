@@ -82,7 +82,7 @@ eq (aapp AL) (aapp AL') :- !,
   std.forall2 AL AL' eq.
 eq X X :- (name X ; X = aglobal _ ; X = apglobal _ _), !.
 
-pred unify-eq aterm, aterm -> diagnostic.
+pred unify-eq i:aterm i:aterm o:diagnostic.
 % TODO this should implement rocq unification algorithm and create equalities for param classes
 % along the way.
 % This is not implemented right now, and is replaced with term equality

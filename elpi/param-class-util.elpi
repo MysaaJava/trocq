@@ -85,12 +85,12 @@ namespace trocq.p {
     coq.env.global MT MM,
     coq.env.global NT NN.
 
-  func univalence o:term.
+  func univalence -> term.
   univalence T :-
     (trocq.db.univalence UG ; coq.error "Univalence axiom required"), !,
     coq.env.global (const UG) T.
   
-  func funext o:term.
+  func funext -> term.
   funext T :-
     (trocq.db.funext UG ; coq.error "Funext axiom required"), !,
     coq.env.global (const UG) T.
