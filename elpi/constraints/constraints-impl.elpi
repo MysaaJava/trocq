@@ -193,11 +193,11 @@ constraint c.graph c.dep-pi c.dep-arrow c.dep-type c.dep-gref c.geq c.reduce-gra
     vars? IDs,
     logging.trace (
       coq.say "[reduce-graph] final constraint graph:",
-      cstr-graph.pp G,
+      cstr-graph.pp G
     ),
     cstr-graph.instantiation-order IDs G SortedIDs,
     logging.trace (
-      coq.say "[reduce-graph] order:" SortedIDs,
+      coq.say "[reduce-graph] order:" SortedIDs
     ),
     DB => std.do! [
       reduce SortedIDs G FinalValues,
