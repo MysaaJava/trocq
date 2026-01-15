@@ -74,7 +74,7 @@ type->classes T OutClass DepClasses GR GR' :-
 
 } % param-class
 
-namespace trocq.p {
+namespace trocq.data {
 
   func pclass param-class -> term, term.
   pclass (uvar as C) T1 T2 :- !,
@@ -173,4 +173,4 @@ namespace trocq.p {
     ),
     W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ WF t t' tr.
 
-} % trocq.p
+} % trocq.data

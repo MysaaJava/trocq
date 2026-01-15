@@ -44,12 +44,12 @@ generate-param-arrow (pc M N as Class) Ui Uj Li Lj Lk :-
   ParamSymA = const {trocq.db.param-sym (pc MA NA)},
   ParamSymB = const {trocq.db.param-sym (pc MB NB)},
   % build functions doing several weakenings at once
-  trocq.p.forget ClassA (pc map0 map0) ForgetA0F,
-  trocq.p.forget ClassB (pc map0 map0) ForgetB0F,
-  trocq.p.forget ClassA ClassAM ForgetADepMF,
-  trocq.p.forget ClassB ClassBM ForgetBDepMF,
-  trocq.p.forget {param-class.negate ClassA} NegClassAN ForgetADepNF,
-  trocq.p.forget {param-class.negate ClassB} NegClassBN ForgetBDepNF,
+  trocq.data.forget ClassA (pc map0 map0) ForgetA0F,
+  trocq.data.forget ClassB (pc map0 map0) ForgetB0F,
+  trocq.data.forget ClassA ClassAM ForgetADepMF,
+  trocq.data.forget ClassB ClassBM ForgetBDepMF,
+  trocq.data.forget {param-class.negate ClassA} NegClassAN ForgetADepNF,
+  trocq.data.forget {param-class.negate ClassB} NegClassBN ForgetBDepNF,
   % we cut the proof into multiple parts for readability
   RArrowF = (a\ a'\ aR\ b\ b'\ bR\
     app [pglobal RArrow UIij,

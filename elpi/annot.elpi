@@ -54,10 +54,10 @@ sub-type (aprod N AT AF) (aprod _ AT' AF') :- !,
 sub-type (afun N AT AF) (afun _ AT AF') :- !,
   @annot-pi-decl N AT x\ sub-type (AF x) (AF' x).
 % SubApp
-sub-type (aapp [ (afun _ AT AF),AX1|AXs]) (aapp [(afun _ AT' AF'),AX1'|AXs']) :- !,
+sub-type (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) :- !,
   % We beta-reduce
   sub-type (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']).
-sub-type (aapp [X|AXs] as T) (aapp [X'|AXs'] as T') :- !,
+sub-type (aapp [X|AXs] as T) (aapp [X|AXs']) :- !,
   (name X ; X = aglobal _ ; X = apglobal _ _ ; coq.error "[sub-type] Input" T "is not a type"), !,
   std.forall2 AXs AXs' eq.
 % SubConv

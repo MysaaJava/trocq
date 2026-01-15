@@ -95,7 +95,7 @@ param
   RT :- !, std.do! [
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
     cstr.dep-type C CR,
-    trocq.p.ttype C CR RT,
+    trocq.data.ttype C CR RT,
     logging.debug (coq.say "[param] Out rule sort :" T' "∵" RT),
   ].
 
@@ -111,7 +111,7 @@ param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F') Witness :- !,
   Witness = (
     fun N {aterm->term T} x\
     fun N' T' x'\
-    fun NR (app [{trocq.p.r {param-class.bottom}}, {aterm->term T}, T', TR, x, x']) xR\
+    fun NR (app [{trocq.data.r {param-class.bottom}}, {aterm->term T}, T', TR, x, x']) xR\
       FR x x' xR
   ),
   logging.debug (coq.say "[param] Out rule lam :" T' "∵" Witness).
@@ -126,7 +126,7 @@ param
       (annot.typecheck A (asort SortA _); coq.error "[param/arrow] Cannot typecheck A with a sort"),
       param A (asort SortA CA) A' AR,
       param B (asort Sort CB) B' BR,
-      coq.mk-app {trocq.p.arrow C} [{aterm->term A}, A', AR, {aterm->term B}, B', BR] Witness,
+      coq.mk-app {trocq.data.arrow C} [{aterm->term A}, A', AR, {aterm->term B}, B', BR] Witness,
       logging.debug (coq.say "[param] Out rule arrow :" T' "∵" Witness)
     ].
 
@@ -146,13 +146,13 @@ param
     (@param-pi-decl N A (ax\ x'\ xR\
       param (B ax) (asort Sort CB) (B' x') (BR {aterm->term ax} x' xR)
     )),
-    coq.mk-app {trocq.p.forall C}
+    coq.mk-app {trocq.data.forall C}
       [ {aterm->term A}, A', AR,
         fun N {aterm->term A} {aterm.util.atermfun->termfun B},
         fun N' A' B',
         fun N {aterm->term A} a\
          fun N' A' a'\
-         fun NR (app [{trocq.p.r CA}, {aterm->term A}, A', AR, a, a']) aR\
+         fun NR (app [{trocq.data.r CA}, {aterm->term A}, A', AR, a, a']) aR\
           BR a a' aR
       ] Witness,
     logging.debug (coq.say "[param] Out rule pi :" T' "∵" Witness)
@@ -186,10 +186,10 @@ param X T _ _ :-
 % ==================================================================================================
 
 
-pred weakener i:aterm i:aterm o:term.
+pred weakener i:aterm, i:aterm, o:term.
 weakener (asort _ C) (asort _ C') Weakener :- !,
-  trocq.p.forget C C' Weakener.
-weakener (aprod NA A P as PiAP) (aprod NB B Q as PiBQ) Weakener :- !,
+  trocq.data.forget C C' Weakener.
+weakener (aprod _ A P) (aprod _ B Q) Weakener :- !,
   pi t t' tr ax x ax' x' xr\ [
     aterm->term ax x,
     term->aterm x ax,
@@ -206,7 +206,7 @@ weakener (aprod NA A P as PiAP) (aprod NB B Q as PiBQ) Weakener :- !,
 weakener (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) W :- !,
   % We beta-reduce
   weakener (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']) W.
-weakener (aapp [X|_] as T) (aapp [X'|_] as T') W :- !,
+weakener (aapp [X|_] as T) (aapp [_|_]) W :- !,
   (name X ; X = aglobal _ ; X = apglobal _ _ ; coq.error "[weakener] Input" T "is not a type"), !,
   % because sub-type T T', we have that eq AXs AXs', and as names and globals are not annotated, all annotations are the same
   W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ tr.
@@ -218,7 +218,7 @@ weakener X _ _ :- !,
 
 
 % weaken A A' t t' tr tr' is ⇓^A_A' {t} {t'} tr = tr'
-pred weaken i:aterm i:aterm i:term i:term i:term o:term.
+pred weaken i:aterm, i:aterm, i:term, i:term, i:term, o:term.
 weaken A B T T' TR TR' :- !,
   logging.trace (coq.say "[weaken] Weakening from" A "to" B "term" T "~" T' "∵" TR),
   prune W [], % Weakening does not depend on context
