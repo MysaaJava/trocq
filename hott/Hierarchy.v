@@ -98,28 +98,12 @@ Register Map3.Has as trocq.map3.
 Register Map4.Has as trocq.map4.
 Elpi Query lp:{{register-map-classes}}.
 
-(* syntactic representation of annotated universes
- * useful to annotate the initial goal with fresh variables of type map_class
- * that will be mapped to variables in the constraint graph
- *)
-Definition PType@{i} (m n : map_class) (* : Type@{i+1} *) := Type@{i}.
-(* placeholder for a weakening from (m, n) to (m', n')
- * replaced with a real weakening function once the ground classes are known
- *)
-Definition weaken@{i} (m n m' n' : map_class) {A : Type@{i}} (a : A) : A := a.
-Register PType as trocq.ptype.
-Register weaken as trocq.weaken.
-
 Definition sym_rel@{i} {A B : Type@{i}} (R : A -> B -> Type@{i}) := fun b a => R a b.
 
 Register sym_rel as trocq.sym_rel.
 Register paths as trocq.paths.
 
 Elpi Query lp:{{
-  {{:gref lib:trocq.ptype}} = const PType,
-  coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.ptype PType)),
-  {{:gref lib:trocq.weaken}} = const Weaken,
-  coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.weaken Weaken)),
   coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.sym-rel {{:gref lib:trocq.sym_rel}})),
   coq.elpi.accumulate _ "trocq.db" (clause _ _ (pi UI\
     trocq.db.paths UI (pglobal {{:gref lib:trocq.paths}} UI)

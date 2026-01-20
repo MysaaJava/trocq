@@ -25,11 +25,13 @@ install-std: std
 
 test-std: std
 	$(MAKE) COQPROJECTFILE=./_CoqProject.std -C tests all
+	rm -f tests/_CoqProject
 	ln -s tests/_CoqProject.std tests/_CoqProject
 .PHONY: test-std
 
 test-hott: hott
 	$(MAKE) COQPROJECTFILE=./_CoqProject.hott -C tests all
+	rm -f tests/_CoqProject
 	ln -s tests/_CoqProject.hott tests/_CoqProject
 .PHONY: test-hott
 

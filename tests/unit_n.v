@@ -15,24 +15,19 @@ From Trocq Require Import Stdlib Trocq.
 
 Set Universe Polymorphism.
 
-Section Transfer.
+Section N.
 
-    Variable (I I' : Type) (f : I -> I').
+    Variable (N N' : Type).
+    Variable (Z : N) (Z' : N').
 
-    Definition Rf := mkParam2a0 f.
-    Trocq Use Rf.
+    Definition RN : Param2a2b.Rel N N'. admit. Admitted.
+    Trocq Use RN.
 
-    Variable (pe : I -> I -> Prop) (pe' : I' -> I' -> Prop).
-    Variable (peR : forall (n m : I) (n' m' : I'), Rf n n' -> Rf m m' -> pe' n' m' -> pe n m).
+    Definition RNZ : RN Z Z'. admit. Admitted.
+    Trocq Use RNZ.
 
-    Definition Rpe (n : I) (n' : I') (rn : Rf n n')
-        (m : I) (m' : I') (rm : Rf m m') :=
-        mkParam01 (peR n m n' m' rn rm).
-    Trocq Use Rpe.
-    Goal forall (n : I), forall (m : I), pe n m.
-    Proof.
-    trocq.
-    enough (x : forall n' : I', forall m' : I', pe' n' m') by exact x.
+    Goal forall (P : N -> Type), (forall a : N, P a).
+        trocq.
     Abort.
 
-End Transfer.
+End N.

@@ -12,9 +12,13 @@ unit_transfer1.v
 unit_transfer2.v
 unit_transfer4.v
 unit_transfer5.v
+unit_n.v
+
 
 # Trocq produces an ill-typed term
 #unit_transfer3.v
+#unit_comm1.v
+#unit_comm2.v
 
 # Bug with trocq ?
 # The generated type has the wrong type

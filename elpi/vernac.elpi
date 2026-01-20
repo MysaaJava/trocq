@@ -28,7 +28,7 @@ main [str "Register", str "Univalence", str S] :- !, std.do! [
   ]},
   GR = const Const,
   coq.elpi.accumulate _ "trocq.db"
-    (clause _ (before "default-univalence") (trocq.db.univalence Const)),
+    (clause _ _ (trocq.db.univalence Const)),
   logging.info (coq.info "Univalence axiom successfully registered.")
 ].
 
@@ -49,7 +49,7 @@ main [str "Register", str "Funext", str S] :- !, std.do! [
   ]},
   GR = const Const,
   coq.elpi.accumulate _ "trocq.db"
-    (clause _ (before "default-funext") (trocq.db.funext Const)),
+    (clause _ _ (trocq.db.funext Const)),
   logging.info (coq.info "Function extensionality axiom successfully registered.")
 ].
 
@@ -130,7 +130,7 @@ main [str "RelatedWith", Rel, X] :- !, std.do! [
 
       logging.info (sigma WCRRId\
         coq.gref->id (const WCRR) WCRRId,
-        coq.say "accumulating" GRId
+        coq.info "accumulating" GRId
           "@" subclass "(" CList ") ~" GR'Id
           ":." WCRRId
           "attached to relation" GRRelId

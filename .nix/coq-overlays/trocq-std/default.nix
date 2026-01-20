@@ -11,6 +11,7 @@ mkCoqDerivation {
 
   buildFlags = [ "std" ];
 
+  doCheck = true;
   checkTarget = [ "test-std" ];
 
   installTargets = [ "install-std" ];

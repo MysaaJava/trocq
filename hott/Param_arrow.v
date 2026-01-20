@@ -15,6 +15,7 @@ From elpi Require Import elpi.
 Require Import ssreflect.
 Require Import Stdlib Hierarchy Database Param_lemmas.
 
+From Trocq.Elpi Extra Dependency "aterm.elpi" as aterm.
 From Trocq.Elpi Extra Dependency "util-rocq.elpi" as util_rocq.
 From Trocq.Elpi Extra Dependency "param-class-util.elpi" as param_class_util.
 From Trocq.Elpi.generation Extra Dependency "param-arrow.elpi" as param_arrow_generation.
@@ -26,6 +27,7 @@ Local Open Scope param_scope.
 
 Elpi Command genparamarrow.
 Elpi Accumulate Db trocq.db.
+Elpi Accumulate File aterm.
 Elpi Accumulate File util_rocq.
 Elpi Accumulate File param_class_util.
 
