@@ -15,7 +15,7 @@ From Trocq Require Import Stdlib Trocq.
 
 Set Universe Polymorphism.
 
-Section RelatedWith.
+Section TrocqTo.
 
     Variable (A B C : Type).
     Variable (f1 : B -> A) (f2 : C -> A).
@@ -23,16 +23,19 @@ Section RelatedWith.
     Definition R1 : Param01.Rel A B := mkParam01 f1.
     Definition R2 : Param01.Rel A C := mkParam01 f2.
 
-    Trocq RelatedWith R1 R1.
-    Trocq RelatedWith R2 R2.
+    Trocq Use R1.
+    Trocq Use R2.
 
     Goal A.
-        trocq with R1.
+        trocq to B.
         enough (x : B) by exact x.
     Abort.
 
+    (* This should work in the future *)
+    (*
     Goal A.
-        trocq with R2.
+        trocq to C.
         enough (x : C) by exact x.
     Abort.
-End RelatedWith.
+    *)
+End TrocqTo.
