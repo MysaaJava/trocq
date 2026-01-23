@@ -41,43 +41,18 @@ pred param i:aterm, i:aterm, o:term, o:term.
 func param.store aterm -> aterm, term, term.
 
 % used in order not to typecheck+annotate twice the same term
-pred fresh-type.
 
 % ==================================================================================================
 
 % TrocqConv + TrocqConst
-param (aglobal GR as Tm) AT' Tm' GrefR :- !,
+param Tm AT' Tm' GrefR :- aterm.util.global Tm GR, !, std.do! [
   logging.debug (coq.say "[param] Rule const :" Tm "@" AT'),
-  if (fresh-type) (
-    % T' already comes from a call to annot.typecheck in the case for app
-    % subtyping will be handled there
-    % (we do not want to annot.typecheck several times a same constant, because it creates
-    %  fresh class variables twice, which would split the information)
-    cstr.dep-gref GR AT' Tm' GRR,
-    GrefR = pglobal GRR _
-  ) (
-    std.do![
-      annot.typecheck (aglobal GR) AT,
-      annot.sub-type AT AT',
-      cstr.dep-gref GR AT Tm' GRR,
-      weaken AT AT' {aterm->term Tm} Tm' (pglobal GRR _) GrefR,
-    ]
-  ),
-  logging.debug (coq.say "[param] Out rule const :" Tm' "∵" GrefR).
-
-% universe-polymorphic case
-param (apglobal GR UI as Tm) AT' Tm' GrefR :- !,
-  logging.debug (coq.say "[param] Rule pconst :" Tm "@" AT'),
-  if (fresh-type) (
-    cstr.dep-gref GR AT' Tm' GRR,
-    GrefR = pglobal GRR UI
-  ) (
-    annot.typecheck (apglobal GR UI) AT,
-    annot.sub-type AT AT',
-    cstr.dep-gref GR AT Tm' GRR,
-    weaken AT AT' {aterm->term Tm} Tm' (pglobal GRR UI) GrefR
-  ),
-  logging.debug (coq.say "[param] Out rule pconst :" Tm' "∵" GrefR).
+  annot.typecheck Tm AT,
+  annot.sub-type AT AT',
+  cstr.dep-gref GR AT Tm' GRR,
+  weaken AT AT' {aterm->term Tm} Tm' (pglobal GRR _) GrefR, %TODO We should replace with a coq.env.global here
+  logging.debug (coq.say "[param] Out rule const :" Tm' "∵" GrefR)
+].
 
 % TrocqConv + TrocqVar
 param X T2 X' Witness :- name X, !,
@@ -162,7 +137,7 @@ param
 param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Witness :- !, std.do! [
   logging.debug (coq.say "[param] Rule app :" T "@" B),
   annot.typecheck F TF,
-  fresh-type => param F TF F' FR,
+  param F TF F' FR,
   param.args TF B Xs Xs' XsR B0,
   coq.mk-app FR XsR AppR,
   weaken B0 B {aterm->term T} T' AppR Witness,

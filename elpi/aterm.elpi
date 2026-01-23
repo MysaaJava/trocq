@@ -99,4 +99,7 @@ namespace aterm.util {
   % The other cases are aglobal, apglobal, and (name X), which all leads to []
   classes _ [] none :- !.
 
+  func global i:aterm o:gref.
+  global (aglobal G) G :- !.
+  global (apglobal G _) G :- !.
 }
