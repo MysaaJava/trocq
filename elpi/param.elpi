@@ -47,13 +47,13 @@ func param.store aterm -> aterm, term, term.
 % ==================================================================================================
 
 % TrocqConv + TrocqConst
-param Tm AT' Tm' GrefR :- aterm.util.global Tm GR, !, std.do! [
+param Tm AT' Tm' Witness :- aterm.util.global Tm GR, !, std.do! [
   logging.debug (coq.say "[param] Rule const :" Tm "@" AT'),
   annot.typecheck Tm AT,
   annot.sub-type AT AT',
-  cstr.dep-gref GR AT Tm' GRR,
-  weaken AT AT' {aterm->term Tm} Tm' (pglobal GRR _) GrefR, %TODO We should replace with a coq.env.global here
-  logging.debug (coq.say "[param] Out rule const :" Tm' "∵" GrefR)
+  cstr.dep-gref GR AT Tm' TRR,
+  weaken AT AT' {aterm->term Tm} Tm' TRR Witness,
+  logging.debug (coq.say "[param] Out rule const :" Tm' "∵" Witness)
 ].
 
 % TrocqConv + TrocqVar

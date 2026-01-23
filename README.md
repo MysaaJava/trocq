@@ -90,9 +90,7 @@ In short, the plugin provides a tactic:
 - `trocq with R1 R2 ...` which works similarly to its argumentless counterpart
   except that it also uses translations associated to the relations `R1`,
   `R2`... ; see below regarding how to associated translations to a relation.
-- `trocq to A` which will fail if the newly computed goal is not _exactly_ `A`.
-  this will be able (in the future) to guide trocq so it uses the right relations
-  in order to achieve the objective goal.
+- `trocq to A` which attempts to translate the goal to a new goal `A`.
 - `trocq to A with R1 R2` is a combination of the two options above
 
 And four commands:

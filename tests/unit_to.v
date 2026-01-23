@@ -31,11 +31,8 @@ Section TrocqTo.
         enough (x : B) by exact x.
     Abort.
 
-    (* This should work in the future *)
-    (*
     Goal A.
         trocq to C.
         enough (x : C) by exact x.
     Abort.
-    *)
 End TrocqTo.
