@@ -10,6 +10,7 @@ digraph {
     "database" [shape=box, URL="https://github.com/rocq-community/trocq/blob/master/elpi/database.elpi"];
     "aterm" [URL="https://github.com/rocq-community/trocq/blob/master/elpi/aterm.elpi"];
     "constraints" [URL="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/constraints.elpi"];
+    "coercion" [URL="https://github.com/rocq-community/trocq/blob/master/elpi/coercion.elpi"];
     "simple-graph" [URL="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/simple-graph.elpi"];
     "constraint-graph" [URL="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/constraint-graph.elpi"];
     "constraints-impl" [URL="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/constraints-impl.elpi"];
@@ -34,7 +35,7 @@ digraph {
     "annot" -> "param";
     "data" -> {"param"  "constraint-graph"};
     "param-class-util" -> "vernac";
-    "param" -> "tactic";
+    "param" -> {"coercion" "tactic"};
 
     ## CLUSTERS
     subgraph cluster_trocqdb {

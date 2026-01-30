@@ -65,6 +65,8 @@ param X T2 X' Witness :- name X, !,
   logging.debug (coq.say "[param] Out rule var :" X' "∵" Witness).
 
 % TrocqSort
+% TODO: This will fail if we don't have the same sort before and after ~
+% We should add a unify-eq between S and S'
 param
   (asort S CR as T)
   (asort _ C as AT)
@@ -157,8 +159,8 @@ param.args (aprod _ T Bk) B [X|Xs] [X'|Xs'] [X_T, X', XR|XRs] B0 :- !,
 param.args FunTy AB L _ _ _ :-
   trocq.error "[param.args] unsupported combination:" FunTy "&" AB "&" L.
 
-param X T _ _ :-
-  trocq.error "[param] unsupported combination:" X "@" T.
+param X T X' Witness :-
+  trocq.error "[param] unsupported combination:" X "@" T "~" X' "∵" Witness.
 
 % ==================================================================================================
 

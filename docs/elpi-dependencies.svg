@@ -8,14 +8,14 @@
  viewBox="0.00 0.00 497.19 674.50" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 670.5)">
 <polygon fill="white" stroke="none" points="-4,4 -4,-670.5 493.19,-670.5 493.19,4 -4,4"/>
-<g id="clust4" class="cluster">
+<g id="clust5" class="cluster">
 <title>cluster_trocqdb</title>
 <polygon fill="#dffdc0" stroke="black" points="83.19,-509.25 83.19,-658.5 179.19,-658.5 179.19,-509.25 83.19,-509.25"/>
 <text text-anchor="middle" x="131.19" y="-641.2" font-family="Times,serif" font-size="14.00">trocq.db</text>
 </g>
-<g id="clust5" class="cluster">
+<g id="clust6" class="cluster">
 <title>cluster_constraints</title>
-<g id="a_clust5"><a xlink:href="https://github.com/rocq-community/trocq/tree/master/elpi/constraints" xlink:title="constraints">
+<g id="a_clust6"><a xlink:href="https://github.com/rocq-community/trocq/tree/master/elpi/constraints" xlink:title="constraints">
 <polygon fill="lightyellow" stroke="black" points="275.19,-208 275.19,-501.25 481.19,-501.25 481.19,-208 275.19,-208"/>
 <text text-anchor="middle" x="378.19" y="-483.95" font-family="Times,serif" font-size="14.00">constraints</text>
 </a>
@@ -85,9 +85,9 @@
 <polygon fill="black" stroke="black" points="218.38,-479.65 214.64,-469.74 211.38,-479.82 218.38,-479.65"/>
 </g>
 <!-- simple&#45;graph -->
-<g id="node7" class="node">
+<g id="node8" class="node">
 <title>simple&#45;graph</title>
-<g id="a_node7"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/simple-graph.elpi" xlink:title="simple&#45;graph">
+<g id="a_node8"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/simple-graph.elpi" xlink:title="simple&#45;graph">
 <ellipse fill="none" stroke="black" cx="362.19" cy="-378" rx="76.99" ry="18"/>
 <text text-anchor="middle" x="362.19" y="-373.32" font-family="Times,serif" font-size="14.00">simple&#45;graph</text>
 </a>
@@ -100,9 +100,9 @@
 <polygon fill="black" stroke="black" points="320.29,-402.69 327.83,-395.25 317.29,-396.36 320.29,-402.69"/>
 </g>
 <!-- data -->
-<g id="node11" class="node">
+<g id="node12" class="node">
 <title>data</title>
-<g id="a_node11"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/data.elpi" xlink:title="data">
+<g id="a_node12"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/data.elpi" xlink:title="data">
 <ellipse fill="none" stroke="black" cx="234.19" cy="-378" rx="33.32" ry="18"/>
 <text text-anchor="middle" x="234.19" y="-373.32" font-family="Times,serif" font-size="14.00">data</text>
 </a>
@@ -115,9 +115,9 @@
 <polygon fill="black" stroke="black" points="229.51,-408.14 228.89,-397.56 222.78,-406.21 229.51,-408.14"/>
 </g>
 <!-- param&#45;class&#45;util -->
-<g id="node12" class="node">
+<g id="node13" class="node">
 <title>param&#45;class&#45;util</title>
-<g id="a_node12"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/param-class-util.elpi" xlink:title="param&#45;class&#45;util">
+<g id="a_node13"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/param-class-util.elpi" xlink:title="param&#45;class&#45;util">
 <ellipse fill="none" stroke="black" cx="91.19" cy="-378" rx="91.19" ry="18"/>
 <text text-anchor="middle" x="91.19" y="-373.32" font-family="Times,serif" font-size="14.00">param&#45;class&#45;util</text>
 </a>
@@ -162,10 +162,19 @@
 <path fill="none" stroke="black" d="M358.43,-431.7C358.95,-424.41 359.57,-415.73 360.15,-407.54"/>
 <polygon fill="black" stroke="black" points="363.64,-407.84 360.86,-397.61 356.66,-407.34 363.64,-407.84"/>
 </g>
+<!-- coercion -->
+<g id="node7" class="node">
+<title>coercion</title>
+<g id="a_node7"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/coercion.elpi" xlink:title="coercion">
+<ellipse fill="none" stroke="black" cx="223.19" cy="-18" rx="53.31" ry="18"/>
+<text text-anchor="middle" x="223.19" y="-13.32" font-family="Times,serif" font-size="14.00">coercion</text>
+</a>
+</g>
+</g>
 <!-- constraint&#45;graph -->
-<g id="node8" class="node">
+<g id="node9" class="node">
 <title>constraint&#45;graph</title>
-<g id="a_node8"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/constraint-graph.elpi" xlink:title="constraint&#45;graph">
+<g id="a_node9"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/constraint-graph.elpi" xlink:title="constraint&#45;graph">
 <ellipse fill="none" stroke="black" cx="378.19" cy="-306" rx="94.88" ry="18"/>
 <text text-anchor="middle" x="378.19" y="-301.32" font-family="Times,serif" font-size="14.00">constraint&#45;graph</text>
 </a>
@@ -178,9 +187,9 @@
 <polygon fill="black" stroke="black" points="375.13,-336.11 373.95,-325.58 368.31,-334.55 375.13,-336.11"/>
 </g>
 <!-- constraints&#45;impl -->
-<g id="node9" class="node">
+<g id="node10" class="node">
 <title>constraints&#45;impl</title>
-<g id="a_node9"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/constraints-impl.elpi" xlink:title="constraints&#45;impl">
+<g id="a_node10"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/constraints/constraints-impl.elpi" xlink:title="constraints&#45;impl">
 <ellipse fill="none" stroke="black" cx="377.19" cy="-234" rx="92.77" ry="18"/>
 <text text-anchor="middle" x="377.19" y="-229.32" font-family="Times,serif" font-size="14.00">constraints&#45;impl</text>
 </a>
@@ -193,9 +202,9 @@
 <polygon fill="black" stroke="black" points="381.1,-263.57 377.46,-253.62 374.1,-263.67 381.1,-263.57"/>
 </g>
 <!-- annot -->
-<g id="node10" class="node">
+<g id="node11" class="node">
 <title>annot</title>
-<g id="a_node10"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/annot.elpi" xlink:title="annot">
+<g id="a_node11"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/annot.elpi" xlink:title="annot">
 <ellipse fill="none" stroke="black" cx="349.19" cy="-162" rx="39.63" ry="18"/>
 <text text-anchor="middle" x="349.19" y="-157.32" font-family="Times,serif" font-size="14.00">annot</text>
 </a>
@@ -208,9 +217,9 @@
 <polygon fill="black" stroke="black" points="363.56,-189.49 356.6,-181.51 357.06,-192.09 363.56,-189.49"/>
 </g>
 <!-- param -->
-<g id="node13" class="node">
+<g id="node14" class="node">
 <title>param</title>
-<g id="a_node13"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/param.elpi" xlink:title="param">
+<g id="a_node14"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/param.elpi" xlink:title="param">
 <ellipse fill="none" stroke="black" cx="278.19" cy="-90" rx="43.32" ry="18"/>
 <text text-anchor="middle" x="278.19" y="-85.33" font-family="Times,serif" font-size="14.00">param</text>
 </a>
@@ -235,9 +244,9 @@
 <polygon fill="black" stroke="black" points="277.24,-120.22 275.3,-109.8 270.32,-119.15 277.24,-120.22"/>
 </g>
 <!-- vernac -->
-<g id="node15" class="node">
+<g id="node16" class="node">
 <title>vernac</title>
-<g id="a_node15"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/vernac.elpi" xlink:title="vernac">
+<g id="a_node16"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/vernac.elpi" xlink:title="vernac">
 <ellipse fill="none" stroke="black" cx="91.19" cy="-306" rx="44.89" ry="18"/>
 <text text-anchor="middle" x="91.19" y="-301.32" font-family="Times,serif" font-size="14.00">vernac</text>
 </a>
@@ -249,20 +258,26 @@
 <path fill="none" stroke="black" d="M91.19,-359.7C91.19,-352.41 91.19,-343.73 91.19,-335.54"/>
 <polygon fill="black" stroke="black" points="94.69,-335.62 91.19,-325.62 87.69,-335.62 94.69,-335.62"/>
 </g>
+<!-- param&#45;&gt;coercion -->
+<g id="edge18" class="edge">
+<title>param&#45;&gt;coercion</title>
+<path fill="none" stroke="black" d="M265.16,-72.41C258.58,-64.04 250.46,-53.71 243.13,-44.37"/>
+<polygon fill="black" stroke="black" points="246,-42.36 237.07,-36.66 240.49,-46.69 246,-42.36"/>
+</g>
 <!-- tactic -->
-<g id="node14" class="node">
+<g id="node15" class="node">
 <title>tactic</title>
-<g id="a_node14"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/tactic.elpi" xlink:title="tactic">
-<ellipse fill="none" stroke="black" cx="278.19" cy="-18" rx="39.11" ry="18"/>
-<text text-anchor="middle" x="278.19" y="-13.32" font-family="Times,serif" font-size="14.00">tactic</text>
+<g id="a_node15"><a xlink:href="https://github.com/rocq-community/trocq/blob/master/elpi/tactic.elpi" xlink:title="tactic">
+<ellipse fill="none" stroke="black" cx="333.19" cy="-18" rx="39.11" ry="18"/>
+<text text-anchor="middle" x="333.19" y="-13.32" font-family="Times,serif" font-size="14.00">tactic</text>
 </a>
 </g>
 </g>
 <!-- param&#45;&gt;tactic -->
-<g id="edge18" class="edge">
+<g id="edge19" class="edge">
 <title>param&#45;&gt;tactic</title>
-<path fill="none" stroke="black" d="M278.19,-71.7C278.19,-64.41 278.19,-55.73 278.19,-47.54"/>
-<polygon fill="black" stroke="black" points="281.69,-47.62 278.19,-37.62 274.69,-47.62 281.69,-47.62"/>
+<path fill="none" stroke="black" d="M291.23,-72.41C297.8,-64.04 305.92,-53.71 313.26,-44.37"/>
+<polygon fill="black" stroke="black" points="315.89,-46.69 319.32,-36.66 310.39,-42.36 315.89,-46.69"/>
 </g>
 </g>
 </svg>
