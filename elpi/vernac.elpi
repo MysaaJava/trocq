@@ -152,6 +152,16 @@ main [str "Logging", str StrLevel] :- !,
     log-level Level
   ).
 
+main [str "Coercion", str "On"] :- !,
+  coq.elpi.accumulate _ "trocq.db" (
+    clause "coercion-enabled-on" (before "coercion-enabled") (trocq.db.coercion-enabled)
+  ).
+
+main [str "Coercion", str "Off"] :- !,
+  coq.elpi.accumulate _ "trocq.db" (
+    clause _ (remove "coercion-enabled-on") (trocq.db.coercion-enabled :- !, fail)
+  ).
+
 main _ :- trocq.error {std.string.concat "\n" ["command syntax error", {usage-msg}]}.
 
 pred usage-msg o:string.
@@ -163,5 +173,6 @@ usage-msg U :-
     "- Trocq Use <RTrocq>+",
     "- Trocq RelatedWith <Relation> <RTrocq>+",
     "- Trocq Logging [\"off\"|\"info\"|\"debug\"|\"trace\"]",
+    "- Trocq Coercion [\"On\"|\"Off\"]",
     "", "",
   ] U.

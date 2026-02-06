@@ -93,7 +93,7 @@ In short, the plugin provides a tactic:
 - `trocq to A` which attempts to translate the goal to a new goal `A`.
 - `trocq to A with R1 R2` is a combination of the two options above
 
-And four commands:
+And six commands:
 - `Trocq Use t` to use a translation `t` during the subsequent calls
   to the tactic `trocq`.
 - `Trocq Register Univalence u` to declare a univalence axiom `u`.
@@ -102,4 +102,6 @@ And four commands:
 - `Trocq RelatedWith R t1 t2 ...` to associate `t1`, `t2`, ... to `R`.
   Subsequent calls to `trocq with R` will be able to use the translations `t1`,
   `t2`, ...
+- `Trocq Coercion "Off"|"On"` to enable or disable trocq being used as a fallback for Rocq's coercion.
 - `Trocq Logging "off"|"info"|"debug"|"trace"` to set the verbosity level.
+- `Trocq Usage` to print a small help message describing available trocq commands.

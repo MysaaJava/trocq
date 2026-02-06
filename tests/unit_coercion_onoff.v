@@ -11,28 +11,29 @@
 (*                            * see LICENSE file for the text of the license *)
 (*****************************************************************************)
 
-From Trocq Require Import Stdlib Trocq.
+From Trocq Require Import Trocq.
 
 Set Universe Polymorphism.
 
-Section TrocqCoercion.
+Section TrocqCoercionOnOff.
 
-    Variable (A B C : Type).
-    Variable (f1 : B -> A) (f2 : C -> A).
+    Variable (A B: Type).
+    Variable (f : B -> A).
 
-    Definition R1 : Param10.Rel B A := mkParam10 f1.
-    Definition R2 : Param10.Rel C A := mkParam10 f2.
+    Definition R1 : Param10.Rel B A := mkParam10 f.
 
     Trocq Use R1.
-    Trocq Use R2.
+    Goal A.
+        Fail (enough (x : B) by exact x).
+    Abort.
 
     Trocq Coercion On.
-
     Goal A.
         enough (x : B) by exact x.
     Abort.
 
+    Trocq Coercion Off.
     Goal A.
-        enough (x : C) by exact x.
+        Fail (enough (x : B) by exact x).
     Abort.
-End TrocqCoercion.
+End TrocqCoercionOnOff.
