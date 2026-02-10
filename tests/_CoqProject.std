@@ -15,6 +15,7 @@ unit_transfer1.v
 unit_transfer2.v
 unit_transfer4.v
 unit_transfer5.v
+unit_twoTranslations.v
 unit_n.v
 
 
@@ -33,9 +34,6 @@ unit_n.v
 # Bug with trocq ?
 # The generated term has the wrong type
 # unit_typeArrow.v
-
-# Waiting for 'trocq to' syntax to be implemented and working
-# unit_twoTranslations.v
 
 # Failing with a elpi error «Unification problem outside the pattern fragment.»
 # Actually uses the constraint graph

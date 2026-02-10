@@ -10,6 +10,7 @@ unit_arrow_contravariant.v
 unit_simpleArrow.v
 unit_relatedWith.v
 unit_to.v
+unit_twoTranslations.v
 unit_type.v
 
 # Bug with trocq ?
@@ -22,9 +23,6 @@ unit_type.v
 # Bug with trocq ?
 # The generated term has the wrong type
 # unit_typeArrow.v
-
-# Waiting for 'trocq to' syntax to be implemented and working
-# unit_twoTranslations.v
 
 # Failing with a elpi error «Unification problem outside the pattern fragment.»
 # Actually uses the constraint graph

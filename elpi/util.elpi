@@ -117,6 +117,18 @@ accumulate-replacing-named-clause Scope Database ClauseName Content :-
   coq.elpi.accumulate Scope Database (clause ClauseName (before GraftingPoint) Content),
   coq.elpi.accumulate Scope Database (clause _ (remove GraftingPoint) Content).
 
+
+func list->set (func A, A -> cmp), list A -> std.set A.
+list->set Cmp [] S :- std.set.make Cmp S.
+list->set Cmp (X :: L) S :-
+  list->set Cmp L S0,
+  std.set.add X S0 S.
+
+func list.uniq (func A, A -> cmp), list A -> list A.
+list.uniq Cmp L L' :- 
+  list->set Cmp L LSet,
+  std.set.elements LSet L'.
+
 } % util
 
 pred std.string.list->set i:list string, o:std.string.set.

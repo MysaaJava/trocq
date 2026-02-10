@@ -162,6 +162,13 @@ main [str "Coercion", str "Off"] :- !,
     clause _ (remove "coercion-enabled-on") (trocq.db.coercion-enabled :- !, fail)
   ).
 
+main [str "Print", str "Translations"] :- !,
+  trocq.data.translations.grefs Goals,
+  std.forall {util.list.uniq cmp_term Goals} (G\ sigma GS\
+    trocq.data.translations.of G GS,
+    coq.info G "->" {util.list.uniq cmp_term GS}
+  ).
+
 main _ :- trocq.error {std.string.concat "\n" ["command syntax error", {usage-msg}]}.
 
 pred usage-msg o:string.
@@ -174,5 +181,6 @@ usage-msg U :-
     "- Trocq RelatedWith <Relation> <RTrocq>+",
     "- Trocq Logging [\"off\"|\"info\"|\"debug\"|\"trace\"]",
     "- Trocq Coercion [\"On\"|\"Off\"]",
+    "- Trocq Print Translations",
     "", "",
   ] U.
