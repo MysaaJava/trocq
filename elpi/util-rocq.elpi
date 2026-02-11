@@ -159,4 +159,9 @@ mk-app HD [] HD :- !.
 mk-app (app L) Args R :- !, std.append L Args LArgs, R = app LArgs.
 mk-app HD Args (app [HD|Args]).
 
+func gref->string gref -> string.
+gref->string G S :-
+  coq.env.global G T,
+  coq.term->string T S.
+
 } % util

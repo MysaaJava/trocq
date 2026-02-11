@@ -106,3 +106,5 @@ And some commands:
 - `Trocq Logging "off"|"info"|"debug"|"trace"` to set the verbosity level.
 - `Trocq Usage` to print a small help message describing available trocq commands.
 - `Trocq Print Translations` to print a list of all currently registered Trocq translations.
+- `Trocq Print Translations G` prints the list of translations registered for a specific Gref `G`.
+  it also prints all registered levels for each translation.

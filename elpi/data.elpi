@@ -133,6 +133,25 @@ namespace trocq.data {
     std.map Translations translations.of.extract Goals
   ).
 
+  % translations.ins G is the list of registered input class levels for translation G ~ G'
+  func translations.ins.extract (pred) -> list param-class.
+  translations.ins.extract (trocq.db.gref _ _ Ins _ _) Ins :- !.
+  pred translations.ins gref, gref -> list (list param-class).
+  translations.ins G G' Inss :- do-not-fail => (
+    std.findall (trocq.db.gref G _ _ G' _) Translations,
+    std.map Translations translations.ins.extract Inss
+  ).
+
+  % translations.out G G' Ins is the list of registered translation goal of gref G
+  % with annotations Ins to goal G'.
+  func translations.out.extract (pred) -> param-class.
+  translations.out.extract (trocq.db.gref _ L _ _ _) L :- !.
+  pred translations.out gref, gref, list param-class -> list param-class.
+  translations.out G G' InLvl OutLvls :- do-not-fail => (
+    std.findall (trocq.db.gref G _ InLvl G' _) Translations,
+    std.map Translations translations.out.extract OutLvls
+  ).
+
 } % trocq.data
 
 namespace trocq {

@@ -10,6 +10,7 @@ unit_arrow_contravariant.v
 unit_simpleArrow.v
 unit_relatedWith.v
 unit_to.v
+unit_print_translations.v
 unit_twoTranslations.v
 unit_type.v
 

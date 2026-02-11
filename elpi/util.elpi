@@ -129,6 +129,14 @@ list.uniq Cmp L L' :-
   list->set Cmp L LSet,
   std.set.elements LSet L'.
 
+% Makes a comparator with lexicographic order for lists from a comparator of its elements
+func listCmp.curry (func K, K -> cmp), list K, list K -> cmp.
+listCmp.curry _ [] [] eq :- !.
+listCmp.curry F [X|Xs] [Y|Ys] Cmp :- !,
+  F X Y CXY,
+  if (CXY = eq) (listCmp.curry F Xs Ys Cmp) (Cmp = CXY).
+func listCmp (func K, K -> cmp) -> (func list K, list K -> cmp).
+listCmp F (xs\ ys\ cmp\ listCmp.curry F xs ys cmp).
 } % util
 
 pred std.string.list->set i:list string, o:std.string.set.
