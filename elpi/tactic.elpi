@@ -86,9 +86,10 @@ solve InitialGoal NewGoals :- std.do! [
 ].
 
 pred translate-goal i:list prop, i:term, i:term, i:param-class, o:term, o:term.
-translate-goal DB (sort S) G (pc M N) G' GR' :- DB => std.do! [
+translate-goal DB Ty G C G' GR' :- DB => std.do! [
+  coq.reduction.lazy.norm Ty (sort S),
   cstr.init,
-  T = asort S (pc M N),
+  T = asort S C,
   logging.debug (coq.say "[translate-goal] will translate" G "at level" T),
   term->aterm G AG,
   % generate the associated goal G' and witness GR

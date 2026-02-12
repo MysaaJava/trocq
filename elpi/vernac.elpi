@@ -12,6 +12,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 accumulate "Trocq.Elpi/param-class-util".
+accumulate "Trocq.Elpi/aterm".
+accumulate "Trocq.Elpi/data".
 
 % command to register the univalence axiom
 main [str "Register", str "Univalence", str S] :- !, std.do! [
@@ -73,6 +75,10 @@ main [str "Use", X] :- !, std.do! [
   coq.elpi.accumulate _ "trocq.db"
     (clause _ _
       (trocq.db.gref GR Class CList GR' GRR)),
+  % We check that inferred Class and CList are valid for given gref.
+  coq.env.typeof GR TGR,
+  (aterm.util.mk-aterm TGR CList (some Class) _; trocq.error "Trocq could not infer classes levels for this term"), !,
+
   std.forall {param-class.all-weakenings-from Class} subclass\
       sigma WTRR Suffix WName WCRR \
     if (trocq.db.gref GR subclass _ _ _) true (std.do! [

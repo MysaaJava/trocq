@@ -22,18 +22,18 @@ digraph {
     "vernac" [URL="https://github.com/rocq-community/trocq/blob/master/elpi/vernac.elpi"];
 
     ## DEPENDENCIES
-    "util" -> "util-rocq";
+    "util" -> {"aterm" "util-rocq"};
     "util-rocq" -> {"data" "param-class-util" "simple-graph"};
     "class" -> "database";
     "class" -> "aterm" [style="dashed"];
     "database" -> {"data" "param-class-util"} [style="dashed"];
-    "aterm" -> "constraints";
+    "aterm" -> {"constraints" "vernac"};
     "constraints" -> "simple-graph";
     "simple-graph" -> "constraint-graph";
     "constraint-graph" -> "constraints-impl";
     "constraints-impl" -> "annot";
     "annot" -> "param";
-    "data" -> {"param"  "constraint-graph"};
+    "data" -> {"param"  "constraint-graph" "vernac"};
     "param-class-util" -> "vernac";
     "param" -> {"coercion" "tactic"};
 

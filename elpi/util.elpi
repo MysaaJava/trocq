@@ -137,6 +137,11 @@ listCmp.curry F [X|Xs] [Y|Ys] Cmp :- !,
   if (CXY = eq) (listCmp.curry F Xs Ys Cmp) (Cmp = CXY).
 func listCmp (func K, K -> cmp) -> (func list K, list K -> cmp).
 listCmp F (xs\ ys\ cmp\ listCmp.curry F xs ys cmp).
+
+func bool->int bool -> int.
+bool->int tt 1.
+bool->int ff 0.
+
 } % util
 
 pred std.string.list->set i:list string, o:std.string.set.
