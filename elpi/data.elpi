@@ -27,12 +27,12 @@ namespace trocq.data {
 
   func univalence -> term.
   univalence T :-
-    (trocq.db.univalence UG ; coq.error "Univalence axiom required"), !,
+    (trocq.db.univalence UG ; trocq.error "Univalence axiom required"), !,
     coq.env.global (const UG) T.
   
   func funext -> term.
   funext T :-
-    (trocq.db.funext UG ; coq.error "Funext axiom required"), !,
+    (trocq.db.funext UG ; trocq.error "Funext axiom required"), !,
     coq.env.global (const UG) T.
 
   func ttype param-class, param-class -> term.
@@ -118,4 +118,4 @@ namespace trocq.data {
 
 pred trocq.data.gref o:gref, o:param-class, o:list param-class, o:gref, o:gref.
 trocq.data.gref GR Out Classes GR' GRR :- trocq.db.gref GR Out Classes GR' GRR.
-trocq.data.gref GR Out _ _ _ :- trocq.error (coq.error "cannot find" GR "at out class" Out).
+trocq.data.gref GR Out _ _ _ :- trocq.error "cannot find" GR "at out class" Out.

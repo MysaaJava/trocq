@@ -216,7 +216,7 @@ reduce [ID|IDs] ConstraintGraph [pr ID MinClass|FinalValues] :- std.do! [
   logging.trace (coq.say "[reduce] min value" MinClass "for" ID),
   cstr-graph.maximal-class ID ConstraintGraph MaxClass,
   logging.trace (coq.say "[reduce] max value" MaxClass "for" ID),
-  util.unless (param-class.geq MaxClass MinClass) (coq.error "no solution for variable" ID),
+  util.unless (param-class.geq MaxClass MinClass) (trocq.error "no solution for variable" ID),
   reduce IDs {cstr-graph.instantiate ID MinClass ConstraintGraph} FinalValues
 ].
 
