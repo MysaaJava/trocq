@@ -69,18 +69,18 @@ main [str "Use", X] :- !, std.do! [
   ),
 
   coq.elpi.accumulate _ "trocq.db"
-    (clause _ (before "default-gref")
+    (clause _ _
       (trocq.db.gref GR Class CList GR' GRR)),
   std.forall {param-class.all-weakenings-from Class} subclass\
       sigma WTRR Suffix WName WCRR \
-    if (do-not-fail => trocq.db.gref GR subclass _ _ _) true (std.do! [
+    if (trocq.db.gref GR subclass _ _ _) true (std.do! [
       param-class.weaken-out subclass GRR WTRR,
 
       param-class.to-string subclass Suffix,
       WName is BaseName ^ "_weakened_to_" ^ Suffix,
       (@univpoly! => coq.env.add-const WName WTRR _ @transparent! WCRR),
       coq.elpi.accumulate _ "trocq.db"
-        (clause _ (before "default-gref")
+        (clause _ _
           (trocq.db.gref GR subclass CList GR' (const WCRR))),
 
       logging.info (sigma WCRRId\

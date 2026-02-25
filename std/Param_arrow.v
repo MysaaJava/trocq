@@ -15,9 +15,10 @@ From elpi Require Import elpi.
 Require Import ssreflect.
 Require Import Stdlib Hierarchy Database Param_lemmas.
 
-From Trocq.Elpi Extra Dependency "aterm.elpi" as aterm.
+From Trocq.Elpi Extra Dependency "util.elpi" as util.
 From Trocq.Elpi Extra Dependency "util-rocq.elpi" as util_rocq.
-From Trocq.Elpi Extra Dependency "param-class-util.elpi" as param_class_util.
+From Trocq.Elpi Extra Dependency "data.elpi" as data.
+From Trocq.Elpi Extra Dependency "aterm.elpi" as aterm.
 From Trocq.Elpi.generation Extra Dependency "param-arrow.elpi" as param_arrow_generation.
 
 Set Universe Polymorphism.
@@ -25,12 +26,6 @@ Unset Universe Minimization ToSet.
 
 Import HoTTNotations.
 Local Open Scope param_scope.
-
-Elpi Command genparamarrow.
-Elpi Accumulate Db trocq.db.
-Elpi Accumulate File aterm.
-Elpi Accumulate File util_rocq.
-Elpi Accumulate File param_class_util.
 
 (* relation for arrow *)
 
@@ -120,6 +115,12 @@ Defined.
 
 (* Param_arrowMN : forall A A' AR B B' BR, ParamMN.Rel (A -> B) (A' -> B') *)
 
+Elpi Command genparamarrow.
+Elpi Accumulate Db trocq.db.
+Elpi Accumulate File util.
+Elpi Accumulate File util_rocq.
+Elpi Accumulate File data.
+Elpi Accumulate File aterm.
 Elpi Accumulate File param_arrow_generation.
 Elpi Query lp:{{
   coq.univ.new Ui,

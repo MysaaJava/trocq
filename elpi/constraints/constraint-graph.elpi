@@ -167,7 +167,7 @@ instantiate.aux ID Class (node.var (ct.gref GR T Tm' GRR) IDs) G G' :- std.do! [
       G1,
   aterm.util.classes T TCs _,
   % find the output constant and proof, as well as the required classes Cs
-  trocq.db.gref GR Class Cs GR' GRR, !,
+  trocq.data.gref GR Class Cs GR' GRR, !,
   coq.env.global GR' Tm',
   % make sure the classes are consistent
   instantiate.gref IDs TCs Cs G1 G'

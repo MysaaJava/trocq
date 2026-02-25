@@ -27,6 +27,7 @@ Set Polymorphic Inductive Cumulativity.
 
 Elpi Command genhierarchy.
 Elpi Accumulate Db trocq.db.
+Elpi Accumulate File util.
 Elpi Accumulate File util_rocq.
 Elpi Accumulate File hierarchy_generation.
 
@@ -124,7 +125,6 @@ Elpi Accumulate lp:{{
     ).
 }}.
 
-#[synterp] Elpi Accumulate File util.
 #[synterp] Elpi Accumulate File class.
 #[synterp] Elpi Accumulate lp:{{
   main-synterp [] _ :-

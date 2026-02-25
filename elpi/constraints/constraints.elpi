@@ -14,8 +14,6 @@
 % API accessible to the rest of the plugin to handle the constraint graph
 % -----------------------------------------------------------------------------
 
-typeabbrev class-id int.
-
 namespace cstr {
 
 pred init.
