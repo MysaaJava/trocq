@@ -13,6 +13,8 @@
 
 % See constraints.elpi for the predicate definitions
 
+accumulate "Trocq.Elpi.constraints/constraint-graph".
+
 namespace cstr {
 
 init :-

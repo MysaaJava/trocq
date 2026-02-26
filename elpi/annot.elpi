@@ -14,6 +14,7 @@
 % Links annotated terms with the constraint graph
 % -----------------------------------------------------------------------------
 
+accumulate "Trocq.Elpi.constraints/constraints-impl".
 
 macro @annot-pi-decl N AT F :- pi ax\ annot.adecl ax N AT => F ax.
 

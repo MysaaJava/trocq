@@ -15,10 +15,6 @@ From elpi Require Import elpi.
 Require Import ssreflect.
 Require Import Stdlib Hierarchy Database Param_lemmas.
 
-From Trocq.Elpi Extra Dependency "util.elpi" as util.
-From Trocq.Elpi Extra Dependency "util-rocq.elpi" as util_rocq.
-From Trocq.Elpi Extra Dependency "data.elpi" as data.
-From Trocq.Elpi Extra Dependency "aterm.elpi" as aterm.
 From Trocq.Elpi.generation Extra Dependency "param-forall.elpi" as param_forall_generation.
 
 Set Universe Polymorphism.
@@ -120,10 +116,6 @@ Proof.
 
 Elpi Command genparamforall.
 Elpi Accumulate Db trocq.db.
-Elpi Accumulate File util.
-Elpi Accumulate File util_rocq.
-Elpi Accumulate File data.
-Elpi Accumulate File aterm.
 Elpi Accumulate File param_forall_generation.
 Elpi Query lp:{{
   coq.univ.new Ui,

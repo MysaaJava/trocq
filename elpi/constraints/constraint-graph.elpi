@@ -13,6 +13,8 @@
 % -----------------------------------------------------------------------------
 % definition of the constraint graph
 % -----------------------------------------------------------------------------
+accumulate "Trocq.Elpi.constraints/simple-graph".
+accumulate "Trocq.Elpi/data".
 
 % in the constraint graph, parametricity classes are represented with integers (it is easier to
 % index on this type than on variables of type param-class)

@@ -10,10 +10,12 @@
 %                        |_| %   GNU Lesser General Public License Version 3  %
 %                            % (see LICENSE file for the text of the license) %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % -----------------------------------------------------------------------------
 % parametricity translation
 % -----------------------------------------------------------------------------
+
+accumulate "Trocq.Elpi/annot".
+accumulate "Trocq.Elpi/data".
 
 % We traverse a binder with name N having annotated type AT
 % Then we call F with parameters ax x' xR

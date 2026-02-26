@@ -15,8 +15,6 @@ Require Import ssreflect.
 Require Import Stdlib Database.
 From elpi Require Import elpi.
 
-From Trocq.Elpi Extra Dependency "util.elpi" as util.
-From Trocq.Elpi Extra Dependency "util-rocq.elpi" as util_rocq.
 From Trocq.Elpi Extra Dependency "class.elpi" as class.
 From Trocq.Elpi.generation Extra Dependency "hierarchy.elpi" as hierarchy_generation.
 
@@ -27,8 +25,6 @@ Set Polymorphic Inductive Cumulativity.
 
 Elpi Command genhierarchy.
 Elpi Accumulate Db trocq.db.
-Elpi Accumulate File util.
-Elpi Accumulate File util_rocq.
 Elpi Accumulate File hierarchy_generation.
 
 (* Coq representation of the hierarchy *)

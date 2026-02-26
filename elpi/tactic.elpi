@@ -11,6 +11,8 @@
 %                            % (see LICENSE file for the text of the license) %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+accumulate "Trocq.Elpi/param".
+
 :before "coq-assign-evar-raw"
 evar _ _ _ :- !.
 

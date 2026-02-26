@@ -14,6 +14,8 @@
 % utilities about param-class
 % -----------------------------------------------------------------------------
 
+accumulate "Trocq.Elpi/util-rocq".
+
 namespace param-class {
 
 % weaking of the out class of a gref.

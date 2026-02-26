@@ -14,6 +14,8 @@
 % Accessors to the Trocq database
 % -----------------------------------------------------------------------------
 
+accumulate "Trocq.Elpi/util-rocq".
+
 namespace trocq.data {
 
   func pclass param-class -> term, term.

@@ -11,6 +11,8 @@
 %                            % (see LICENSE file for the text of the license) %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+accumulate "Trocq.Elpi/param-class-util".
+
 % command to register the univalence axiom
 main [str "Register", str "Univalence", str S] :- !, std.do! [
   std.assert! (coq.locate S GR) "unknown global reference",

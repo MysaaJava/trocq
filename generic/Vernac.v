@@ -14,15 +14,9 @@
 From elpi Require Import elpi.
 From Trocq Require Import Param.
 
-From Trocq.Elpi Extra Dependency "util.elpi" as util.
-From Trocq.Elpi Extra Dependency "util-rocq.elpi" as util_rocq.
-From Trocq.Elpi Extra Dependency "param-class-util.elpi" as param_class_util.
 From Trocq.Elpi Extra Dependency "vernac.elpi" as vernac.
 
 Elpi Command Trocq.
 Elpi Accumulate Db trocq.db.
-Elpi Accumulate File util.
-Elpi Accumulate File util_rocq.
-Elpi Accumulate File param_class_util.
 Elpi Accumulate File vernac.
 Elpi Export Trocq.

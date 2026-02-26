@@ -14,6 +14,8 @@
 % API accessible to the rest of the plugin to handle the constraint graph
 % -----------------------------------------------------------------------------
 
+accumulate "Trocq.Elpi/aterm".
+
 namespace cstr {
 
 pred init.
