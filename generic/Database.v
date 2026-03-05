@@ -13,7 +13,6 @@
 
 From elpi Require Export elpi.
 
-From Trocq.Elpi Extra Dependency "database.elpi" as database.
-
-Elpi Db trocq.db lp:{{ }}.
-#[superglobal] Elpi Accumulate trocq.db File database.
+Elpi Db trocq.db lp:{{
+    accumulate "Trocq.Elpi/database".
+}}.
