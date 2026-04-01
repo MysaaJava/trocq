@@ -43,6 +43,12 @@ trocq.error X1 X2 X3 X4 X5 X6 X7 X8 :- !, coq.error X1 X2 X3 X4 X5 X6 X7 X8, !.
 trocq.error _ _ _ _ _ _ _ _ _ :- do-not-fail, !, false.
 trocq.error X1 X2 X3 X4 X5 X6 X7 X8 X9 :- !, coq.error X1 X2 X3 X4 X5 X6 X7 X8 X9, !.
 
+
+func trocq.error.translation-not-found gref, param-class, list param-class, term ->.
+trocq.error.translation-not-found G Alpha L uvar :- !,
+  trocq.error "Could not find a translation of gref" G "at level" Alpha.
+trocq.error.translation-not-found G Alpha L G' :- !,
+  trocq.error "Could not find a translation of gref" G "to" G' "at level" Alpha.
 % subst-gref T GR' T'
 % substitutes GR for GR' in T if T = (global GR) or (pglobal GR I)
 pred subst-gref i:term, i:gref, o:term.

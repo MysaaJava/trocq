@@ -97,7 +97,7 @@ translate-goal DB Ty G C G' GR' :- DB => std.do! [
   logging.debug (coq.say "[translate-goal] after translation: goal" G' "with proof" GR),
   % reduce the graph, so the variables all become ground in the terms
   cstr.local-db DB,
-  cstr.reduce-graph,
+  (cstr.reduce-graph; trocq.error "Could not solve constraint Graph"),
   logging.debug (coq.say "[translate-goal] Beta-reducing proof" GR),
   %TODO make β-reduction directly in weaken predicate (Issue #63)
   coq.reduction.lazy.bi-norm GR GR',

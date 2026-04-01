@@ -9,6 +9,8 @@ unit_simpleArrow.v
 unit_relatedWith.v
 unit_to.v
 unit_coercion.v
+unit_coercion_pi.v
+unit_pi.v
 unit_coercion_onoff.v
 unit_print_translations.v
 unit_type.v

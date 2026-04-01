@@ -164,7 +164,7 @@ namespace trocq {
     coq.env.global TG T,
     coq.env.global TRG TR.
   data.gref G Alpha List T TR :- coq.env.global TG T, !,
-    trocq.db.gref G Alpha List TG TRG, !,
+    (trocq.db.gref G Alpha List TG TRG ; trocq.error.translation-not-found G Alpha List {coq.env.global TG}), !,
     coq.env.global TRG TR.
   data.gref G Alpha List T TR :- !,
     trocq.error "NYI Registering trocq to a non-gref term".
