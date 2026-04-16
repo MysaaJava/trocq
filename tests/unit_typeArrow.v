@@ -11,23 +11,23 @@
 (*                            * see LICENSE file for the text of the license *)
 (*****************************************************************************)
 
-From Trocq Require Import Trocq.
+From Trocq Require Import Stdlib Trocq.
 
 Set Universe Polymorphism.
 
 Section TypeArrow.
 
-    Variable (L : Type -> Type) (L' : Type -> Type).
-    Variable (f : forall (A : Type) (A' : Type), (A' -> A) -> L' A -> L A').
+    Variable (L L' : Type -> Type).
+    Variable (f : forall (A : Type) (A' : Type), (A -> A') -> L' A' -> L A).
 
-    Definition RL (A : Type) (A' : Type) (AR : Param01.Rel A A')
-        := mkParam01 (f A A' (Map1.map _ (Param01.contravariant _ _ AR))).
+    Definition RL (A : Type) (A' : Type) (AR : Param10.Rel A A')
+        : Param01.Rel (L A) (L' A') := mkParam01 (f A A' (map AR)).
 
     Trocq Use RL.
 
     Goal (forall A : Type, L A).
         trocq.
-        enough (x : (fun A : Type, L' A)) by exact x.
+        enough (x : forall A' : Type, L' A') by exact x.
     Abort.
 
 End TypeArrow.
