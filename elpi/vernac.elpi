@@ -170,20 +170,20 @@ main [str "Coercion", str "Off"] :- !,
 
 main [str "Print", str "Translations"] :- !,
   trocq.data.translations.grefs Goals,
-  std.forall {util.list.uniq cmp_term Goals} (G\ sigma GS\
+  std.forall {util.remove-duplicates cmp_term Goals} (G\ sigma GS\
     trocq.data.translations.of G GS,
-    coq.info {coq.gref->string G} "->" {util.list.uniq cmp_term {std.map GS coq.gref->string}}
+    coq.info {coq.gref->string G} "->" {util.remove-duplicates cmp_term {std.map GS coq.gref->string}}
   ).
 
 main [str "Print", str "Translations", Obj] :- !,
   util.argument->gref Obj G,
   coq.info "Registered translations of" {coq.gref->string G} ":",
   trocq.data.translations.of G GS,
-  std.forall {util.list.uniq cmp_term GS} (G'\ sigma SG' Inss InssU\
+  std.forall {util.remove-duplicates cmp_term GS} (G'\ sigma SG' Inss InssU\
     coq.gref->string G' SG',
     coq.info "->" SG',
     trocq.data.translations.ins G G' Inss,
-    util.list.uniq {util.listCmp cmp_term} Inss InssU,
+    util.remove-duplicates {util.lexicographic-cmp cmp_term} Inss InssU,
     std.forall InssU (Ins\ sigma Outs UOuts SUOuts SIns\
       trocq.data.translations.out G G' Ins Outs,
       % We only show upper bounds as we suppose that all weakenings have been generated

@@ -103,40 +103,57 @@ delete A [A|Xs] Xs :- !.
 delete A [X|Xs] [X|Xs'] :- delete A Xs Xs'.
 delete _ [] [].
 
-% Elpi does not allow replacing a named clause with a named clause. This is not allowed:
-%   coq.elpi.accumulate Scope Database (clause ClauseName (replace ClauseName) Content)
-% (read the explanation: https://github.com/LPCIC/elpi/blob/62d3f0c311206cb4b0cf033c34fca8336c61822e/ELPI.md?plain=1#L281)
-% This utility predicate emulates this feature.
-% However it does not solve the fundamental issue that lead Elpi to forbid
-% this, so one has to be cautious when using it.
-pred accumulate-replacing-named-clause i:scope, i:id, i:id, i:prop.
-accumulate-replacing-named-clause Scope Database ClauseName Content :-
-  GraftingPoint is ClauseName ^ "-temporary-grafting-point",
-  coq.elpi.accumulate Scope Database (clause GraftingPoint (after ClauseName) Content),
-  coq.elpi.accumulate Scope Database (clause _ (remove ClauseName) Content),
-  coq.elpi.accumulate Scope Database (clause ClauseName (before GraftingPoint) Content),
-  coq.elpi.accumulate Scope Database (clause _ (remove GraftingPoint) Content).
+% Merge sort for lists
+func sort.merge (func A, A -> cmp), list A -> list A.
+func sort.merge.join (func A, A -> cmp), list A, list A -> list A.
+func sort.merge.split list A -> list A, list A.
+sort.merge.split [] [] [].
+sort.merge.split [X] [X] [].
+sort.merge.split [X,Y|L] [X|L1] [Y|L2] :- sort.merge.split L L1 L2.
+sort.merge.join _ [] L L :- !.
+sort.merge.join _ L [] L :- !.
+sort.merge.join Cmp [X1|L1] [X2|L2] [X|L] :-
+  if (Cmp X1 X2 lt) % If X1 < X2
+    (X = X1, sort.merge.join Cmp L1 [X2|L2] L)
+    (X = X2, sort.merge.join Cmp [X1|L1] L2 L).
+sort.merge _ [] [] :- !.
+sort.merge _ [X] [X] :- !.
+sort.merge Cmp L S :-
+  sort.merge.split L L1 L2,
+  sort.merge Cmp L1 S1,
+  sort.merge Cmp L2 S2,
+  sort.merge.join Cmp S1 S2 S.
 
+% We use merge sort as the default sort
+func sort (func A, A -> cmp), list A -> list A.
+sort Cmp L L' :- sort.merge Cmp L L'.
 
-func list->set (func A, A -> cmp), list A -> std.set A.
-list->set Cmp [] S :- std.set.make Cmp S.
-list->set Cmp (X :: L) S :-
-  list->set Cmp L S0,
-  std.set.add X S0 S.
+% Remove duplicates from a sorted list
+func uniq (func A, A -> cmp), list A -> list A.
+uniq _ [] [].
+uniq _ [X] [X].
+uniq Cmp [X,Y|L] L' :- Cmp X Y eq, !, uniq Cmp [Y|L] L'.
+uniq Cmp [X,Y|L] [X|L'] :- uniq Cmp [Y|L] L'.
 
-func list.uniq (func A, A -> cmp), list A -> list A.
-list.uniq Cmp L L' :- 
-  list->set Cmp L LSet,
-  std.set.elements LSet L'.
+% Remove duplicates from any list
+func remove-duplicates (func A, A -> cmp), list A -> list A.
+func remove-duplicates.aux (func A, A -> cmp), list A -> std.set A, list A.
+remove-duplicates.aux Cmp [] S [] :- std.set.make Cmp S.
+remove-duplicates.aux Cmp [X|L] S L' :-
+  remove-duplicates.aux Cmp L S0 L0,
+  if (std.set.mem X S0)
+    (L' = L0, S0 = S)
+    (L' = [X|L0], std.set.add X S0 S).
+remove-duplicates Cmp L L' :- remove-duplicates.aux Cmp L _ L'.
 
 % Makes a comparator with lexicographic order for lists from a comparator of its elements
-func listCmp.curry (func K, K -> cmp), list K, list K -> cmp.
-listCmp.curry _ [] [] eq :- !.
-listCmp.curry F [X|Xs] [Y|Ys] Cmp :- !,
+func lexicographic-cmp (func K, K -> cmp) -> (func list K, list K -> cmp).
+func lexicographic-cmp.curry (func K, K -> cmp), list K, list K -> cmp.
+lexicographic-cmp.curry _ [] [] eq :- !.
+lexicographic-cmp.curry F [X|Xs] [Y|Ys] Cmp :- !,
   F X Y CXY,
-  if (CXY = eq) (listCmp.curry F Xs Ys Cmp) (Cmp = CXY).
-func listCmp (func K, K -> cmp) -> (func list K, list K -> cmp).
-listCmp F (xs\ ys\ cmp\ listCmp.curry F xs ys cmp).
+  if (CXY = eq) (lexicographic-cmp.curry F Xs Ys Cmp) (Cmp = CXY).
+lexicographic-cmp F (xs\ ys\ cmp\ lexicographic-cmp.curry F xs ys cmp).
 
 func bool->int bool -> int.
 bool->int tt 1.
