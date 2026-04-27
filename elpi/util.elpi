@@ -129,31 +129,34 @@ func sort (func A, A -> cmp), list A -> list A.
 sort Cmp L L' :- sort.merge Cmp L L'.
 
 % Remove duplicates from a sorted list
-func uniq (func A, A -> cmp), list A -> list A.
-uniq _ [] [].
-uniq _ [X] [X].
-uniq Cmp [X,Y|L] L' :- Cmp X Y eq, !, uniq Cmp [Y|L] L'.
-uniq Cmp [X,Y|L] [X|L'] :- uniq Cmp [Y|L] L'.
+func sorted-cmp-undup (func A, A -> cmp), list A -> list A.
+sorted-cmp-undup _ [] [].
+sorted-cmp-undup _ [X] [X].
+sorted-cmp-undup Cmp [X,Y|L] L' :- Cmp X Y eq, !, sorted-cmp-undup Cmp [Y|L] L'.
+sorted-cmp-undup Cmp [X,Y|L] [X|L'] :- sorted-cmp-undup Cmp [Y|L] L'.
 
-% Remove duplicates from any list
-func remove-duplicates (func A, A -> cmp), list A -> list A.
-func remove-duplicates.aux (func A, A -> cmp), list A -> std.set A, list A.
-remove-duplicates.aux Cmp [] S [] :- std.set.make Cmp S.
-remove-duplicates.aux Cmp [X|L] S L' :-
-  remove-duplicates.aux Cmp L S0 L0,
-  if (std.set.mem X S0)
-    (L' = L0, S0 = S)
-    (L' = [X|L0], std.set.add X S0 S).
-remove-duplicates Cmp L L' :- remove-duplicates.aux Cmp L _ L'.
+% Remove duplicates from any list using a comparator
+func cmp-undup (func A, A -> cmp), list A -> list A.
+func cmp-undup.aux std.set A, list A ->  list A.
+cmp-undup Cmp Xs Ys :- cmp-undup.aux {std.set.make Cmp} Xs Ys.
+cmp-undup.aux _ [] [].
+cmp-undup.aux Duplicates [X|Xs] Ys :- std.set.mem X Duplicates, !, cmp-undup.aux Duplicates Xs Ys.
+cmp-undup.aux Duplicates [X|Xs] [X|Ys] :- cmp-undup.aux {std.set.add X Duplicates} Xs Ys.
+
+% Remove duplicates from any list using elpi unification
+func undup list A -> list A.
+func undup.is-dup -> A.
+undup [] [].
+undup [X|Xs] Ys :- undup.is-dup X, !, undup Xs Ys.
+undup [X|Xs] [X|Ys] :- undup.is-dup X => undup Xs Ys.
 
 % Makes a comparator with lexicographic order for lists from a comparator of its elements
 func lexicographic-cmp (func K, K -> cmp) -> (func list K, list K -> cmp).
 func lexicographic-cmp.curry (func K, K -> cmp), list K, list K -> cmp.
 lexicographic-cmp.curry _ [] [] eq :- !.
-lexicographic-cmp.curry F [X|Xs] [Y|Ys] Cmp :- !,
-  F X Y CXY,
-  if (CXY = eq) (lexicographic-cmp.curry F Xs Ys Cmp) (Cmp = CXY).
-lexicographic-cmp F (xs\ ys\ cmp\ lexicographic-cmp.curry F xs ys cmp).
+lexicographic-cmp.curry F [X|_] [Y|_] Cmp :- F X Y Cmp, not (Cmp = eq), !.
+lexicographic-cmp.curry F [_|Xs] [_|Ys] Cmp :- lexicographic-cmp.curry F Xs Ys Cmp.
+lexicographic-cmp F (lexicographic-cmp.curry F).
 
 func bool->int bool -> int.
 bool->int tt 1.
