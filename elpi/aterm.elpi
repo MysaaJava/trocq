@@ -14,59 +14,115 @@
 % Annotated terms
 % -----------------------------------------------------------------------------
 
-accumulate "Trocq.Elpi/class".
+accumulate "Trocq.Elpi/aterm-type".
 accumulate "Trocq.Elpi/util".
+accumulate "Trocq.Elpi/util-rocq".
 
-kind aterm type.
-type asort    sort -> param-class -> aterm.
-type aglobal  gref -> aterm.
-type apglobal gref -> univ-instance -> aterm.
-type afun     name -> aterm -> (aterm -> aterm) -> aterm.     % fun x : t =>
-type aprod    name -> aterm -> (aterm -> aterm) -> aterm.         % forall x : t,
-type alet     name -> aterm -> aterm -> (aterm -> aterm) -> aterm. % let x : T := v in
-type aapp     list aterm -> aterm.                              % app [hd|args]
-type amatch   aterm -> aterm -> list aterm -> aterm.              % match t p [branch])
-type afix     name -> int -> aterm -> (term -> aterm) -> aterm.  % fix name rno ty bo
-type aprimitive primitive-value -> aterm.
+% `@pi-adecl N AT (ax\ x\ x'\ xr\ F x x' xr)` declares elpi pi-variables x x' xr with adecl
+% x has annotated type AT
+macro @pi-adecl N AT F :-
+  aterm.triple AT PAD_T PAD_T' TR,
+  coq.mk-app TR [PAD_T,PAD_T'] TRx,
+  coq.name-suffix N "'" N',
+  coq.name-suffix N "R" NR,
+  @pi-decl N PAD_T x\ (
+  @pi-decl N' PAD_T' x'\ (
+  @pi-decl NR TRx xR\ (
+  pi ax\ [
+    adecl ax N x x' xR AT
+  ] => (F ax x x' xR)
+  ))).
 
-% Forgets the term annotations of a term
-func aterm->term aterm -> term.
-aterm->term (asort Sort _) (sort Sort) :- !.
-aterm->term (aglobal GRef) (global GRef) :- !.
-aterm->term (apglobal GRef Universe) (pglobal GRef Universe) :- !.
-aterm->term (afun N AT AF) (fun N T F) :-
-  aterm->term AT T,
-  pi ay\ pi y \ aterm->term ay y => aterm->term (AF ay) (F y), !.
-aterm->term (aprod N AT AF) (prod N T F) :- !,
-  aterm->term AT T,
-  pi ay\ pi y \ aterm->term ay y => aterm->term (AF ay) (F y), !.
-aterm->term (aapp AL) (app L) :-
-  std.map AL aterm->term L, !.
-aterm->term (uvar as AT) T :- !,
-  declare_constraint (aterm->term AT T) [AT].
-%TODO implement the other constructors
+% curry f := fun x => f (fst x) (snd x)
+% forall z : A * A', B[z] -> forall x : A, forall y : A', B[x,y]
+% TODO XXX Move this to data.elpi
+func trocq.data.r param-class -> term.
+trocq.data.r (uvar as C) T :- !,
+  declare_constraint (trocq.data.r C T) [C].
+trocq.data.r C T :-
+  trocq.db.r C Const, !,
+  coq.env.global (const Const) T.
 
-% Adds fresh annotation variable on every sort inside a term
-func term->aterm term -> aterm.
-term->aterm (sort S) (asort S Alpha_) :- !.
-term->aterm (global GRef) (aglobal GRef) :- !.
-term->aterm (pglobal GRef U) (apglobal GRef U) :- !.
-term->aterm (fun Name T F) (afun Name AT AF) :- !,
-  term->aterm T AT,
-  pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
-term->aterm (prod Name T F) (aprod Name AT AF) :- !,
-  term->aterm T AT,
-  pi y\ pi ay\ term->aterm y ay => term->aterm (F y) (AF ay).
-term->aterm (app L) (aapp AL) :- !,
-  std.map L term->aterm AL.
-%TODO implement the other constructors
+namespace aterm {
+
+  func triple aterm -> term,term,term.
+  triple AX X X' RX :- adecl AX _ X X' RX _, !.
+  triple (atriple X X' RX) X X' RX.
+  triple (asort S Cl) (sort S) (sort S) T :- 
+    declare_constraint (trocq.data.r Cl T) [Cl].%XXX This should not be suspended here ? Should it
+  triple (aglobal G (uvar as G') GRG) (global G) TG' RG :- !,
+    declare_constraint (triple (aglobal G G' GRG) (global G) TG' RG) [G'].%XXX These constraints should be removed with only triples
+  triple (aglobal G G' (uvar as GRG)) (global G) TG' RG :- !,
+    declare_constraint (triple (aglobal G G' GRG) (global G) TG' RG) [GRG].%XXX These constraints should be removed with only triples
+  triple (aglobal G G' GRG) (global G) TG' RG :-
+    coq.env.global G' TG',
+    coq.env.global GRG RG.
+  triple (apglobal G U (uvar as G') GRG) (pglobal G U) TG' RG :- !,
+    declare_constraint (triple (apglobal G U G' GRG) (pglobal G U) TG' RG) [G'].%XXX These constraints should be removed with only triples
+  triple (apglobal G U G' (uvar as GRG)) (pglobal G U) TG' RG :- !,
+    declare_constraint (triple (apglobal G U G' GRG) (pglobal G U) TG' RG) [GRG].%XXX These constraints should be removed with only triples
+  triple (apglobal G U G' GRG) (pglobal G U) TG' RG :-
+    coq.env.global G' TG',
+    coq.env.global GRG RG.
+  triple (afun N AT AF) (fun N T F) (fun N' T' F')
+      (fun N T x\ fun N' T' x'\ fun NR TRx rx\ RF x x' rx) :-
+    coq.name-suffix N "'" N', 
+    coq.name-suffix N "R" NR, 
+    triple AT T T' RT,
+    coq.mk-app RT [T,T'] TRx,
+    @pi-adecl N AT (ay\ y\ y'\ ry\ triple (AF ay) (F y) (F' y') (RF y y' ry)).
+  triple (aprod N AT AF) (prod N T F) (prod N' T' F')
+      (prod N T x\ prod N' T' x'\ prod NR TRx rx\ RF x x' rx) :-
+    coq.name-suffix N "'" N', 
+    coq.name-suffix N "R" NR, 
+    triple AT T T' RT,
+    coq.mk-app RT [T,T'] TRx,
+    @pi-adecl N AT (ay\ y\ y'\ ry\ triple (AF ay) (F y) (F' y') (RF y y' ry)).
+  triple (aapp AL) (app [X|L]) (app [X'|L']) Out :-
+    util.mapTo3 AL triple [X|L] [X'|L'] [RX|RL],
+    util.mk-app RX {util.interleave [L,L',RL]} Out.
+  triple (uvar as AT) T T' RT :- !,
+    declare_constraint (triple AT T T' RT) [AT].
+
+  func erase aterm -> term.
+  erase AT T :- triple AT T _ _.
+
+  func tr aterm -> term.
+  tr AT T' :- triple AT _ T' _.
+
+  func rel aterm -> term.
+  rel AT RT :- triple AT _ _ RT.
+
+  % Annotates a term with evars
+  func fresh term -> aterm.
+  fresh (sort S) (asort S Cl) :-
+    prune Cl []. %XXX Check wether those prunes will cause any trouble.
+  fresh (global G) (aglobal G G' RG) :-
+    prune G' [],
+    prune RG [].
+  fresh (pglobal G U) (apglobal G U G' RG) :-
+    prune G' [],
+    prune RG [].
+  fresh (fun Name T F) (afun Name AT AF) :- !,
+    fresh T AT,
+    pi y\ pi ay\ fresh y ay => fresh (F y) (AF ay).
+  fresh (prod Name T F) (aprod Name AT AF) :- !,
+    fresh T AT,
+    pi y\ pi ay\ fresh y ay => fresh (F y) (AF ay).
+  fresh (app L) (aapp AL) :- !,
+    std.map L fresh AL.
+
+  % TODO Implement the other constructors for all this section
+}
 
 namespace aterm.util {
+  %TODO XXX This method is weird, should it use pi-adecl ? Weird
   % Forgets the term annotations of a function aterm -> aterm
-  func atermfun->termfun (aterm -> aterm) -> (term -> term).
-  atermfun->termfun AF F :- !, 
-    pi ax x\ aterm->term ax x => aterm->term (AF ax) (F x).
-
+  func erase-fun name, atype, (aterm -> aterm) -> (term -> term).
+  erase-fun N AT AF F :- !, 
+    @pi-adecl N AT (ax\ x\ x'\ xr\
+      aterm.triple (AF ax) (F x) _ _
+    ).
   % {mk-app F Args} outputs a term corresponding to (aapp [F | Args])
   % With some β-reductions
   func mk-app aterm, list aterm -> aterm.
@@ -130,50 +186,8 @@ namespace aterm.util {
   % The other cases are aglobal, apglobal, and (name X), which all leads to [],none
   shape _ 0 ff :- !.
   shape.all T N :- !, shape T NT B, N is NT + {util.bool->int B}.
-
-  func mk-aterm term, list param-class, option param-class -> aterm.
-  func mk-aterm.all term, list param-class -> aterm.
-  mk-aterm.all T Cs AT :-
-    shape T N B,
-    if (B == tt) (
-      mk-aterm T {std.drop-last 1 Cs} (some {std.last Cs}) AT
-    ) (
-      mk-aterm T Cs none AT
-    ).
-  mk-aterm (sort S) [] (some C) (asort S C) :- !.
-  mk-aterm (prod N T F) Cs Out (aprod N AT AF) :- !,
-    pi x ax\ term->aterm x ax => (
-      shape.all T TN,
-      le_ TN {std.length Cs},
-      std.split-at TN Cs CsT CsF,
-      mk-aterm.all T CsT AT,
-      mk-aterm (F x) CsF Out (AF ax)
-    ).
-  mk-aterm (fun N T F) Cs Out (afun N AT AF) :- !,
-    pi x ax\ term->aterm x ax => (
-      shape.all T TN,
-      le_ TN {std.length Cs},
-      std.split-at TN Cs CsT CsF,
-      mk-aterm.all T CsT AT,
-      mk-aterm.all (F x) CsF (AF ax)
-    ).
-  mk-aterm (app [F|Xs]) Cs Out (aapp [AF|AXs]) :- !,
-    shape.all F FN,
-    le_ FN {std.length Cs},
-    std.split-at FN Cs CsF CsXs,
-    mk-aterm F CsF Out AF,
-    std.fold-map Xs CsXs (x\ csxs\ ax\ csxs'\ sigma XN CSX CSXSL'\
-      shape.all x XN,
-      std.length csxs CSXSL',
-      le_ XN CSXSL',
-      std.split-at XN csxs CSX csxs',
-      mk-aterm.all x CSX ax
-    ) AXs [].
-  mk-aterm (global G) _ _ (aglobal G) :- !.
-  mk-aterm (pglobal G U) _ _ (apglobal G U) :- !.
-  mk-aterm T _ _ AT :- name T, !, term->aterm T AT.
 }
 
 func aterm.util.global i:aterm o:gref.
-aterm.util.global (aglobal G) G :- !.
-aterm.util.global (apglobal G _) G :- !.
+aterm.util.global (aglobal G _ _) G :- !.
+aterm.util.global (apglobal G _ _ _) G :- !.

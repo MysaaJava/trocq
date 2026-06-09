@@ -158,6 +158,27 @@ lexicographic-cmp.curry F [X|_] [Y|_] Cmp :- F X Y Cmp, not (Cmp = eq), !.
 lexicographic-cmp.curry F [_|Xs] [_|Ys] Cmp :- lexicographic-cmp.curry F Xs Ys Cmp.
 lexicographic-cmp F (lexicographic-cmp.curry F).
 
+func mapTo2 list A, (func A -> B,C) -> list B, list C.
+mapTo2 [] F_ [] [].
+mapTo2 [X|L] F [X1|L1] [X2|L2] :- F X X1 X2, mapTo2 L F L1 L2.
+
+func mapTo3 list A, (func A -> B,C,D) -> list B, list C, list D.
+mapTo3 [] F_ [] [] [].
+mapTo3 [X|L] F [X1|L1] [X2|L2] [X3|L3] :- F X X1 X2 X3, mapTo3 L F L1 L2 L3.
+
+func behead list A -> A, list A.
+behead [X|L] X L.
+
+func beheads list (list A) -> list A, list (list A).
+beheads L H T :- mapTo2 L behead H T.
+
+func interleave list (list A) -> list A.
+interleave L Out :- beheads L LH LT, !, 
+  interleave LT Rest,
+  std.append LH Rest Out.
+% Else, lists are empty
+interleave L_ [].
+
 func bool->int bool -> int.
 bool->int tt 1.
 bool->int ff 0.

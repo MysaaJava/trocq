@@ -52,7 +52,7 @@ parse-goal Goal G Ty G' [] :-
   std.assert-ok! (coq.typecheck G Ty) "goal ill-typed",
   util.argument->term RG' G'.
 % trocq with A B C.
-parse-goal Goal G Ty G' Rels :-
+parse-goal Goal G Ty _ Rels :-
   Goal = goal _Context _ G _ [(str "with")|RRels], !,
   std.assert-ok! (coq.typecheck G Ty) "goal ill-typed",
   std.map RRels util.argument->gref Rels.
@@ -61,7 +61,7 @@ parse-goal Goal G Ty _ [] :-
   Goal = goal _Context _ G _ [], !,
   logging.trace (coq.say "[parse-goal] No arguments"),
   std.assert-ok! (coq.typecheck G Ty) "goal ill-typed".
-parse-goal Goal _ _ _ _ :- !,
+parse-goal _ _ _ _ _ :- !,
   coq.error "Wrong usage of trocq tactic",
   fail.
 
@@ -91,7 +91,7 @@ translate-goal DB Ty G C G' GR' :- DB => std.do! [
   cstr.init,
   T = asort S C,
   logging.debug (coq.say "[translate-goal] will translate" G "at level" T),
-  term->aterm G AG,
+  aterm.fresh G AG,
   % generate the associated goal G' and witness GR
   param AG T G' GR,
   logging.debug (coq.say "[translate-goal] after translation: goal" G' "with proof" GR),

@@ -23,7 +23,7 @@ translate-goal DB Ty G C G' GR' :- DB => std.do! [
   cstr.init,
   T = asort S C,
   logging.debug (coq.say "[translate-goal] will translate" G "at level" T),
-  term->aterm G AG,
+  aterm.fresh G AG,
   % generate the associated goal G' and witness GR
   param AG T G' GR,
   logging.debug (coq.say "[translate-goal] after translation: goal" G' "with proof" GR),
@@ -38,7 +38,7 @@ translate-goal DB Ty G C G' GR' :- DB => std.do! [
 
 
 pred coercion i:goal-ctx, i:term, i:term, i:term, o:term.
-coercion Ctx T G G' T' :- std.do! [
+coercion _ T G G' T' :- std.do! [
   trocq.db.coercion-enabled,
   
   % We have a coercion challenge to change a term T of type G to a term
