@@ -17,55 +17,57 @@
 accumulate "Trocq.Elpi/annot".
 accumulate "Trocq.Elpi/data".
 
-% We traverse a binder with name N having annotated type AT
-% Then we call F with parameters ax x' xR
-% We add the rule ax @ AT ~ x' ∵ xR
-macro @param-pi-decl N AT F :- 
-  aterm->term AT LocalT, % We prefix the variable with 'Local' to avoir collision with another name
-  pi ax x\ [
-    aterm->term ax x,
-    term->aterm x ax,
-    annot.adecl ax N AT,
-    decl x N LocalT,
-  ] => (pi x' xR\ [
-    param.store ax AT x' xR 
-    ] => (
-      logging.trace (coq.say "[param/decl] aterm->term" ax x),
-      logging.trace (coq.say "[param/decl] New rule in context:" ax "@" AT "~" x' "∵" xR),
-      F ax x' xR
-    )
-  ).
+macro @pi-adecl N AT F :-
+  aterm.triple AT PAD_T PAD_T' TR,
+  coq.mk-app TR [PAD_T,PAD_T'] TRx,
+  coq.name-suffix N "'" N',
+  coq.name-suffix N "R" NR,
+  @pi-decl N PAD_T x\ (
+  @pi-decl N' PAD_T' x'\ (
+  @pi-decl NR TRx xR\ (
+  pi ax\ [
+    adecl ax N x x' xR AT,
+  ] => (F ax x x' xR)
+  ))).
+
+%XXX Enlever cette infamie parce que weakening appelle deux fois @pi-adecl
+pred pi-adecl name, atype, (aterm -> term -> term -> term -> prop) ->.
+pi-adecl N AT F :-
+  aterm.triple AT PAD_T PAD_T' TR,
+  coq.mk-app TR [PAD_T,PAD_T'] TRx,
+  coq.name-suffix N "'" N',
+  coq.name-suffix N "R" NR,
+  @pi-decl N PAD_T x\ (
+  @pi-decl N' PAD_T' x'\ (
+  @pi-decl NR TRx xR\ (
+  pi ax\ [
+    adecl ax N x x' xR AT,
+  ] => (F ax x x' xR)
+  ))).
 
 % param X T X' XR translates X at annotated type T, to X' with witness XR
 pred param i:aterm, i:aterm, o:term, o:term.
 
-% locally remember the translation of bound variables
-func param.store aterm -> aterm, term, term.
-
-% used in order not to typecheck+annotate twice the same term
-
-% ==================================================================================================
-
 % TrocqConv + TrocqConst
-param Tm AT' Tm' Witness :- aterm.util.global Tm GR, !, std.do! [
+param Tm AT' Tm' Witness :- aterm.util.global Tm GTm, !, std.do! [
   logging.debug (coq.say "[param] Rule const :" Tm "@" AT'),
   annot.typecheck Tm AT,
   annot.sub-type AT AT',
-  cstr.dep-gref GR AT Tm' TRR,
-  weaken AT AT' {aterm->term Tm} Tm' TRR Witness,
+  cstr.dep-gref GTm AT Tm' TRR,
+  weaken AT AT' {aterm.erase Tm} Tm' TRR Witness,
   logging.debug (coq.say "[param] Out rule const :" Tm' "∵" Witness)
 ].
 
 % TrocqConv + TrocqVar
 param X T2 X' Witness :- name X, !,
   logging.debug (coq.say "[param] Rule var :" X "@" T2),
-  param.store X T1 X' XR, !,
+  adecl X _ _ X' XR T1, !,
   annot.sub-type T1 T2, !,
-  weaken T1 T2 {aterm->term X} X' XR Witness,
+  weaken T1 T2 {aterm.erase X} X' XR Witness,
   logging.debug (coq.say "[param] Out rule var :" X' "∵" Witness).
 
 % TrocqSort
-% TODO: This will fail if we don't have the same sort before and after ~
+% TODO: This will fail if we don't have the same sort before and after ~
 % We should add a unify-eq between S and S'
 param
   (asort S CR as T)
@@ -79,21 +81,21 @@ param
   ].
 
 % TrocqLam
-param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F') Witness :- !,
+param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F' as T0') Witness :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" AT),
   coq.name-suffix N "'" N', 
   coq.name-suffix N "R" NR,
   param TT (asort (typ _U) {param-class.bottom}) T' TR, !,
-  (@param-pi-decl N TT (ax\ x'\ xR\ 
-    param (F ax) (FT ax) (F' x') (FR {aterm->term ax} x' xR)
+  (@pi-adecl N TT (ax\ x\ x'\ xR\ 
+    param (F ax) (FT ax) (F' x') (FR x x' xR)
   )),
   Witness = (
-    fun N {aterm->term T} x\
+    fun N {aterm.erase T} x\
     fun N' T' x'\
-    fun NR (app [{trocq.data.r {param-class.bottom}}, {aterm->term T}, T', TR, x, x']) xR\
+    fun NR (app [{trocq.data.r {param-class.bottom}}, {aterm.erase T}, T', TR, x, x']) xR\
       FR x x' xR
   ),
-  logging.debug (coq.say "[param] Out rule lam :" T' "∵" Witness).
+  logging.debug (coq.say "[param] Out rule lam :" T0' "∵" Witness).
 
 % TrocqArrow
 param
@@ -105,7 +107,7 @@ param
       (annot.typecheck A (asort SortA _); trocq.error "[param/arrow] Cannot typecheck" A "with a sort"),
       param A (asort SortA CA) A' AR,
       param B (asort Sort CB) B' BR,
-      coq.mk-app {trocq.data.arrow C} [{aterm->term A}, A', AR, {aterm->term B}, B', BR] Witness,
+      coq.mk-app {trocq.data.arrow C} [{aterm.erase A}, A', AR, {aterm.erase B}, B', BR] Witness,
       logging.debug (coq.say "[param] Out rule arrow :" T' "∵" Witness)
     ].
 
@@ -122,16 +124,16 @@ param
 
     (annot.typecheck A (asort SortA _); trocq.error "[param/forall] Cannot typecheck" A "with a sort"),
     param A (asort SortA CA) A' AR,
-    (@param-pi-decl N A (ax\ x'\ xR\
-      param (B ax) (asort Sort CB) (B' x') (BR {aterm->term ax} x' xR)
+    (@pi-adecl N A (ax\ x\ x'\ xR\
+      param (B ax) (asort Sort CB) (B' x') (BR x x' xR)
     )),
     coq.mk-app {trocq.data.forall C}
-      [ {aterm->term A}, A', AR,
-        fun N {aterm->term A} {aterm.util.atermfun->termfun B},
+      [ {aterm.erase A}, A', AR,
+        fun N {aterm.erase A} {aterm.util.erase-fun N A B},
         fun N' A' B',
-        fun N {aterm->term A} a\
+        fun N {aterm.erase A} a\
          fun N' A' a'\
-         fun NR (app [{trocq.data.r CA}, {aterm->term A}, A', AR, a, a']) aR\
+         fun NR (app [{trocq.data.r CA}, {aterm.erase A}, A', AR, a, a']) aR\
           BR a a' aR
       ] Witness,
     logging.debug (coq.say "[param] Out rule pi :" T' "∵" Witness)
@@ -144,7 +146,7 @@ param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Witness :- !, std.do! [
   param F TF F' FR,
   param.args TF B Xs Xs' XsR B0,
   coq.mk-app FR XsR AppR,
-  weaken B0 B {aterm->term T} T' AppR Witness,
+  weaken B0 B {aterm.erase T} T' AppR Witness,
   logging.debug (coq.say "[param] Out rule app :" T' "∵" Witness)
 ].
 
@@ -154,7 +156,7 @@ param.args B0 B [] [] [] B0 :- std.do! [
 param.args (aprod _ T Bk) B [X|Xs] [X'|Xs'] [X_T, X', XR|XRs] B0 :- !,
   param X T X' XR, !,
   param.args (Bk X) B Xs Xs' XRs B0,
-  aterm->term X X_T.
+  aterm.erase X X_T.
 
 param.args FunTy AB L _ _ _ :-
   trocq.error "[param.args] unsupported combination:" FunTy "&" AB "&" L.
@@ -168,28 +170,30 @@ param X T X' Witness :-
 pred weakener i:aterm, i:aterm, o:term.
 weakener (asort _ C) (asort _ C') Weakener :- !,
   trocq.data.forget C C' Weakener.
-weakener (aprod _ A P) (aprod _ B Q) Weakener :- !,
-  pi t t' tr ax x ax' x' xr\ [
-    aterm->term ax x,
-    term->aterm x ax,
-    aterm->term ax' x',
-    term->aterm x' ax',
-  ] => sigma XRWeakened TRWeakened\ (
-    util.mk-app {weakener B A} [x,x',xr] XRWeakened,
+weakener (aprod NA A P as AP) (aprod NB B Q as BQ)
+    (fun _ TAP t\ fun _ TAP' t'\ fun _ RRTAP tr\ fun _ TB x\ fun _ TB' x'\ fun _ RRTB xr\ 
+      WeakenerF t t' tr x x' xr) :- !,
+  aterm.triple AP TAP TAP' RTAP,
+  aterm.triple BQ TB TB' RTB, % Property on subtype, we should have TA=TB and TA'=TB'
+  util.mk-app RTAP [TAP,TAP'] RRTAP,
+  util.mk-app RTB [TB,TB'] RRTB,
+  weakener B A BAWeakener,
+  @pi-adecl `t` AP (_\ t\ t'\ tr\
+  pi-adecl NB B (ax\ x\ x'\ xr\
+  sigma XRWeakened TRWeakened PQWeakener\ (
+    weakener (P ax) (Q ax) PQWeakener,
+    util.mk-app BAWeakener [x,x',xr] XRWeakened,
     util.mk-app tr [x,x',XRWeakened] TRWeakened,
-    util.mk-app {weakener (P ax) (Q ax')} [app [t, x],app [t', x'],TRWeakened] (WeakenerF t t' tr x x' xr)
-  ),
-  Weakener = (fun _ _ t\ fun _ _ t'\ fun _ _ tr\ fun _ _ x\ fun _ _ x'\ fun _ _ xr\ 
-    WeakenerF t t' tr x x' xr
-  ).
+    util.mk-app PQWeakener [app [t, x],app [t', x'],TRWeakened] (WeakenerF t t' tr x x' xr)
+  ))).
 weakener (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) W :- !,
   % We beta-reduce
   weakener (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']) W.
 weakener (aapp [X|_] as T) (aapp [_|_]) W :- !,
-  (name X ; X = aglobal _ ; X = apglobal _ _ ; trocq.error "[weakener] Input" T "is not a type"), !,
-  % because sub-type T T', we have that eq AXs AXs', and as names and globals are not annotated, all annotations are the same
+  (name X ; X = aglobal _ _ _; X = apglobal _ _ _ _ ; trocq.error "[weakener] Input" T "is not a type"), !,
+  % because sub-type T T', we have that eq AXs AXs', and as names and globals are not annotated, all annotations are the same
   W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ tr.
-weakener X _ W :- (name X ; X = aglobal _ ; X = apglobal _ _ ), !,
+weakener X _ W :- (name X ; X = aglobal _ _ _ ; X = apglobal _ _ _ _ ), !,
   % names and globals are not annotated, so weakener is identity
   W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ tr.
 weakener X _ _ :- !,

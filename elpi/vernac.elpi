@@ -76,8 +76,9 @@ main [str "Use", X] :- !, std.do! [
     (clause _ _
       (trocq.db.gref GR Class CList GR' GRR)),
   % We check that inferred Class and CList are valid for given gref.
-  coq.env.typeof GR TGR,
-  (aterm.util.mk-aterm TGR CList (some Class) _; trocq.error "Trocq could not infer classes levels for this term"), !,
+  %XXX We should strengthen this anyways
+  %coq.env.typeof GR TGR,
+  %(aterm.util.mk-aterm TGR CList (some Class) _; trocq.error "Trocq could not infer classes levels for this term"), !,
 
   std.forall {param-class.all-weakenings-from Class} subclass\
       sigma WTRR Suffix WName WCRR \

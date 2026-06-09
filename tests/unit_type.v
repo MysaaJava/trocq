@@ -17,7 +17,7 @@ Set Universe Polymorphism.
 
 Section TypeTest.
 
-    Variable (A B U : Type).
+    Variable (A B : Type).
     Variable (f : A -> B).
 
     Definition R1 : Param10.Rel A B := mkParam10 f.
