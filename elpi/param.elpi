@@ -46,23 +46,24 @@ pi-adecl N AT F :-
   ))).
 
 % param X T X' XR translates X at annotated type T, to X' with witness XR
-pred param i:aterm, i:aterm, o:term, o:term.
+pred param i:aterm, i:aterm, o:term, o:term o:cstr-list.
 
 % TrocqConv + TrocqConst
-param Tm AT' Tm' Witness :- aterm.util.global Tm GTm, !, std.do! [
+param Tm AT' Tm' Witness [Cstr|Cstrs] :- aterm.util.global Tm GTm, !, std.do! [
   logging.debug (coq.say "[param] Rule const :" Tm "@" AT'),
-  annot.typecheck Tm AT,
-  annot.sub-type AT AT',
-  cstr.dep-gref GTm AT Tm' TRR,
+  annot.typecheck Tm AT CstrsX,
+  annot.sub-type AT AT' CstrsY,
+  std.append CstrsX CstrsY Cstrs,
+  Cstr = cstr-gref GTm AT Tm' TRR, % Can't we do the weakening in the constraint resolution ?
   weaken AT AT' {aterm.erase Tm} Tm' TRR Witness,
   logging.debug (coq.say "[param] Out rule const :" Tm' "∵" Witness)
 ].
 
 % TrocqConv + TrocqVar
-param X T2 X' Witness :- name X, !,
+param X T2 X' Witness Cstrs :- name X, !,
   logging.debug (coq.say "[param] Rule var :" X "@" T2),
   adecl X _ _ X' XR T1, !,
-  annot.sub-type T1 T2, !,
+  annot.sub-type T1 T2 Cstrs, !,
   weaken T1 T2 {aterm.erase X} X' XR Witness,
   logging.debug (coq.say "[param] Out rule var :" X' "∵" Witness).
 
@@ -73,26 +74,28 @@ param
   (asort S CR as T)
   (asort _ C as AT)
   (sort S as T')
-  RT :- !, std.do! [
+  RT [Cstr] :- !, std.do! [
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
-    cstr.dep-type C CR,
+    Cstr = cstr-type C CR,
     trocq.data.ttype C CR RT,
     logging.debug (coq.say "[param] Out rule sort :" T' "∵" RT),
   ].
 
 % TrocqLam
-param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F' as T0') Witness :- !,
+param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F' as T0') Witness Cstrs :- !,
   logging.debug (coq.say "[param] Rule lam :" T0 "@" AT),
   coq.name-suffix N "'" N', 
   coq.name-suffix N "R" NR,
-  param TT (asort (typ _U) {param-class.bottom}) T' TR, !,
-  (@pi-adecl N TT (ax\ x\ x'\ xR\ 
-    param (F ax) (FT ax) (F' x') (FR x x' xR)
+  aterm.triple T Ter T' TR,
+  annot.eq T TT CstrsT,
+  (@pi-adecl N T (ax\ x\ x'\ xR\ 
+    param (F ax) (FT ax) (F' x') (FR x x' xR) CstrsF
   )),
+  std.append CstrsT CstrsF Cstrs,
   Witness = (
-    fun N {aterm.erase T} x\
+    fun N Ter x\
     fun N' T' x'\
-    fun NR (app [{trocq.data.r {param-class.bottom}}, {aterm.erase T}, T', TR, x, x']) xR\
+    fun NR (app [TR, x, x']) xR\
       FR x x' xR
   ),
   logging.debug (coq.say "[param] Out rule lam :" T0' "∵" Witness).
@@ -100,13 +103,14 @@ param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F' as T0') Witness :- 
 % TrocqArrow
 param
   (aprod _ A (_\ B ) as T) (asort Sort C as AT)
-  (prod `_` A' (_\ B') as T') Witness :- !,
+  (prod `_` A' (_\ B') as T') Witness [Cstr|Cstrs] :- !,
    std.do! [
       logging.debug (coq.say "[param] Rule arrow :" T "@" AT),
-      cstr.dep-arrow C CA CB,
-      (annot.typecheck A (asort SortA _); trocq.error "[param/arrow] Cannot typecheck" A "with a sort"),
-      param A (asort SortA CA) A' AR,
-      param B (asort Sort CB) B' BR,
+      Cstr = cstr-arrow C CA CB,
+      (annot.typecheck A (asort SortA _) CstrsT; trocq.error "[param/arrow] Cannot typecheck" A "with a sort"),
+      param A (asort SortA CA) A' AR CstrsA,
+      param B (asort Sort CB) B' BR CstrsB,
+      std.flatten [CstrsT,CstrsA,CstrsB] Cstrs,
       coq.mk-app {trocq.data.arrow C} [{aterm.erase A}, A', AR, {aterm.erase B}, B', BR] Witness,
       logging.debug (coq.say "[param] Out rule arrow :" T' "∵" Witness)
     ].
@@ -115,18 +119,19 @@ param
 param
   (aprod N A B as T) (asort Sort C as AT)
   (prod N' A' B' as T')
-  Witness :- !, std.do![
+  Witness [Cstr|Cstrs] :- !, std.do![
     logging.debug (coq.say "[param] Rule pi :" T "@" AT),
     coq.name-suffix N "'" N',
     coq.name-suffix N "R" NR,
 
-    cstr.dep-pi C CA CB,
+    Cstr = cstr-pi C CA CB,
 
-    (annot.typecheck A (asort SortA _); trocq.error "[param/forall] Cannot typecheck" A "with a sort"),
-    param A (asort SortA CA) A' AR,
+    (annot.typecheck A (asort SortA _) CstrsD; trocq.error "[param/forall] Cannot typecheck" A "with a sort"),
+    param A (asort SortA CA) A' AR CstrsA,
     (@pi-adecl N A (ax\ x\ x'\ xR\
-      param (B ax) (asort Sort CB) (B' x') (BR x x' xR)
+      param (B ax) (asort Sort CB) (B' x') (BR x x' xR) CstrsB
     )),
+    std.flatten [CstrsD,CstrsA,CstrsB] Cstrs,
     coq.mk-app {trocq.data.forall C}
       [ {aterm.erase A}, A', AR,
         fun N {aterm.erase A} {aterm.util.erase-fun N A B},
@@ -140,28 +145,30 @@ param
   ].
 
 % TrocqConv for F (argument B in param.args) + TrocqApp
-param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Witness :- !, std.do! [
+param (aapp [F|Xs] as T) B (app [F'|Xs'] as T') Witness Cstrz :- !, std.do! [
   logging.debug (coq.say "[param] Rule app :" T "@" B),
-  annot.typecheck F TF,
-  param F TF F' FR,
-  param.args TF B Xs Xs' XsR B0,
+  annot.typecheck F TF CstrsT,
+  param F TF F' FR Cstrs0,
+  param.args TF B Xs Xs' XsR B0 CstrzP,
+  std.flatten [CstrsT, Cstrs0, CstrzP] Cstrz,
   coq.mk-app FR XsR AppR,
   weaken B0 B {aterm.erase T} T' AppR Witness,
   logging.debug (coq.say "[param] Out rule app :" T' "∵" Witness)
 ].
 
-pred param.args i:aterm, o:aterm, i:list aterm, o:list term, o:list term, o:aterm.
-param.args B0 B [] [] [] B0 :- std.do! [
-  annot.sub-type B0 B].
-param.args (aprod _ T Bk) B [X|Xs] [X'|Xs'] [X_T, X', XR|XRs] B0 :- !,
-  param X T X' XR, !,
-  param.args (Bk X) B Xs Xs' XRs B0,
+pred param.args i:aterm, o:aterm, i:list aterm, o:list term, o:list term, o:aterm, o:cstr-list.
+param.args B0 B [] [] [] B0 Cstrs :- std.do! [
+  annot.sub-type B0 B Cstrs].
+param.args (aprod _ T Bk) B [X|Xs] [X'|Xs'] [X_T, X', XR|XRs] B0 Cstrs :- !,
+  param X T X' XR CstrsX, !,
+  param.args (Bk X) B Xs Xs' XRs B0 CstrsB,
+  std.append CstrsX CstrsB Cstrs,
   aterm.erase X X_T.
 
-param.args FunTy AB L _ _ _ :-
+param.args FunTy AB L _ _ _ _ :-
   trocq.error "[param.args] unsupported combination:" FunTy "&" AB "&" L.
 
-param X T X' Witness :-
+param X T X' Witness _ :-
   trocq.error "[param] unsupported combination:" X "@" T "~" X' "∵" Witness.
 
 % ==================================================================================================
@@ -170,7 +177,7 @@ param X T X' Witness :-
 pred weakener i:aterm, i:aterm, o:term.
 weakener (asort _ C) (asort _ C') Weakener :- !,
   trocq.data.forget C C' Weakener.
-weakener (aprod NA A P as AP) (aprod NB B Q as BQ)
+weakener (aprod N A P as AP) (aprod _ B Q as BQ)
     (fun _ TAP t\ fun _ TAP' t'\ fun _ RRTAP tr\ fun _ TB x\ fun _ TB' x'\ fun _ RRTB xr\ 
       WeakenerF t t' tr x x' xr) :- !,
   aterm.triple AP TAP TAP' RTAP,
@@ -179,7 +186,7 @@ weakener (aprod NA A P as AP) (aprod NB B Q as BQ)
   util.mk-app RTB [TB,TB'] RRTB,
   weakener B A BAWeakener,
   @pi-adecl `t` AP (_\ t\ t'\ tr\
-  pi-adecl NB B (ax\ x\ x'\ xr\
+  pi-adecl N B (ax\ x\ x'\ xr\
   sigma XRWeakened TRWeakened PQWeakener\ (
     weakener (P ax) (Q ax) PQWeakener,
     util.mk-app BAWeakener [x,x',xr] XRWeakened,

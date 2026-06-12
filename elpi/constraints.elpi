@@ -1,0 +1,178 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                            %                     Trocq                      %
+%  _______                   %        Copyright (C) 2023 Inria & MERCE        %
+% |__   __|                  %     (Mitsubishi Electric R&D Centre Europe)    %
+%    | |_ __ ___   ___ __ _  %        Cyril Cohen <cyril.cohen@inria.fr>      %
+%    | | '__/ _ \ / __/ _` | %        Enzo Crance <enzo.crance@inria.fr>      %
+%    | | | | (_) | (_| (_| | %    Assia Mahboubi <assia.mahboubi@inria.fr>    %
+%    |_|_|  \___/ \___\__, | %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                        | | %   This file is distributed under the terms of  %
+%                        |_| %   GNU Lesser General Public License Version 3  %
+%                            % (see LICENSE file for the text of the license) %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% -----------------------------------------------------------------------------
+% Constaints data
+% -----------------------------------------------------------------------------
+
+accumulate "Trocq.Elpi/data".
+accumulate "Trocq.Elpi/aterm".
+
+kind cstr type.
+
+typeabbrev cstr-list (list cstr).
+
+% D_π(C, C_A, C_B)
+type cstr-pi param-class -> param-class -> param-class -> cstr.
+
+% D_->(C, C_A, C_B)
+type cstr-arrow param-class -> param-class -> param-class -> cstr.
+
+% D_□(C, C_R)
+type cstr-type param-class -> param-class -> cstr.
+
+% G @ AT ~ T' ∵ RT
+type cstr-gref gref -> aterm -> term -> term -> cstr.
+
+% C >= C'
+type cstr-geq param-class -> param-class -> cstr.
+
+% C = C'
+type cstr-eq param-class -> param-class -> cstr.
+
+namespace map-class-cstr {
+
+    pred all -> map-class.
+    all map0.
+    all map1.
+    all map2a.
+    all map2b.
+    all map3.
+    all map4.
+
+    pred geq -> map-class, map-class.
+    geq map0  map0.
+    geq map1  M :- std.mem [map0, map1] M.
+    geq map2a M :- std.mem [map0, map1, map2a] M.
+    geq map2b M :- std.mem [map0, map1, map2b] M.
+    geq map3  M :- std.mem [map0, map1, map2a, map2b, map3] M.
+    geq map4  M :- all M.
+
+    func dep-pi map-class -> param-class, param-class.
+    dep-pi map0  (pc map0 map0)  (pc map0 map0).
+    dep-pi map1  (pc map0 map2a) (pc map1 map0).
+    dep-pi map2a (pc map0 map4)  (pc map2a map0).
+    dep-pi map2b (pc map0 map2a) (pc map2b map0).
+    dep-pi map3  (pc map0 map4)  (pc map3 map0).
+    dep-pi map4  (pc map0 map4)  (pc map4 map0).
+
+    % minimal dependencies to translate an arrow type, see the table in the article
+    func dep-arrow map-class -> param-class, param-class.
+    dep-arrow map0  (pc map0 map0)  (pc map0 map0).
+    dep-arrow map1  (pc map0 map1)  (pc map1 map0).
+    dep-arrow map2a (pc map0 map2b) (pc map2a map0).
+    dep-arrow map2b (pc map0 map2a) (pc map2b map0).
+    dep-arrow map3  (pc map0 map3)  (pc map3 map0).
+    dep-arrow map4  (pc map0 map4)  (pc map4 map0).
+}
+
+namespace param-class-cstr {
+
+    func negate param-class -> param-class.
+    negate (pc M N) (pc N M).
+
+    pred geq -> param-class, param-class.
+    geq (pc M1 N1) (pc M2 N2) :-
+        map-class-cstr.geq M1 M2,
+        map-class-cstr.geq N1 N2.
+
+    func dep-pi param-class -> param-class, param-class.
+    dep-pi (pc M N) ClassA ClassB :-
+        map-class-cstr.dep-pi M ClassAM ClassBM,
+        map-class-cstr.dep-pi N ClassAN ClassBN,
+        param-class.union ClassAM {param-class-cstr.negate ClassAN} ClassA,
+        param-class.union ClassBM {param-class-cstr.negate ClassBN} ClassB.
+
+    func dep-arrow param-class -> param-class, param-class.
+    dep-arrow (pc M N) ClassA ClassB :-
+        map-class-cstr.dep-arrow M ClassAM ClassBM,
+        map-class-cstr.dep-arrow N ClassAN ClassBN,
+        param-class.union ClassAM {param-class-cstr.negate ClassAN} ClassA,
+        param-class.union ClassBM {param-class-cstr.negate ClassBN} ClassB.
+
+    pred requires-axiom -> param-class.
+    requires-axiom (pc M N) :- (map-class-cstr.geq M map2b ; map-class-cstr.geq N map2b).
+    pred doesnt-require-axiom -> param-class.
+    doesnt-require-axiom (pc M N) :- map-class-cstr.geq map2a M, map-class-cstr.geq map2a N.
+
+    pred all -> param-class.
+    all (pc M N) :- map-class-cstr.all M, map-class-cstr.all N.
+}
+
+pred has-funext-if-needed -> param-class.
+has-funext-if-needed C :-
+    if (trocq.db.funext _)
+    (param-class-cstr.all C)
+    (param-class-cstr.doesnt-require-axiom C).
+pred has-univ-if-needed -> param-class.
+has-univ-if-needed C :-
+    if (trocq.db.univalence _)
+    (param-class-cstr.all C)
+    (param-class-cstr.doesnt-require-axiom C).
+
+func cstr->prop cstr -> prop.
+cstr->prop (cstr-eq X Y) (X = Y).
+cstr->prop (cstr-pi C CA CB) (has-funext-if-needed C, param-class-cstr.dep-pi C CA CB).
+cstr->prop (cstr-arrow C CA CB) (has-funext-if-needed C, param-class-cstr.dep-arrow C CA CB).
+cstr->prop (cstr-type C CR) (
+    (param-class-cstr.doesnt-require-axiom C, param-class-cstr.all CR) ;
+    (trocq.db.univalence _, param-class-cstr.all C, CR = (pc map4 map4))
+).
+cstr->prop (cstr-geq CA CB) (param-class-cstr.geq CA CB).
+
+func cstr->varz cstr -> list param-class.
+cstr->varz (cstr-eq X Y) [X,Y].
+cstr->varz (cstr-pi X Y Z) [X,Y,Z].
+cstr->varz (cstr-arrow X Y Z) [X,Y,Z].
+cstr->varz (cstr-type X Y) [X,Y].
+cstr->varz (cstr-geq X Y) [X,Y].
+
+func cstrs->evars list cstr -> list param-class.
+cstrs->evars [] [].
+cstrs->evars [Cstr|Cstrz] L :-
+    cstrs->evars Cstrz L0,
+    cstr->varz Cstr LC,
+    util.append-uniq-evar L0 LC L, !.
+
+pred solve-gref-constraint i:cstr.
+solve-gref-constraint (cstr-gref G AT T' TR) :- var T', var TR, !,
+    trocq.data.gref G Cl List T' TR, !, %XXX This is temporary, we should handre gref solving otherwise
+    coq.info "[solve-gref-constraint] Made arbitrary choice for translation of" G "~" T' "because" TR,
+    coq.env.global G TG,
+    coq.typecheck TG T ok,
+    aterm.util.mk-aterm T List (some Cl) AT.
+solve-gref-constraint (cstr-gref G AT T' TR) :- var TR, !,
+    trocq.data.gref G Cl List T' TR, !, %XXX This is temporary, we should handre gref solving otherwise
+    coq.env.global G TG,
+    coq.typecheck TG T ok,
+    aterm.util.mk-aterm T List (some Cl) AT.
+
+pred do list param-class, list prop.
+do _ [].
+do Assignation [P|L] :-
+    %coq.say "[solve-constraints] Solving" P,
+    %coq.say "[solve-constraints] Currently" Assignation,
+    P, do Assignation L.
+
+pred solve-constraints i:cstr-list.
+solve-constraints L :-
+    std.filter L (x\ x = cstr-gref _ _ _ _) LGref,
+    logging.trace (coq.say "[solve-constraints] Solving Gref Constraints" LGref),
+    std.forall LGref solve-gref-constraint,
+    logging.debug (coq.say "[solve-constraints] Solved Gref Constraints"),
+    std.filter L (x\ not (x = cstr-gref _ _ _ _)) LOther,
+    std.map LOther cstr->prop LOtherProp,
+    logging.trace (coq.say "[solve-constraints] Solving proposition set" LOther), !,
+    cstrs->evars LOther LVars,
+    logging.trace (coq.say "[solve-constraints] Variables are" LVars),
+    (do LVars LOtherProp; trocq.error "Could not solve constraint graph"), !,
+    logging.trace (coq.say "[solve-constraints] Solved all constraints ! Assignation is " LVars).

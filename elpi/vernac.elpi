@@ -79,26 +79,6 @@ main [str "Use", X] :- !, std.do! [
   %XXX We should strengthen this anyways
   %coq.env.typeof GR TGR,
   %(aterm.util.mk-aterm TGR CList (some Class) _; trocq.error "Trocq could not infer classes levels for this term"), !,
-
-  std.forall {param-class.all-weakenings-from Class} subclass\
-      sigma WTRR Suffix WName WCRR \
-    if (trocq.db.gref GR subclass _ _ _) true (std.do! [
-      param-class.weaken-out subclass GRR WTRR,
-
-      param-class.to-string subclass Suffix,
-      WName is BaseName ^ "_weakened_to_" ^ Suffix,
-      (@univpoly! => coq.env.add-const WName WTRR _ @transparent! WCRR),
-      coq.elpi.accumulate _ "trocq.db"
-        (clause _ _
-          (trocq.db.gref GR subclass CList GR' (const WCRR))),
-
-      logging.info (sigma WCRRId\
-        coq.gref->id (const WCRR) WCRRId,
-        coq.info "accumulating" GRId
-          "@" subclass "(" CList ") ~" GR'Id
-          ":." WCRRId
-      ),
-  ])
 ].
 
 % several use in one go!

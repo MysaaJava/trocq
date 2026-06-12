@@ -98,6 +98,24 @@ map.update K F M M' :-
   std.map.add K V' M M', !.     % add
 map.update _ _ M M.          % no-op
 
+% [mem-evar! L X] succeeds once if X is an evar and occurs inside L 
+pred mem-evar! -> list A, A.
+mem-evar! [X|_] Y :- X == Y, !.
+mem-evar! [_|L] Y :- mem-evar! L Y.
+
+% [append-uniq-evar L1 L2 L] adds elements of L2 into L1 if they are evars that did not occur
+pred append-uniq-evar -> list A, list A, list A.
+append-uniq-evar L1 [] L1.
+append-uniq-evar L1 [X|L2] L :- 
+  var X,
+  mem-evar! L1 X, !,
+  append-uniq-evar L1 L2 L.
+append-uniq-evar L1 [X|L2] L :-
+  var X, !,
+  append-uniq-evar [X|L1] L2 L.
+append-uniq-evar L1 [_|L2] L :- !, % X is not a var
+  append-uniq-evar L1 L2 L.
+
 func delete A, list A -> list A.
 delete A [A|Xs] Xs :- !.
 delete A [X|Xs] [X|Xs'] :- delete A Xs Xs'.

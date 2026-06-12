@@ -26,17 +26,17 @@ Section ArrowContravariant.
     Trocq Use RA1 RA2 RB.
 
     Goal A.
-        trocq.
+        trocq to A''.
         enough (x : A'') by exact x.
     Abort.
 
     Goal A -> B.
-        trocq.
+        trocq to (A' -> B').
         enough (x : A' -> B') by exact x.
     Abort.
 
     Goal B -> A.
-        trocq.
+        trocq to (B' -> A'').
         enough (x : B' -> A'') by exact x.
     Abort.
 

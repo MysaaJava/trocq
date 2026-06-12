@@ -49,7 +49,7 @@ pred id-map-sym o:map-class, o:constant.
 %     {{ParamMN.R}} {{ParamMN.covariant}} {{ParamMN.contravariant}}
 pred rel o:param-class, o:gref, o:gref, o:gref, o:gref, o:gref.
 
-% Given the class (M, N), obtain {{ParamMN.Rel}}, the projection of the
+% Given the class (M, N), obtain {{ParamMN.R}}, the projection of the
 % relation inside a ParamMN
 pred r o:param-class, o:constant.
 
