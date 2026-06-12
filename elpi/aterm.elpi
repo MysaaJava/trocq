@@ -17,6 +17,7 @@
 accumulate "Trocq.Elpi/aterm-type".
 accumulate "Trocq.Elpi/util".
 accumulate "Trocq.Elpi/util-rocq".
+accumulate "Trocq.Elpi/param-class-util".
 
 % `@pi-adecl N AT (ax\ x\ x'\ xr\ F x x' xr)` declares elpi pi-variables x x' xr with adecl
 % x has annotated type AT
@@ -35,13 +36,19 @@ macro @pi-adecl N AT F :-
 
 % curry f := fun x => f (fst x) (snd x)
 % forall z : A * A', B[z] -> forall x : A, forall y : A', B[x,y]
-% TODO XXX Move this to data.elpi
+% TODO XXX Move this back to data.elpi
 func trocq.data.r param-class -> term.
-trocq.data.r (uvar as C) T :- !,
-  declare_constraint (trocq.data.r C T) [C].
 trocq.data.r C T :-
-  trocq.db.r C Const, !,
-  coq.env.global (const Const) T.
+  param-class.suspend-on C (
+      trocq.db.r C Const, !,
+      coq.env.global (const Const) T
+  ).
+func trocq.data.rel param-class -> term.
+trocq.data.rel C T :-
+  param-class.suspend-on C (
+      trocq.db.rel C Const _ _ _ _, !,
+      coq.env.global Const T
+  ).
 
 namespace aterm {
 
@@ -49,7 +56,7 @@ namespace aterm {
   triple AX X X' RX :- adecl AX _ X X' RX _, !.
   triple (atriple X X' RX) X X' RX.
   triple (asort S Cl) (sort S) (sort S) T :- 
-    declare_constraint (trocq.data.r Cl T) [Cl].%XXX This should not be suspended here ? Should it
+    trocq.data.rel Cl T.
   triple (aglobal G (uvar as G') GRG) (global G) TG' RG :- !,
     declare_constraint (triple (aglobal G G' GRG) (global G) TG' RG) [G'].%XXX These constraints should be removed with only triples
   triple (aglobal G G' (uvar as GRG)) (global G) TG' RG :- !,
@@ -186,6 +193,49 @@ namespace aterm.util {
   % The other cases are aglobal, apglobal, and (name X), which all leads to [],none
   shape _ 0 ff :- !.
   shape.all T N :- !, shape T NT B, N is NT + {util.bool->int B}.
+
+
+  %TODO XXX THis should be removed, only used in constraints.elpi
+  func mk-aterm term, list param-class, option param-class -> aterm.
+  func mk-aterm.all term, list param-class -> aterm.
+  mk-aterm.all T Cs AT :-
+    shape T _ B,
+    if (B == tt) (
+      mk-aterm T {std.drop-last 1 Cs} (some {std.last Cs}) AT
+    ) (
+      mk-aterm T Cs none AT
+    ).
+  mk-aterm (sort S) [] (some C) (asort S C) :- !.
+  mk-aterm (prod N T F) Cs Out (aprod N AT AF) :- !,
+    pi x ax\ (mk-aterm x [] none ax :- !) => (
+      shape.all T TN,
+      le_ TN {std.length Cs},
+      std.split-at TN Cs CsT CsF,
+      mk-aterm.all T CsT AT,
+      mk-aterm (F x) CsF Out (AF ax)
+    ).
+  mk-aterm (fun N T F) Cs _ (afun N AT AF) :- !,
+    pi x ax\ (mk-aterm x [] none ax :- !) => (
+      shape.all T TN,
+      le_ TN {std.length Cs},
+      std.split-at TN Cs CsT CsF,
+      mk-aterm.all T CsT AT,
+      mk-aterm.all (F x) CsF (AF ax)
+    ).
+  mk-aterm (app [F|Xs]) Cs Out (aapp [AF|AXs]) :- !,
+    shape.all F FN,
+    le_ FN {std.length Cs},
+    std.split-at FN Cs CsF CsXs,
+    mk-aterm F CsF Out AF,
+    std.fold-map Xs CsXs (x\ csxs\ ax\ csxs'\ sigma XN CSX CSXSL'\
+      shape.all x XN,
+      std.length csxs CSXSL',
+      le_ XN CSXSL',
+      std.split-at XN csxs CSX csxs',
+      mk-aterm.all x CSX ax
+    ) AXs [].
+  mk-aterm (global G ) _ _ (aglobal G _ _) :- !.
+  mk-aterm (pglobal G U) _ _ (apglobal G U _ _) :- !.
 }
 
 func aterm.util.global i:aterm o:gref.
