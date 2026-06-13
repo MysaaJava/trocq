@@ -136,7 +136,7 @@ main [str "Usage"] :- !, coq.info {usage-msg}.
 main [str "Logging", str StrLevel] :- !,
   string->verbosity StrLevel Level,
   util.accumulate-replacing-named-clause _ "trocq.db" "log-level" (
-    log-level Level
+    trocq.db.log-level Level
   ).
 
 main [str "Coercion", str "On"] :- !,
