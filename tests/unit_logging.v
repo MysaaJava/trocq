@@ -11,12 +11,32 @@
 (*                            * see LICENSE file for the text of the license *)
 (*****************************************************************************)
 
-From elpi Require Import elpi.
-From Trocq Require Import Param.
+From Trocq Require Import Stdlib Trocq.
 
-From Trocq.Elpi Extra Dependency "vernac.elpi" as vernac.
+Set Universe Polymorphism.
 
-Elpi Command Trocq.
-Elpi Accumulate File vernac.
-Elpi Accumulate Db trocq.db.
-Elpi Export Trocq.
+Section TrocqLogging.
+
+    Variable (A B: Type).
+    Variable (f : B -> A).
+
+    Definition R1 : Param01.Rel A B := mkParam01 f.
+
+    Trocq Use R1.
+    Goal A.
+        trocq.
+        enough (x : B) by exact x.
+    Abort.
+
+    Trocq Logging trace.
+    Goal A.
+        trocq.
+        enough (x : B) by exact x.
+    Abort.
+
+    Trocq Logging info.
+    Goal A.
+        trocq.
+        enough (x : B) by exact x.
+    Abort.
+End TrocqLogging.
