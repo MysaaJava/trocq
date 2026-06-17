@@ -122,6 +122,10 @@ namespace aterm {
   % TODO Implement the other constructors for all this section
 }
 
+func aterm.util.global i:aterm o:gref.
+aterm.util.global (aglobal G _ _) G :- !.
+aterm.util.global (apglobal G _ _ _) G :- !.
+
 namespace aterm.util {
   %TODO XXX This method is weird, should it use pi-adecl ? Weird
   % Forgets the term annotations of a function aterm -> aterm
@@ -191,13 +195,19 @@ namespace aterm.util {
     shape F FN B,
     N is FN + XsN.
   % The other cases are aglobal, apglobal, and (name X), which all leads to [],none
-  shape _ 0 ff :- !.
+  %XXX This is bugged, see example Vector_tuple, Elpi fails on coq.env.global _ X when X is pglobal «append»
+  %shape X 0 ff :- (coq.env.global _ X ; name X), !.
+  shape X 0 ff :- (X = global _ ; X = pglobal _ _ ; name X), !.
   shape.all T N :- !, shape T NT B, N is NT + {util.bool->int B}.
 
 
   %TODO XXX THis should be removed, only used in constraints.elpi
   func mk-aterm term, list param-class, option param-class -> aterm.
   func mk-aterm.all term, list param-class -> aterm.
+  mk-aterm T L Cl AT :-
+    logging.trace (coq.say "[mk-aterm]" T L Cl AT), fail, !.
+  mk-aterm.all T L AT :-
+    logging.trace (coq.say "[mk-aterm.all]" T L AT), fail, !.
   mk-aterm.all T Cs AT :-
     shape T _ B,
     if (B == tt) (
@@ -205,21 +215,22 @@ namespace aterm.util {
     ) (
       mk-aterm T Cs none AT
     ).
-  mk-aterm (sort S) [] (some C) (asort S C) :- !.
+  mk-aterm (sort S) [] (some C) (asort S' C) :- !,
+    coq.unify-eq (sort S) (sort S') ok.
   mk-aterm (prod N T F) Cs Out (aprod N AT AF) :- !,
-    pi x ax\ (mk-aterm x [] none ax :- !) => (
-      shape.all T TN,
-      le_ TN {std.length Cs},
-      std.split-at TN Cs CsT CsF,
-      mk-aterm.all T CsT AT,
+    shape.all T TN,
+    le_ TN {std.length Cs},
+    std.split-at TN Cs CsT CsF,
+    mk-aterm.all T CsT AT,
+    @pi-adecl N AT ax\ x\ _\ _\ (
       mk-aterm (F x) CsF Out (AF ax)
     ).
   mk-aterm (fun N T F) Cs _ (afun N AT AF) :- !,
-    pi x ax\ (mk-aterm x [] none ax :- !) => (
-      shape.all T TN,
-      le_ TN {std.length Cs},
-      std.split-at TN Cs CsT CsF,
-      mk-aterm.all T CsT AT,
+    shape.all T TN,
+    le_ TN {std.length Cs},
+    std.split-at TN Cs CsT CsF,
+    mk-aterm.all T CsT AT,
+    @pi-adecl N AT ax\ x\ _\ _\ (
       mk-aterm.all (F x) CsF (AF ax)
     ).
   mk-aterm (app [F|Xs]) Cs Out (aapp [AF|AXs]) :- !,
@@ -234,10 +245,7 @@ namespace aterm.util {
       std.split-at XN csxs CSX csxs',
       mk-aterm.all x CSX ax
     ) AXs [].
-  mk-aterm (global G ) _ _ (aglobal G _ _) :- !.
-  mk-aterm (pglobal G U) _ _ (apglobal G U _ _) :- !.
+  mk-aterm (global G ) [] none (aglobal G _ _) :- !.
+  mk-aterm (pglobal G _) [] none (apglobal G _ _ _) :- !.
+  mk-aterm T [] none AT :- adecl AT _ T _ _ _, !.
 }
-
-func aterm.util.global i:aterm o:gref.
-aterm.util.global (aglobal G _ _) G :- !.
-aterm.util.global (apglobal G _ _ _) G :- !.

@@ -49,12 +49,12 @@ pi-adecl N AT F :-
 pred param i:aterm, i:aterm, o:term, o:term o:cstr-list.
 
 % TrocqConv + TrocqConst
-param Tm AT' Tm' Witness [Cstr|Cstrs] :- aterm.util.global Tm GTm, !, std.do! [
+param Tm AT' Tm' Witness Cstrs' :- aterm.util.global Tm GTm, !, std.do! [
   logging.debug (coq.say "[param] Rule const :" Tm "@" AT'),
-  annot.typecheck Tm AT CstrsX,
-  annot.sub-type AT AT' CstrsY,
-  std.append CstrsX CstrsY Cstrs,
-  Cstr = cstr-gref GTm AT Tm' TRR, % Can't we do the weakening in the constraint resolution ?
+  annot.typecheck Tm AT CstrsTypecheck,
+  annot.sub-type AT AT' CstrsSubtype,
+  std.append CstrsTypecheck CstrsSubtype Cstrs,
+  add-cstr Cstrs (cstr-gref GTm AT Tm' TRR) Cstrs', % Can't we do the weakening in the constraint resolution ?
   weaken AT AT' {aterm.erase Tm} Tm' TRR Witness,
   logging.debug (coq.say "[param] Out rule const :" Tm' "∵" Witness)
 ].
@@ -73,11 +73,12 @@ param X T2 X' Witness Cstrs :- name X, !,
 param
   (asort S CR as T)
   (asort _ C as AT)
-  (sort S as T')
-  RT [Cstr] :- !, std.do! [
+  (sort S' as T')
+  RT Cstrs :- !, std.do! [
     logging.debug (coq.say "[param] Rule sort :" T "@" AT),
-    Cstr = cstr-type C CR,
+    add-cstr [] (cstr-type C CR) Cstrs,
     trocq.data.ttype C CR RT,
+    coq.unify-eq (sort S) (sort S') ok,
     logging.debug (coq.say "[param] Out rule sort :" T' "∵" RT),
   ].
 
@@ -103,14 +104,14 @@ param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F' as T0') Witness Cst
 % TrocqArrow
 param
   (aprod _ A (_\ B ) as T) (asort Sort C as AT)
-  (prod `_` A' (_\ B') as T') Witness [Cstr|Cstrs] :- !,
+  (prod `_` A' (_\ B') as T') Witness Cstrs' :- !,
    std.do! [
       logging.debug (coq.say "[param] Rule arrow :" T "@" AT),
-      Cstr = cstr-arrow C CA CB,
       (annot.typecheck A (asort SortA _) CstrsT; trocq.error "[param/arrow] Cannot typecheck" A "with a sort"),
       param A (asort SortA CA) A' AR CstrsA,
       param B (asort Sort CB) B' BR CstrsB,
       std.flatten [CstrsT,CstrsA,CstrsB] Cstrs,
+      add-cstr Cstrs (cstr-arrow C CA CB) Cstrs',
       coq.mk-app {trocq.data.arrow C} [{aterm.erase A}, A', AR, {aterm.erase B}, B', BR] Witness,
       logging.debug (coq.say "[param] Out rule arrow :" T' "∵" Witness)
     ].
@@ -119,19 +120,17 @@ param
 param
   (aprod N A B as T) (asort Sort C as AT)
   (prod N' A' B' as T')
-  Witness [Cstr|Cstrs] :- !, std.do![
+  Witness Cstrs' :- !, std.do![
     logging.debug (coq.say "[param] Rule pi :" T "@" AT),
     coq.name-suffix N "'" N',
     coq.name-suffix N "R" NR,
-
-    Cstr = cstr-pi C CA CB,
-
     (annot.typecheck A (asort SortA _) CstrsD; trocq.error "[param/forall] Cannot typecheck" A "with a sort"),
     param A (asort SortA CA) A' AR CstrsA,
     (@pi-adecl N A (ax\ x\ x'\ xR\
       param (B ax) (asort Sort CB) (B' x') (BR x x' xR) CstrsB
     )),
     std.flatten [CstrsD,CstrsA,CstrsB] Cstrs,
+    add-cstr Cstrs (cstr-pi C CA CB) Cstrs',
     coq.mk-app {trocq.data.forall C}
       [ {aterm.erase A}, A', AR,
         fun N {aterm.erase A} {aterm.util.erase-fun N A B},
@@ -177,13 +176,16 @@ param X T X' Witness _ :-
 pred weakener i:aterm, i:aterm, o:term.
 weakener (asort _ C) (asort _ C') Weakener :- !,
   trocq.data.forget C C' Weakener.
+%TODO XXX We do not type the output function, as we have pi variable dependency issues appearing with this.
+% We should do more pruning because this should work in the future
 weakener (aprod N A P as AP) (aprod _ B Q as BQ)
-    (fun _ TAP t\ fun _ TAP' t'\ fun _ RRTAP tr\ fun _ TB x\ fun _ TB' x'\ fun _ RRTB xr\ 
+    (fun _ _ t\ fun _ _ t'\ fun _ _ tr\ fun _ _ x\ fun _ _ x'\ fun _ _ xr\ 
+    %(fun _ TAP t\ fun _ TAP' t'\ fun _ RRTAP tr\ fun _ TB x\ fun _ TB' x'\ fun _ RRTB xr\ 
       WeakenerF t t' tr x x' xr) :- !,
-  aterm.triple AP TAP TAP' RTAP,
-  aterm.triple BQ TB TB' RTB, % Property on subtype, we should have TA=TB and TA'=TB'
-  util.mk-app RTAP [TAP,TAP'] RRTAP,
-  util.mk-app RTB [TB,TB'] RRTB,
+  %aterm.triple AP TAP TAP' RTAP,
+  %aterm.triple BQ TB TB' RTB, % Property on subtype, we should have TA=TB and TA'=TB'
+  %util.mk-app RTAP [TAP,TAP'] RRTAP,
+  %util.mk-app RTB [TB,TB'] RRTB,
   weakener B A BAWeakener,
   @pi-adecl `t` AP (_\ t\ t'\ tr\
   pi-adecl N B (ax\ x\ x'\ xr\

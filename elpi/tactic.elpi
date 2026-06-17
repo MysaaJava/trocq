@@ -22,7 +22,7 @@ evar _ _ _ :- !.
 pred known->gref i:prop, o:prop.
 known->gref
   (trocq.db.known-gref _Rel GR OutCl Classes GR' GRR)
-  (trocq.db.gref GR OutCl Classes GR' GRR :- !).
+  (trocq.db.gref GR OutCl Classes GR' GRR).
 
 pred load-rel i:gref, o:list prop.
 load-rel GRRel DB :- std.do! [
@@ -94,7 +94,6 @@ translate-goal DB Ty G C G' GR' :- param-class.end-suspension ES => DB => std.do
   % generate the associated goal G' and witness GR
   param AG T G' GR Cstrs,
   logging.debug (coq.say "[translate-goal] after translation: goal" G' "with proof" GR),
-  logging.debug (coq.say "These are the constraints" Cstrs),
   solve-constraints Cstrs,
   logging.debug (coq.say "[translate-goal] After constraint solve: goal" G' "with proof" GR),
   ES = pc map0 map0, % This triggers elpi held constraints

@@ -50,8 +50,8 @@ sub-type AT AT' _ :-
 % SubSort
 % We don't check wether S and S' are related.
 % We need to think this again when algebraic universes will be added to Rocq
-sub-type (asort _ C) (asort _ C') [Cstr] :- !,
-  Cstr = cstr-geq C C'.
+sub-type (asort _ C) (asort _ C') Cstrs :- !,
+  add-cstr [] (cstr-geq C C') Cstrs.
 % SubPi
 sub-type (aprod N AT AF) (aprod _ AT' AF') Cstrs :- !,
   sub-type AT' AT CstrsA, !,
@@ -79,8 +79,8 @@ sub-type X Y [] :- trocq.error "[annot/sub-type]" X "is not a sub-type of" Y.
 pred eq i:aterm, i:aterm, o:cstr-list.
 eq AT AT' _ :-
   logging.trace (coq.say "[eq] Checking equality" AT "==" AT'), fail.
-eq (asort S C1) (asort S C2) [Cstr]:-
-  Cstr = cstr-eq C1 C2.
+eq (asort _ C1) (asort _ C2) Cstrs:-
+  add-cstr [] (cstr-eq C1 C2) Cstrs. % XXX Nothing is checked about sort compatibility
 eq (aprod _ AT AF) (aprod _ AT' AF') Cstrs :- !,
   eq AT AT' CstrsA, !,
   pi x\ eq (AF x) (AF' x) CstrsB,

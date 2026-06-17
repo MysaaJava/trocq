@@ -85,9 +85,12 @@ namespace trocq.data {
   forget.aux C C [] :- !.
   % TODO This is broken, when forgetting from 30 to 2b0
   % The program will attempt 30->2a0->10->00 then fail
-  % This is a quick fix for this bug
+  % XXX This is a quick fix for this bug
   forget.aux (pc map3 N as CA) (pc map2b N as CB) [W0] :- !,
     forget0 CA CB W0.
+  forget.aux (pc MA map3 as CA) (pc _ map2b as CB) [W0|Ws] :- !,
+    forget0 CA (pc MA map2b) W0,
+    forget.aux (pc MA map2b) CB Ws.
   forget.aux (pc MA N as CA) (pc _ N as CB) [W0|Ws] :- !,
     % CA >= CC >= CB
     std.mem {map-class.weakenings-from MA} MC, !,
