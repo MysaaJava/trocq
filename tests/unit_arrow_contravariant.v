@@ -23,7 +23,9 @@ Section ArrowContravariant.
     Definition RA2 : Param01.Rel A A'':= mkParam01 f2.
     Definition RB  : Param11.Rel B B' := mkParam11 g1 g2.
 
-    Trocq Use RA1 RA2 RB.
+    Trocq Register A @ (PType map1 map0) ~ A' because RA1.
+    Trocq Register A @ (PType map0 map1) ~ A'' because RA2.
+    Trocq Register B @ (PType map1 map1) ~ B' because RB.
 
     Goal A.
         trocq to A''.

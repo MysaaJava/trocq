@@ -23,8 +23,8 @@ typeabbrev atype aterm.
 
 type atriple  term -> term -> term -> aterm.
 type asort    sort -> param-class -> aterm.
-type aglobal  gref -> gref -> gref -> aterm.
-type apglobal gref -> univ-instance -> gref -> gref -> aterm.
+type aglobal  gref -> term -> term -> aterm.
+type apglobal gref -> univ-instance -> term -> term -> aterm.
 type afun     name -> atype -> (aterm -> aterm) -> aterm.     % fun x : t =>
 type aprod    name -> atype -> (aterm -> aterm) -> aterm.         % forall x : t,
 type alet     name -> atype -> aterm -> (aterm -> aterm) -> aterm. % let x : T := v in
@@ -36,4 +36,4 @@ type aprimitive primitive-value -> aterm.
 
 % `adecl ax N x x' xr A` declares an annotated variable ax with name N with an annotated type A
 % which forgets to a term x and translates to a term x' with relation xr
-pred adecl i:aterm o:name o:term o:term o:term o:atype.
+pred adecl o:aterm o:name o:term o:term o:term o:atype.

@@ -17,18 +17,20 @@
 accumulate "Trocq.Elpi/annot".
 accumulate "Trocq.Elpi/data".
 
-macro @pi-adecl N AT F :-
-  aterm.triple AT PAD_T PAD_T' TR,
-  coq.mk-app TR [PAD_T,PAD_T'] TRx,
+macro @pi-adecl N PAD_AT PAD_F :-
+  aterm.triple PAD_AT PAD_T PAD_T' PAD_TR,
+  util.mk-app PAD_TR [PAD_T,PAD_T'] PAD_TRx,
   coq.name-suffix N "'" N',
   coq.name-suffix N "R" NR,
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
-  @pi-decl NR TRx xR\ (
+  @pi-decl NR PAD_TRx xR\ (
   pi ax\ [
-    adecl ax N x x' xR AT,
-  ] => (F ax x x' xR)
-  ))).
+    adecl ax N x x' xR PAD_AT
+  ] => (
+    logging.trace (coq.say "[adecl]" ax "==" x "@" PAD_AT "~" x' "∵" xR),
+    (PAD_F ax x x' xR)
+  )))).
 
 %XXX Enlever cette infamie parce que weakening appelle deux fois @pi-adecl
 pred pi-adecl name, atype, (aterm -> term -> term -> term -> prop) ->.

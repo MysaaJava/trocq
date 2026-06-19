@@ -25,7 +25,10 @@ Section DoubleUse.
     Variable (RF1 : forall (X X' : Type) (RX : Param01.Rel X X'), Param01.Rel (F X) (F' X')).
     Variable (RF2 : forall (X X' : Type) (RX : Param10.Rel X X'), Param10.Rel (F X) (F' X')).
     
-    Trocq Use RA RF1 RF2.
+
+    Trocq Register A @ (PType map1 map1) ~ A' because RA.
+    Trocq Register F @ (PType map0 map1 -> PType map0 map1) ~ F' because RF1.
+    Trocq Register F @ (PType map1 map0 -> PType map1 map0) ~ F' because RF2.
     
     Trocq Logging trace.
     Goal F A -> F A.

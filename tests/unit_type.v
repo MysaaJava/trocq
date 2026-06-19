@@ -22,7 +22,7 @@ Section TypeTest.
 
     Definition R1 : Param10.Rel A B := mkParam10 f.
 
-    Trocq Use R1.
+    Trocq Register A @ (PType map1 map0) ~ B because R1.
 
     Goal A -> Type.
         trocq.

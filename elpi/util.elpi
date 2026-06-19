@@ -94,6 +94,12 @@ pred mem-evar! -> list A, A.
 mem-evar! [X|_] Y :- X == Y, !.
 mem-evar! [_|L] Y :- mem-evar! L Y.
 
+% [split-last L L' A] is L = L ++ [X]
+pred split-last list A -> list A, A.
+split-last [] _ _ :- !, fail.
+split-last [X] [] X :- !.
+split-last [Y|L] [Y|L'] X :- split-last L L' X.
+
 % [append-uniq-evar L1 L2 L] adds elements of L2 into L1 if they are evars that did not occur
 pred append-uniq-evar -> list A, list A, list A.
 append-uniq-evar L1 [] L1.

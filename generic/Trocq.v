@@ -19,6 +19,9 @@ From Trocq Require Export
   Param_nat Param_list Param_bool Param_lemmas.
 
 (* TODO: should we also export some variant-specific files, such as Param_Prop.v? *)
-
-Trocq Use Param10_paths.
-Trocq Use Param01_paths.
+Trocq Register eq
+  @ (forall (A : PType map0 map2b) (a1 : A) (a2 : A), PType map0 map1)
+  ~ eq because Param01_paths.
+Trocq Register eq
+  @ (forall (A : PType map2b map0) (a1 : A) (a2 : A), PType map1 map0)
+  ~ eq because Param10_paths.

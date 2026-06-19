@@ -11,9 +11,7 @@
 %                            % (see LICENSE file for the text of the license) %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-accumulate "Trocq.Elpi/param-class-util".
 accumulate "Trocq.Elpi/aterm".
-accumulate "Trocq.Elpi/data".
 
 % command to register the univalence axiom
 main [str "Register", str "Univalence", str S] :- !, std.do! [
@@ -59,57 +57,41 @@ main [str "Register", str "Funext", str S] :- !, std.do! [
 
 % command to add custom witnesses to the database
 % and tells trocq to use it immediately
-main [str "Use", X] :- !, std.do! [
-  util.argument->gref X GRR,
-  coq.env.typeof GRR XTy,
-  param-class.type->classes XTy Class CList GR GR',
-
-  coq.gref->id GR GRId,
-  coq.gref->id GR' GR'Id,
-  coq.gref->id GRR BaseName,
-  logging.info (
-    coq.info "accumulating" GRId "@" Class "(" CList ") ~"
-      GR'Id ":." BaseName
-  ),
-
+main [str "Register", T, str "@", AT0, str "~", T', str "because", RT] :- !,
+  util.argument->term AT0 ATT,
+  util.argument->gref T GT,
+  util.argument->gref T' GT',
+  util.argument->gref RT GRT,
+  coq.elaborate-skeleton ATT _ ATT' ok,
+  (aterm.util.fake-term->aterm ATT' AT, ! ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}),
+  util.mk-app {aterm.rel AT} [{coq.env.global GT},{coq.env.global GT'}] RTType,
+  coq.env.global GRT TGRT,
+  coq.reduction.lazy.bi-norm RTType RTType',
+  coq.elaborate-ty-skeleton RTType' _ RTType'' Diag0,
+  (Diag0 = ok; trocq.error "Could not infer" {coq.term->string RTType'} "as a type" Diag0),
+  coq.elaborate-skeleton TGRT RTType'' _ Diag,
+  (Diag = ok; trocq.error "Could not elaborate" TGRT "with type" {coq.term->string RTType''} Diag),
   coq.elpi.accumulate _ "trocq.db"
-    (clause _ _
-      (trocq.db.gref GR Class CList GR' GRR)),
-  % We check that inferred Class and CList are valid for given gref.
-  %XXX We should strengthen this anyways
-  %coq.env.typeof GR TGR,
-  %(aterm.util.mk-aterm TGR CList (some Class) _; trocq.error "Trocq could not infer classes levels for this term"), !,
-].
+    (clause _ _ (trocq.db.gref GT AT GT' GRT)).
 
-% several use in one go!
-main [str "Use", X, Y | Rest] :- !, std.do![
-    main [str "Use", X], main [str "Use", Y | Rest]].
-
-main [str "RelatedWith", Rel, X] :- !, std.do! [
-  util.argument->gref Rel GRRel,
-  util.argument->gref X GRR,
-  coq.env.typeof GRR XTy,
-  param-class.type->classes XTy Class CList GR GR',
-
-  coq.gref->id GR GRId,
-  coq.gref->id GR' GR'Id,
-  coq.gref->id GRR BaseName,
-  coq.gref->id GRRel GRRelId,
-  logging.info (
-    coq.info "accumulating" GRId
-      "@" Class "(" CList ") ~" GR'Id
-      ":." BaseName
-      "attached to relation" GRRelId
-  ),
-
+% command to add custom witnesses to the database in a DB
+main [str "RegisterWith", DBT, T, str "@", AT0, str "~", T', str "because", RT] :- !,
+  util.argument->gref DBT DBG,
+  util.argument->term AT0 ATT,
+  util.argument->gref T GT,
+  util.argument->gref T' GT',
+  util.argument->gref RT GRT,
+  coq.elaborate-skeleton ATT _ ATT' ok,
+  (aterm.util.fake-term->aterm ATT' AT, ! ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}),
+  util.mk-app {aterm.rel AT} [{coq.env.global GT},{coq.env.global GT'}] RTType,
+  coq.env.global GRT TGRT,
+  coq.reduction.lazy.bi-norm RTType RTType',
+  coq.elaborate-ty-skeleton RTType' _ RTType'' Diag0,
+  (Diag0 = ok; trocq.error "Could not infer" {coq.term->string RTType'} "as a type" Diag0),
+  coq.elaborate-skeleton TGRT RTType'' _ Diag,
+  (Diag = ok; trocq.error "Could not elaborate" TGRT "with type" {coq.term->string RTType''} Diag),
   coq.elpi.accumulate _ "trocq.db"
-    (clause _ _
-      (trocq.db.known-gref GRRel GR Class CList GR' GRR)),
-].
-
-% several use in one go!
-main [str "RelatedWith", Rel, X, Y | Rest] :- !, std.do![
-    main [str "RelatedWith",  Rel, X], main [str "RelatedWith", Rel, Y | Rest]].
+    (clause _ _ (trocq.db.known-gref DBG GT AT GT' GRT)).
 
 main [str "Usage"] :- !, coq.info {usage-msg}.
 
@@ -140,24 +122,18 @@ main [str "Print", str "Translations", Obj] :- !,
   util.argument->gref Obj G,
   coq.info "Registered translations of" {coq.gref->string G} ":",
   trocq.data.translations.of G GS,
-  std.forall {util.cmp-undup cmp_term GS} (G'\ sigma SG' Inss InssU\
+  std.forall {util.cmp-undup cmp_term GS} (G'\ sigma SG' ATs\
     coq.gref->string G' SG',
     coq.info "->" SG',
-    trocq.data.translations.ins G G' Inss,
-    util.cmp-undup {util.lexicographic-cmp cmp_term} Inss InssU,
-    std.forall InssU (Ins\ sigma Outs UOuts SUOuts SIns\
-      trocq.data.translations.out G G' Ins Outs,
-      % We only show upper bounds as we suppose that all weakenings have been generated
-      param-class.upper-bounds Outs UOuts,
-      std.map UOuts param-class.to_string SUOuts,
-      std.map Ins param-class.to_string SIns,
-      coq.info "lvl" SIns "->" SUOuts
+    trocq.data.translations.lvl G G' ATs,
+    std.forall ATs (AT\
+      coq.info "lvl" AT
     )
   ).
 
 main _ :- trocq.error {std.string.concat "\n" ["command syntax error", {usage-msg}]}.
 
-pred usage-msg o:string.
+func usage-msg o:string.
 usage-msg U :-
   std.string.concat "\n" [
     "usage:",

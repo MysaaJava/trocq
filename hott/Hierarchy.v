@@ -112,6 +112,15 @@ Elpi Query lp:{{
   )).
 }}.
 
+Definition PType (n : map_class) (m : map_class) : Type := Type.
+Definition PTriple {T T' TR : Type} (X : T) (X' : T') (XR : TR) := X.
+
+Register PType as trocq.fake_aterm_ptype.
+Register PTriple as trocq.fake_aterm_ptriple.
+Elpi Query lp:{{
+  coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.fake-aterm-ptype {{:gref lib:trocq.fake_aterm_ptype}} {{:gref lib:trocq.fake_aterm_ptriple}})).
+}}.
+
 (********************)
 (* Record Hierarchy *)
 (********************)

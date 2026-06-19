@@ -23,7 +23,7 @@ Section TypeArrow.
     Definition RL (A : Type) (A' : Type) (AR : Param10.Rel A A')
         : Param01.Rel (L A) (L' A') := mkParam01 (f A A' (map AR)).
 
-    Trocq Use RL.
+    Trocq Register L @ (forall A : PType map1 map0, PType map0 map1) ~ L' because RL.
 
     Goal (forall A : Type, L A).
         trocq.

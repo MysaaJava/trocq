@@ -29,7 +29,12 @@ Section PrintTranslations.
     Variable (RC1 : forall X X' : Type, Param2a3.Rel X X' -> Param02b.Rel (C X) (C' X')).
     Variable (RC2 : forall X X'' : Type, Param2a2b.Rel X X'' -> Param43.Rel (C X) (C'' X'')).
 
-    Trocq Use RA1 RA2 RB1 RB2 RC1 RC2.
+    Trocq Register A @ (PType map2a map4) ~ A' because RA1.
+    Trocq Register A @ (PType map3 map3) ~ A'' because RA2.
+    Trocq Register B @ (PTriple A A' RA1 -> PType map3 map2b) ~ B' because RB1.
+    Trocq Register B @ (PTriple A A'' RA2 -> PType map1 map4) ~ B'' because RB2.
+    Trocq Register C @ (PType map2a map3 -> PType map0 map2b) ~ C' because RC1.
+    Trocq Register C @ (PType map2a map2b -> PType map4 map3) ~ C'' because RC2.
 
     Trocq Print Translations.
 

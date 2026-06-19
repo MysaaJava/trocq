@@ -133,20 +133,11 @@ has-univ-if-needed C :-
 pred solve-gref-constraint i:cstr.
 solve-gref-constraint (cstr-gref G AT T' TR) :- !,
     logging.trace (coq.say "[solve-gref]" G AT T' TR),
-    trocq.db.gref G Cl List G' GR,
-    logging.trace (coq.say "[found-gref]" G Cl List G' GR),
-    coq.env.global G TG,
+    trocq.db.gref G AT' G' GR,
+    aterm.util.equals-ignore AT' AT,
+    logging.trace (coq.say "[found-gref]" G AT' G' GR),
     coq.env.global G' T',
-    coq.env.global GR TR,
-    coq.typecheck TG T ok,
-    logging.trace (coq.say "[typed-gref]" TG T' TR T),
-    aterm.util.shape T X Y,
-    if (aterm.util.shape T _ ff)
-    (OCl = none)
-    (OCl = some Cl),
-    logging.trace (coq.say "[class-gref]" X Y OCl),
-    aterm.util.mk-aterm T List OCl AT,
-    logging.trace (coq.say "[aterm-gref]" AT).
+    coq.env.global GR TR.
 
 func cstr->prop cstr -> prop.
 cstr->prop (cstr-eq X Y) (X = Y).
@@ -250,7 +241,7 @@ undeterministic-progress Cstrz :-
 
 pred solve-constraints i:cstr-list.
 solve-constraints L :-
-    std.findall (trocq.db.gref _ _ _ _ _) DatabaseContents,
+    std.findall (trocq.db.gref _ _ _ _) DatabaseContents,
     logging.trace (coq.say "[solve-constraints] Gref Database :" DatabaseContents),
     logging.trace (coq.say "[solve-constraints] Solving constraints", coq.say {cstrs.pp L}), !,
     cstrs->evars L LVars,

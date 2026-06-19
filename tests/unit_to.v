@@ -23,8 +23,8 @@ Section TrocqTo.
     Definition R1 : Param01.Rel A B := mkParam01 f1.
     Definition R2 : Param01.Rel A C := mkParam01 f2.
 
-    Trocq Use R1.
-    Trocq Use R2.
+    Trocq Register A @ (PType map0 map1) ~ B because R1.
+    Trocq Register A @ (PType map0 map1) ~ C because R2.
 
     Goal A.
         trocq to B.
