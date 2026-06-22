@@ -167,7 +167,7 @@ Lemma flt3_step : forall (m n p : ℤ),
 Proof.
 trocq=> /=.
 
-(* the following should be a call to troq to compute *)
+(* the following should be a call to trocq to compute *)
 move=> + + + /eqP + /eqP.
 by do 3![case; do 9?[case=> //=] => ?].
 
