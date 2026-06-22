@@ -71,8 +71,7 @@ sub-type (aapp [X|AXs] as T) (aapp [X|AXs']) Cstrs :- !,
   std.map2 AXs AXs' eq Cstrsz,
   std.flatten Cstrsz Cstrs.
 % SubConv
-sub-type (aglobal G _ _) (aglobal G _ _) [].%XXX This should ensure G' = G' ?
-sub-type (apglobal G _ _ _) (apglobal G _ _ _) [].
+sub-type X Y L :- (X = aglobal _ _ _ ; X = apglobal _ _ _ _), !, eq X Y L.
 sub-type X X [] :- name X, !.
 sub-type X Y [] :- trocq.error "[annot/sub-type]" X "is not a sub-type of" Y.
 
@@ -91,6 +90,10 @@ eq (afun _ AT AF) (afun _ AT' AF') Cstrs :- !,
   eq AT AT' CstrsA, !,
   pi x\ eq (AF x) (AF' x) CstrsB,
   std.append CstrsA CstrsB Cstrs.
+eq (aglobal G1 G1' RG1) (aglobal G2 G2' RG2) [] :- !,
+  G1 = G2, G1' = G2', RG1 = RG2. % XXX Maybe we should put those as real constraints
+eq (apglobal G1 _ G1' RG1) (apglobal G2 _ G2' RG2) [] :- !,
+  G1 = G2, G1' = G2', RG1 = RG2. % XXX Maybe we should put those as real constraints
 eq X Y [] :- unify-eq X Y ok.
 eq (aapp AL) (aapp AL') Cstrs:- !,
   std.map2 AL AL' eq Cstrsz,
