@@ -4,8 +4,8 @@
   mkCoqDerivation,
   version ? null,
   trocq,
+  prelude ? "std"
 }:
-
 let
   cleanSource = source: lib.cleanSourceWith {
     filter = (
@@ -27,19 +27,21 @@ let
     src = lib.cleanSource source;
   };
 in
+lib.throwIfNot (lib.elem prelude ["std" "hott"]) "Parameter `prelude` of package `trocq` should be either \"std\" or \"hott\"" <|
 mkCoqDerivation {
-  pname = "trocq-std-examples";
-  inherit (trocq.std) version;
+  pname = "trocq-${prelude}-examples";
+  inherit (trocq.${prelude}) version;
 
-  src = cleanSource ../../../examples;
+  src = cleanSource ../examples;
 
   makeFlags = [
     "-C"
-    "std"
+    "${prelude}"
   ];
 
   propagatedBuildInputs = [
-    trocq.std
+    trocq.${prelude}
+    mathcomp.ssreflect
     mathcomp.algebra
   ];
 }

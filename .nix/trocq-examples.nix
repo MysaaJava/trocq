@@ -1,11 +1,11 @@
 {
   lib,
   mathcomp,
-  mkCoqDerivation,
+  mkRocqDerivation,
   version ? null,
   trocq,
+  prelude ? "std"
 }:
-
 let
   cleanSource = source: lib.cleanSourceWith {
     filter = (
@@ -16,6 +16,7 @@ let
       type != "regular"
       || !(
         baseName == ".Makefile.d"
+        || baseName == "Makefile.conf"
         || lib.hasSuffix ".vo" baseName
         || lib.hasSuffix ".vok" baseName
         || lib.hasSuffix ".vos" baseName
@@ -26,20 +27,21 @@ let
     src = lib.cleanSource source;
   };
 in
-mkCoqDerivation {
-  pname = "trocq-hott-examples";
-  inherit (trocq.hott) version;
+lib.throwIfNot (lib.elem prelude ["std" "hott"]) "Parameter `prelude` of package `trocq` should be either \"std\" or \"hott\"" <|
+mkRocqDerivation {
+  pname = "trocq-${prelude}-examples";
+  inherit (trocq.${prelude}) version;
 
-  src = cleanSource ../../../examples;
+  src = cleanSource ../examples;
 
   makeFlags = [
     "-C"
-    "hott"
+    "${prelude}"
   ];
 
   propagatedBuildInputs = [
-    trocq.hott
-    mathcomp.ssreflect
+    trocq.${prelude}
+    mathcomp.boot
     mathcomp.algebra
   ];
 }
