@@ -5,14 +5,18 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1783007595,
-        "narHash": "sha256-DqiYgDVMAnXUgYVJL/aLxpdqMYmejFWqMXIn7Wn0Bjk=",
-        "path": "/home/mysaa/Documents/Arbeiten/These/coq-nix-toolbox",
-        "type": "path"
+        "lastModified": 1783065972,
+        "narHash": "sha256-Xmn0dMsWC78Z5lH5pld9L/6jKS4hsv0c7XascNE451Q=",
+        "owner": "MysaaJava",
+        "repo": "coq-nix-toolbox",
+        "rev": "f51974cc39d79e7f6110e0e938d585c7580cacbb",
+        "type": "github"
       },
       "original": {
-        "path": "/home/mysaa/Documents/Arbeiten/These/coq-nix-toolbox",
-        "type": "path"
+        "owner": "MysaaJava",
+        "ref": "flakes",
+        "repo": "coq-nix-toolbox",
+        "type": "github"
       }
     },
     "dune": {
@@ -49,11 +53,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1726560853,
-        "narHash": "sha256-X6rJYSESBVr3hBoH0WbKE5KvhPU5bloyZ2L4K60/fPQ=",
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "c1dfcf08411b08f6b8615f7d8971a2bfa81d5e8a",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
         "type": "github"
       },
       "original": {
@@ -80,49 +84,11 @@
         "type": "github"
       }
     },
-    "flake-utils_3": {
-      "inputs": {
-        "systems": "systems_3"
-      },
-      "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "hott-90": {
-      "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs_2"
-      },
-      "locked": {
-        "lastModified": 1738152741,
-        "narHash": "sha256-etdLH1qDyDc+ZM7K/65iib0MRlLhsnVmzWBCULUDD50=",
-        "owner": "HoTT",
-        "repo": "Coq-HoTT",
-        "rev": "77c8a6dd7c48cd4ab9e5d175c37025a759cab59d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "HoTT",
-        "ref": "V9.0",
-        "repo": "Coq-HoTT",
-        "type": "github"
-      }
-    },
     "hott-91": {
       "inputs": {
         "dune": "dune",
-        "flake-utils": "flake-utils_3",
-        "nixpkgs": "nixpkgs_4"
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1782253192,
@@ -263,22 +229,6 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1728336163,
-        "narHash": "sha256-rISnMC117SHUI19jwOyoBpeH1lg0JkNUwDS2khhEXzc=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "df8a060c473cf49d3d3b0480f892ffcbea7bba41",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_3": {
-      "locked": {
         "lastModified": 1762233356,
         "narHash": "sha256-cGS3lLTYusbEP/IJIWGgnkzIl+FA5xDvtiHyjalGr4k=",
         "owner": "NixOS",
@@ -293,7 +243,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_4": {
+    "nixpkgs_3": {
       "locked": {
         "lastModified": 1777063280,
         "narHash": "sha256-7eer3nzFUVt8VDjS6KyTM8wmkT70YH9ZFB2OG2qUBfg=",
@@ -350,9 +300,9 @@
     },
     "oxcaml": {
       "inputs": {
-        "flake-utils": "flake-utils_2",
+        "flake-utils": "flake-utils",
         "nix-github-actions": "nix-github-actions",
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
         "lastModified": 1771613821,
@@ -468,7 +418,6 @@
     "root": {
       "inputs": {
         "coq-nix-toolbox": "coq-nix-toolbox",
-        "hott-90": "hott-90",
         "hott-91": "hott-91",
         "rocq-elpi": "rocq-elpi"
       }
@@ -489,21 +438,6 @@
       }
     },
     "systems_2": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
-    "systems_3": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

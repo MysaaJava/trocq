@@ -11,7 +11,7 @@ synopsis: >-
   A modular parametricity plugin for proof transfer in Coq
 
 description: |-
-  Trocq is a modular parametricity plugin for Coq. It can be used to
+  Trocq is a modular parametricity plugin for Rocq. It can be used to
   achieve proof transfer by both translating a user goal into another,
   related, variant, and computing a proof that proves the corresponding implication.
 
@@ -123,7 +123,7 @@ documentation: |-
   ## Documentation
 
   See the [tutorial](https://rocq-community.org/trocq/index.html#/quick-start) for concrete use cases.
-  
+
   In short, the plugin provides a tactic:
   - `trocq` (without arguments) which attempts to run a translation on
     a given goal, using the information provided by the user with the
@@ -133,7 +133,7 @@ documentation: |-
     `R2`... ; see below regarding how to associated translations to a relation.
   - `trocq to A` which attempts to translate the goal to a new goal `A`.
   - `trocq to A with R1 R2` is a combination of the two options above
-  
+
   And some commands:
   - `Trocq Use t` to use a translation `t` during the subsequent calls
     to the tactic `trocq`.

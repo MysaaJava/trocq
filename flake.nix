@@ -1,10 +1,9 @@
 {
-  description = "Mathcomp multinomials";
+  description = "Trocq, a modular parametricity plugin for Rocq";
 
   inputs = {
-    coq-nix-toolbox.url = "path:/home/mysaa/Documents/Arbeiten/These/coq-nix-toolbox";
+    coq-nix-toolbox.url = "github:MysaaJava/coq-nix-toolbox?ref=flakes";
 
-    hott-90.url = "github:HoTT/Coq-HoTT?ref=V9.0";
     hott-91.url = "github:HoTT/Coq-HoTT?ref=V9.1";
 
     rocq-elpi.url = "github:LPCIC/coq-elpi?ref=ba3cc750eda486c85d94e3eb35fb0eba77609338";
@@ -63,13 +62,3 @@
     };
   };
 }
-
-# We can build the package mathcomp-multinomials from overlay (formerly bundle) rocq91 with the following line
-# nix develop should also work
-# nix build .#rocq91.rocqPackages.mathcomp-multinomials
-
-
-#CI
-
-#-> dépendances, le but c'est de populer cachix
-#mappé avec le hash

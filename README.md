@@ -23,7 +23,7 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 [doi-shield]: https://zenodo.org/badge/DOI/10.5281/zenodo.10492403.svg
 [doi-link]: https://doi.org/10.5281/zenodo.10492403
 
-Trocq is a modular parametricity plugin for Coq. It can be used to
+Trocq is a modular parametricity plugin for Rocq. It can be used to
 achieve proof transfer by both translating a user goal into another,
 related, variant, and computing a proof that proves the corresponding implication.
 
