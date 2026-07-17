@@ -58,12 +58,13 @@ main [str "Register", str "Funext", str S] :- !, std.do! [
 % command to add custom witnesses to the database
 % and tells trocq to use it immediately
 main [str "Register", T, str "@", AT0, str "~", T', str "because", RT] :- !,
-  util.argument->term AT0 ATT,
+  (util.argument->term AT0 ATT,
   util.argument->gref T GT,
   util.argument->gref T' GT',
-  util.argument->gref RT GRT,
+  util.argument->gref RT GRT, ! ; trocq.error "Could not parse arguments"),
   coq.elaborate-skeleton ATT _ ATT' ok,
   (aterm.util.fake-term->aterm ATT' AT, ! ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}),
+  logging.trace (coq.say "Inferred annotated term" AT),
   util.mk-app {aterm.rel AT} [{coq.env.global GT},{coq.env.global GT'}] RTType,
   coq.env.global GRT TGRT,
   coq.reduction.lazy.bi-norm RTType RTType',

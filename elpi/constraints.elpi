@@ -260,10 +260,11 @@ undeterministic-progress Cstrz :-
     deterministic-progress Cstrz Cstrz',
     if (Cstrz' = [Cstr0|CstrzOther])
     (
-        logging.trace (coq.say "[cstr]" "Solving" {cstr.pp Cstr0} "non-determinstically"),
         !,
+        logging.trace (cstr.pp Cstr0 Cstr0Str),
+        logging.trace (coq.say "[cstr]" "Solving" Cstr0Str "non-determinstically"),
         do-cstrz [Cstr0], % Non-deterministically
-        logging.trace (coq.say "[cstr]" "Solved to" {cstr.pp Cstr0}), 
+        logging.trace (coq.say "[cstr]" "Solved" Cstr0Str "to" {cstr.pp Cstr0}), 
         undeterministic-progress CstrzOther,
         !
     ) (true),

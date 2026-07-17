@@ -177,7 +177,7 @@ equals-ignore (sort _) (sort _) :- !.
 equals-ignore (global G) (global G) :- !.
 equals-ignore (pglobal G _) (pglobal G _) :- !.
 equals-ignore (app AL) (app AL') :- !,
-  util.forall2 equals-ignore AL AL'.
+  std.map AL equals-ignore AL'.
 equals-ignore X X :- !.
 
 func gref->string gref -> string.

@@ -203,8 +203,6 @@ namespace aterm.util {
   shape.all T N :- !, shape T NT B, N is NT + {util.bool->int B}.
 
   func fake-term->aterm term -> aterm.
-  fake-term->aterm AT _ :-
-    coq.say "faking aterm" AT, fail, !.
   fake-term->aterm (app [PType|L]) (asort (typ U) Cl) :-
     trocq.data.ptype PType, !,
     L = [TM, TN],
@@ -217,11 +215,16 @@ namespace aterm.util {
   fake-term->aterm (app [PTriple|L]) Out :-
     trocq.data.ptriple PTriple,
     L = [_,_,_,X,X',RX|L'], !,
+    std.map L' fake-term->aterm AL',
+    % XXX Reactivate this, but think about it first
+    %coq.elaborate-skeleton RX (prod `_` X _\ prod `_` X' _\ sort _) RXR Diag,
+    %(Diag = ok, ! ; trocq.error {coq.term->string RX} "is not a relation between" {coq.term->string X} "and" {coq.term->string X'} Diag), !,
+    RXR = RX,
     if (X = global G)
-    (OutT = aglobal G X' RX)
+    (OutT = aglobal G X' RXR)
     (if (X = pglobal G U)
-    (OutT = apglobal G U X' RX)
-    (OutT = atriple X X' RX)),
+    (OutT = apglobal G U X' RXR)
+    (OutT = atriple X X' RXR)),
     std.map L' fake-term->aterm AL',
     aterm.util.mk-app OutT AL' Out.
   fake-term->aterm (sort S) (asort S Cl) :- !,
@@ -246,8 +249,10 @@ namespace aterm.util {
     std.map L fake-term->aterm AL.
   fake-term->aterm X AX :- adecl AX _ X _ _ _, !.
 
-  % Replace all names in an aterm with `x`
+  % From a full aterm in the database, instantiates a aterm with holes
   func equals-ignore aterm -> aterm.
+  equals-ignore X X' :-
+    logging.trace (coq.say "[equals-ignore]" X "vs" X'), fail, !.
   equals-ignore (aprod N AT F) (aprod _ AT' F') :- !,
     equals-ignore AT AT',
     @pi-adecl N AT (ax\ _\ _\ _\ equals-ignore (F ax) (F' ax)).
