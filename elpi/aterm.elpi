@@ -36,6 +36,20 @@ macro @pi-adecl N PAD_AT PAD_F :-
     logging.trace (coq.say "[adecl]" ax "==" x "@" PAD_AT "~" x' "∵" xR),
     (PAD_F ax x x' xR)
   )))).
+%XXX Enlever cette infamie parce que bottomOf et topOf appelle deux fois @pi-adecl
+pred pi-adecl name, atype, (aterm -> term -> term -> term -> prop) ->.
+pi-adecl N AT F :-
+  aterm.triple AT PAD_T PAD_T' TR,
+  coq.mk-app TR [PAD_T,PAD_T'] TRx,
+  coq.name-suffix N "'" N',
+  coq.name-suffix N "R" NR,
+  @pi-decl N PAD_T x\ (
+  @pi-decl N' PAD_T' x'\ (
+  @pi-decl NR TRx xR\ (
+  pi ax\ [
+    adecl ax N x x' xR AT,
+  ] => (F ax x x' xR)
+  ))).
 
 % curry f := fun x => f (fst x) (snd x)
 % forall z : A * A', B[z] -> forall x : A, forall y : A', B[x,y]
@@ -99,7 +113,7 @@ namespace aterm {
   func rel aterm -> term.
   rel AT RT :- triple AT _ _ RT.
 
-  % Annotates a term with evars
+  % Annotates a term with fresh evars
   func fresh term -> aterm.
   fresh (sort S) (asort S Cl) :-
     prune Cl []. %XXX Check wether those prunes will cause any trouble.
@@ -283,6 +297,42 @@ namespace aterm.util {
     trocq.data.forget _ _ Weakener, !,
     remove-weakenings T T'.
   remove-weakenings T T.
+
+  % returns the weakest (resp. strongest) annotations for the given type
+  func bottomOf atype -> atype.
+  func topOf atype -> atype.
+  bottomOf T U :- logging.trace (coq.say "[bottomOf]" T "//" U), fail, !.
+  topOf T U :- logging.trace (coq.say "[topOf]" T "//" U), fail, !.
+  bottomOf (asort S C) (asort S Bot) :- !, param-class.bottom Bot.
+  topOf (asort S C) (asort S Top) :- !, param-class.top Top.
+  bottomOf (aprod N AT AF) (aprod N AT' AF') :- !,
+    topOf AT AT',
+    @pi-adecl N AT (ax\ _\ _\ _\
+    pi-adecl N AT' (ax'\ _\ _\ _\
+      [bottomOf ax ax', topOf ax ax'] =>
+      bottomOf (AF ax) (AF' ax')
+    )), !.
+  topOf (aprod N AT AF) (aprod N AT' AF') :- !,
+    bottomOf AT AT',
+    @pi-adecl N AT (ax\ _\ _\ _\
+    pi-adecl N AT' (ax'\ _\ _\ _\
+      [bottomOf ax ax', topOf ax ax'] =>
+      topOf (AF ax) (AF' ax')
+    )), !.
+  bottomOf (aapp [ (afun _ _ AF),AX1|AXs]) Out :- !,
+    % We beta-reduce
+    bottomOf (aapp [(AF AX1) | AXs]) Out.
+  topOf (aapp [ (afun _ _ AF),AX1|AXs]) Out :- !,
+    % We beta-reduce
+    topOf (aapp [(AF AX1) | AXs]) Out.
+  bottomOf (aapp [X|AXs] as T) (aapp [X'|AXs]) :- !,
+    (name X ; X = aglobal _ _ _ ; X = apglobal _ _ _ _ ; trocq.error "[bottomOf] Input" T "is not a type"), !,
+    bottomOf X X'.
+  topOf (aapp [X|AXs] as T) (aapp [X'|AXs]) :- !,
+    (name X ; X = aglobal _ _ _ ; X = apglobal _ _ _ _ ; trocq.error "[topOf] Input" T "is not a type"), !,
+    topOf X X'.
+  bottomOf X X :- !.
+  topOf X X :- !.
 
   % {infer-aterm TR AT T T'} infers AT, T, and T' such that
   % TR = [[AT]] T T'

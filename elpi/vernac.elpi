@@ -11,7 +11,39 @@
 %                            % (see LICENSE file for the text of the license) %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-accumulate "Trocq.Elpi/aterm".
+accumulate "Trocq.Elpi/annot".
+
+
+% API
+
+% Checks and adds to database the lemma
+% (G, T', RT) @ AT ∵ W
+pred add-to-database gref, term, term, aterm, term ->.
+add-to-database G T' RT AT W :- !,
+  logging.info (coq.say "Trying to add" G "to the database"),
+  % First, we reduce the input terms
+  (annot.check-database {coq.env.global G} T' RT AT W;
+    trocq.error "Values are invalid for the database: " "(" G "," T'"," RT ")" "@" AT "∵" W), !,
+  (coq.env.global G' T'; trocq.error "Trocq does not support relating a gref to something that is not a gref"), !,
+  (coq.env.global WG W; trocq.error "Trocq does not support relating a gref with something that is not a gref"), !,
+  coq.elpi.accumulate _ "trocq.db"
+    (clause _ _ (trocq.db.gref G AT G' WG)).
+
+
+func usage-msg o:string.
+usage-msg U :-
+  std.string.concat "\n" [
+    "usage:",
+    "- Trocq Register Univalence <u>",
+    "- Trocq Register Funext <f>",
+    "- Trocq Use <RTrocq>+",
+    "- Trocq RelatedWith <Relation> <RTrocq>+",
+    "- Trocq Logging (\"off\"|\"info\"|\"debug\"|\"trace\")",
+    "- Trocq Coercion (\"On\"|\"Off\")",
+    "- Trocq Print Translations [Gref]",
+    "", "",
+  ] U.
+
 
 % command to register the univalence axiom
 main [str "Register", str "Univalence", str S] :- !, std.do! [
@@ -57,23 +89,19 @@ main [str "Register", str "Funext", str S] :- !, std.do! [
 
 % command to add custom witnesses to the database
 % and tells trocq to use it immediately
-main [str "Register", T, str "@", AT0, str "~", T', str "because", RT] :- !,
-  (util.argument->term AT0 ATT,
-  util.argument->gref T GT,
-  util.argument->gref T' GT',
-  util.argument->gref RT GRT, ! ; trocq.error "Could not parse arguments"),
+main [str "Register", ArgT, str "@", ArgAT0, str "~", ArgT', str "because", ArgRT, str "rel", ArgRel] :- !,
+  (util.argument->term ArgAT0 ATT,
+  util.argument->gref ArgT T,
+  util.argument->term ArgT' T',
+  util.argument->term ArgRel Rel,
+  util.argument->term ArgRT RT, ! ; trocq.error ("Could not parse arguments. Please type `Trocq Usage` for help")),
+
+  % We parse ATT
   coq.elaborate-skeleton ATT _ ATT' ok,
   (aterm.util.fake-term->aterm ATT' AT, ! ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}),
   logging.trace (coq.say "Inferred annotated term" AT),
-  util.mk-app {aterm.rel AT} [{coq.env.global GT},{coq.env.global GT'}] RTType,
-  coq.env.global GRT TGRT,
-  coq.reduction.lazy.bi-norm RTType RTType',
-  coq.elaborate-ty-skeleton RTType' _ RTType'' Diag0,
-  (Diag0 = ok; trocq.error "Could not infer" {coq.term->string RTType'} "as a type" Diag0),
-  coq.elaborate-skeleton TGRT RTType'' _ Diag,
-  (Diag = ok; trocq.error "Could not elaborate" TGRT "with type" {coq.term->string RTType''} Diag),
-  coq.elpi.accumulate _ "trocq.db"
-    (clause _ _ (trocq.db.gref GT AT GT' GRT)).
+
+  add-to-database T T' Rel AT RT, !.
 
 % command to add custom witnesses to the database in a DB
 main [str "RegisterWith", DBT, T, str "@", AT0, str "~", T', str "because", RT] :- !,
@@ -133,17 +161,3 @@ main [str "Print", str "Translations", Obj] :- !,
   ).
 
 main _ :- trocq.error {std.string.concat "\n" ["command syntax error", {usage-msg}]}.
-
-func usage-msg o:string.
-usage-msg U :-
-  std.string.concat "\n" [
-    "usage:",
-    "- Trocq Register Univalence <u>",
-    "- Trocq Register Funext <f>",
-    "- Trocq Use <RTrocq>+",
-    "- Trocq RelatedWith <Relation> <RTrocq>+",
-    "- Trocq Logging (\"off\"|\"info\"|\"debug\"|\"trace\")",
-    "- Trocq Coercion (\"On\"|\"Off\")",
-    "- Trocq Print Translations [Gref]",
-    "", "",
-  ] U.

@@ -31,81 +31,169 @@ macro @pi-adecl N PAD_AT PAD_F :-
     (PAD_F ax x x' xR)
   )))).
 
+
+%XXX Enlever cette infamie parce que weakening appelle deux fois @pi-adecl
+pred pi-adecl name, atype, (aterm -> term -> term -> term -> prop) ->.
+pi-adecl N AT F :-
+  aterm.triple AT PAD_T PAD_T' TR,
+  coq.mk-app TR [PAD_T,PAD_T'] TRx,
+  coq.name-suffix N "'" N',
+  coq.name-suffix N "R" NR,
+  @pi-decl N PAD_T x\ (
+  @pi-decl N' PAD_T' x'\ (
+  @pi-decl NR TRx xR\ (
+  pi ax\ [
+    adecl ax N x x' xR AT,
+  ] => (F ax x x' xR)
+  ))).
+
 namespace annot {
 
-pred typecheck i:aterm, o:atype o:cstr-list.
-typecheck X AT [] :- adecl X _ _ _ _ AT, !.
-% TODO We should recode this function in order to intelligently typecheck
-% λ x : AT, t' ==> AT' -> _ with AT' <= AT
-% For now, new annotations are created, so AT is discarded
-% Before, we relied on rocq copying the lambda annotation and we had AT -> _
-typecheck AT ATy [] :-
-  aterm.erase AT T,
-  coq.typecheck T Ty ok,
-  aterm.fresh Ty ATy.
+  pred typecheck i:aterm, o:atype o:cstr-list.
+  typecheck X AT [] :- adecl X _ _ _ _ AT, !.
+  % TODO We should recode this function in order to intelligently typecheck
+  % λ x : AT, t' ==> AT' -> _ with AT' <= AT
+  % For now, new annotations are created, so AT is discarded
+  % Before, we relied on rocq copying the lambda annotation and we had AT -> _
+  typecheck AT ATy [] :-
+    aterm.erase AT T,
+    coq.typecheck T Ty ok,
+    aterm.fresh Ty ATy.
 
-% sub-typing predicate following the sub-typing rules in the article
-% This should only be called between two types
-pred sub-type i:atype, i:atype, o:cstr-list.
-sub-type AT AT' _ :-
-  logging.trace (coq.say "[sub-type] Checking wether" AT "<=" AT'), fail.
-% SubSort
-% We don't check wether S and S' are related.
-% We need to think this again when algebraic universes will be added to Rocq
-sub-type (asort _ C) (asort _ C') Cstrs :- !,
-  add-cstr [] (cstr-geq C C') Cstrs.
-% SubPi
-sub-type (aprod N AT AF) (aprod _ AT' AF') Cstrs :- !,
-  sub-type AT' AT CstrsA, !,
-  @pi-adecl N AT' (ax\ _\ _\ _\ sub-type (AF ax) (AF' ax) CstrsB),
-  std.append CstrsA CstrsB Cstrs.
-% SubLam
-sub-type (afun N AT AF) (afun _ AT AF') Cstrs :- !,
-  @pi-adecl N AT (ax\ _\ _\ _\ sub-type (AF ax) (AF' ax) Cstrs).
-% SubApp
-sub-type (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) Cstrs :- !,
-  % We beta-reduce
-  sub-type (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']) Cstrs.
-sub-type (aapp [X|AXs] as T) (aapp [X|AXs']) Cstrs :- !,
-  (name X ; X = aglobal _ _ _ ; X = apglobal _ _ _ _ ; trocq.error "[sub-type] Input" T "is not a type"), !,
-  std.map2 AXs AXs' eq Cstrsz,
-  std.flatten Cstrsz Cstrs.
-% SubConv
-sub-type X Y L :- (X = aglobal _ _ _ ; X = apglobal _ _ _ _), !, eq X Y L.
-sub-type X X [] :- name X, !.
-sub-type X Y [] :- trocq.error "[annot/sub-type]" X "is not a sub-type of" Y.
+  % sub-typing predicate following the sub-typing rules in the article
+  % This should only be called between two types
+  pred sub-type i:atype, i:atype, o:cstr-list.
+  sub-type AT AT' _ :-
+    logging.trace (coq.say "[sub-type] Checking wether" AT "<=" AT'), fail.
+  % SubSort
+  % We don't check wether S and S' are related.
+  % We need to think this again when algebraic universes will be added to Rocq
+  sub-type (asort _ C) (asort _ C') Cstrs :- !,
+    add-cstr [] (cstr-geq C C') Cstrs.
+  % SubPi
+  sub-type (aprod N AT AF) (aprod _ AT' AF') Cstrs :- !,
+    sub-type AT' AT CstrsA, !,
+    @pi-adecl N AT' (ax\ _\ _\ _\ sub-type (AF ax) (AF' ax) CstrsB),
+    std.append CstrsA CstrsB Cstrs.
+  % SubApp
+  sub-type (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) Cstrs :- !,
+    % We beta-reduce
+    sub-type (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']) Cstrs.
+  sub-type (aapp [X|AXs] as T) (aapp [X|AXs']) Cstrs :- !,
+    (name X ; X = aglobal _ _ _ ; X = apglobal _ _ _ _ ; trocq.error "[sub-type] Input" T "is not a type"), !,
+    std.map2 AXs AXs' eq Cstrsz,
+    std.flatten Cstrsz Cstrs.
+  % SubConv
+  sub-type X Y L :- (X = aglobal _ _ _ ; X = apglobal _ _ _ _), !, eq X Y L.
+  sub-type X X [] :- name X, !.
+  sub-type X Y [] :- trocq.error "[annot/sub-type]" X "is not a sub-type of" Y.
 
-% syntactic term equality, taking care of adding annotation equalities in the constraint graph
-% This should only be called between two types
-pred eq i:aterm, i:aterm, o:cstr-list.
-eq AT AT' _ :-
-  logging.trace (coq.say "[eq] Checking equality" AT "==" AT'), fail.
-eq (asort _ C1) (asort _ C2) Cstrs:-
-  add-cstr [] (cstr-eq C1 C2) Cstrs. % XXX Nothing is checked about sort compatibility
-eq (aprod _ AT AF) (aprod _ AT' AF') Cstrs :- !,
-  eq AT AT' CstrsA, !,
-  pi x\ eq (AF x) (AF' x) CstrsB,
-  std.append CstrsA CstrsB Cstrs.
-eq (afun _ AT AF) (afun _ AT' AF') Cstrs :- !,
-  eq AT AT' CstrsA, !,
-  pi x\ eq (AF x) (AF' x) CstrsB,
-  std.append CstrsA CstrsB Cstrs.
-eq (aglobal G1 G1' RG1) (aglobal G2 G2' RG2) [] :- !,
-  G1 = G2, G1' = G2', RG1 = RG2. % XXX Maybe we should put those as real constraints
-eq (apglobal G1 _ G1' RG1) (apglobal G2 _ G2' RG2) [] :- !,
-  G1 = G2, G1' = G2', RG1 = RG2. % XXX Maybe we should put those as real constraints
-eq X Y [] :- unify-eq X Y ok.
-eq (aapp AL) (aapp AL') Cstrs:- !,
-  std.map2 AL AL' eq Cstrsz,
-  std.flatten Cstrsz Cstrs.
-eq X X [] :- (name X ; X = aglobal _ _ _; X = apglobal _ _ _ _), !.
+  % syntactic term equality, taking care of adding annotation equalities in the constraint graph
+  % This should only be called between two types
+  pred eq i:aterm, i:aterm, o:cstr-list.
+  eq AT AT' _ :-
+    logging.trace (coq.say "[eq] Checking equality" AT "==" AT'), fail.
+  eq (asort _ C1) (asort _ C2) Cstrs:-
+    add-cstr [] (cstr-eq C1 C2) Cstrs. % XXX Nothing is checked about sort compatibility
+  eq (aprod _ AT AF) (aprod _ AT' AF') Cstrs :- !,
+    eq AT AT' CstrsA, !,
+    pi x\ eq (AF x) (AF' x) CstrsB,
+    std.append CstrsA CstrsB Cstrs.
+  eq (afun _ AT AF) (afun _ AT' AF') Cstrs :- !,
+    eq AT AT' CstrsA, !,
+    pi x\ eq (AF x) (AF' x) CstrsB,
+    std.append CstrsA CstrsB Cstrs.
+  eq (aglobal G1 G1' RG1) (aglobal G2 G2' RG2) [] :- !,
+    G1 = G2, G1' = G2', RG1 = RG2. % XXX Maybe we should put those as real constraints
+  eq (apglobal G1 _ G1' RG1) (apglobal G2 _ G2' RG2) [] :- !,
+    G1 = G2, G1' = G2', RG1 = RG2. % XXX Maybe we should put those as real constraints
+  eq X Y [] :- unify-eq X Y ok.
+  eq (aapp AL) (aapp AL') Cstrs:- !,
+    std.map2 AL AL' eq Cstrsz,
+    std.flatten Cstrsz Cstrs.
+  eq X X [] :- (name X ; X = aglobal _ _ _; X = apglobal _ _ _ _), !.
 
-pred unify-eq i:aterm i:aterm o:diagnostic.
-% TODO this should implement rocq unification algorithm and create equalities for param classes
-% along the way.
-% This is not implemented right now, and is replaced with term equality
-unify-eq AT AT' ok :- AT = AT'.
-unify-eq AT AT' ok :- coq.unify-eq {aterm.erase AT} {aterm.erase AT'} ok.
-unify-eq AT AT' _ :- trocq.error "[annot/unify-eq] Could not unify" AT "with" AT'.
+  pred unify-eq i:aterm i:aterm o:diagnostic.
+  % TODO this should implement rocq unification algorithm and create equalities for param classes
+  % along the way.
+  % This is not implemented right now, and is replaced with term equality
+  unify-eq AT AT' ok :- AT = AT'.
+  unify-eq AT AT' ok :- coq.unify-eq {aterm.erase AT} {aterm.erase AT'} ok.
+  unify-eq AT AT' _ :- trocq.error "[annot/unify-eq] Could not unify" AT "with" AT'.
+
+
+  pred weakener i:aterm, i:aterm, o:term.
+  weakener (asort _ C) (asort _ C') Weakener :- !,
+    trocq.data.forget C C' Weakener.
+  %TODO XXX We do not type the output function, as we have pi variable dependency issues appearing with this.
+  % We should do more pruning because this should work in the future
+  weakener (aprod N A P as AP) (aprod _ B Q as BQ)
+      (fun _ _ t\ fun _ _ t'\ fun _ _ tr\ fun _ _ x\ fun _ _ x'\ fun _ _ xr\ 
+      %(fun _ TAP t\ fun _ TAP' t'\ fun _ RRTAP tr\ fun _ TB x\ fun _ TB' x'\ fun _ RRTB xr\ 
+        WeakenerF t t' tr x x' xr) :- !,
+    %aterm.triple AP TAP TAP' RTAP,
+    %aterm.triple BQ TB TB' RTB, % Property on subtype, we should have TA=TB and TA'=TB'
+    %util.mk-app RTAP [TAP,TAP'] RRTAP,
+    %util.mk-app RTB [TB,TB'] RRTB,
+    weakener B A BAWeakener,
+    @pi-adecl `t` AP (_\ t\ t'\ tr\
+    pi-adecl N B (ax\ x\ x'\ xr\
+    sigma XRWeakened TRWeakened PQWeakener\ (
+      weakener (P ax) (Q ax) PQWeakener,
+      util.mk-app BAWeakener [x,x',xr] XRWeakened,
+      util.mk-app tr [x,x',XRWeakened] TRWeakened,
+      util.mk-app PQWeakener [app [t, x],app [t', x'],TRWeakened] (WeakenerF t t' tr x x' xr)
+    ))).
+  weakener (aapp [ (afun _ _ AF),AX1|AXs]) (aapp [(afun _ _ AF'),AX1'|AXs']) W :- !,
+    % We beta-reduce
+    weakener (aapp [(AF AX1) | AXs]) (aapp [(AF' AX1') | AXs']) W.
+  weakener (aapp [X|_] as T) (aapp [_|_]) W :- !,
+    (name X ; X = aglobal _ _ _; X = apglobal _ _ _ _ ; trocq.error "[weakener] Input" T "is not a type"), !,
+    % because sub-type T T', we have that eq AXs AXs', and as names and globals are not annotated, all annotations are the same
+    W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ tr.
+  weakener X _ W :- (name X ; X = aglobal _ _ _ ; X = apglobal _ _ _ _ ), !,
+    % names and globals are not annotated, so weakener is identity
+    W = fun _ _ t\ fun _ _ t'\ fun _ _ tr\ tr.
+  weakener X _ _ :- !,
+    trocq.error "[weakener] Cannot weaken" X.
+
+
+  % weaken A A' t t' tr tr' is ⇓^A_A' {t} {t'} tr = tr'
+  pred weaken i:aterm, i:aterm, i:term, i:term, i:term, o:term.
+  weaken A B T T' TR TR' :- !,
+    logging.trace (coq.say "[weaken] Weakening from" A "to" B "term" T "~" T' "∵" TR),
+    prune W [], % Weakening does not depend on context
+    weakener A B W,
+    util.mk-app W [T,T',TR] TR'.
+
+  func coherence aterm, term, term, term, term ->.
+  coherence T X X' RX W :- !,
+    aterm.util.bottomOf T TBot,
+    weaken T TBot X X' W Wweak, 
+    coq.reduction.lazy.bi-norm Wweak Wweak',
+    aterm.rel TBot TT,
+    coq.reduction.lazy.bi-norm {util.mk-app TT [X, X']} TTXX,
+    (coq.elaborate-ty-skeleton TTXX _ ETTXX ok ; trocq.error "Could not typecheck" TTXX "as a type"),
+    (coq.elaborate-skeleton RX ETTXX ERX ok ; trocq.error "Could not typecheck" {coq.term->string RX} "with" {coq.term->string ETTXX}), !,
+    (coq.elaborate-skeleton Wweak' ETTXX EWweak ok ; trocq.error "Could not typecheck" {coq.term->string EWweak} "with" {coq.term->string ETTXX}), !,
+    (coq.unify-eq EWweak ERX ok; coq.warn "Please make sure that" {coq.term->string ERX} "=" {coq.term->string EWweak}), !.
+
+  % Checks that the given arguments can be added to the database
+  % We check (X,X',RX) @ AT ∵ W
+  func check-database term, term, term, aterm, term ->.
+  check-database X X' RX AT W :- !,
+    % We extract the subterms
+    aterm.triple AT T T' RT,
+
+    % We check the types are correct
+    coq.env.global WG W,
+    (coq.elaborate-skeleton X T EX ok; trocq.error "Could not typecheck" X "with" {coq.term->string TN}), !,
+    (coq.elaborate-skeleton X' T' EX' ok; trocq.error "Could not typecheck" {coq.term->string X'} "with" {coq.term->string TN'}), !,
+
+    % We β-reduce for readability
+    coq.reduction.lazy.bi-norm {util.mk-app RT [EX, EX']} RTXXN,
+    (coq.elaborate-ty-skeleton RTXXN _ ERTXXN ok; trocq.error "Could not elaborate" RTXXN "as a type"), !,
+    (coq.elaborate-skeleton W ERTXXN EW ok; trocq.error "Could not typecheck" {coq.term->string W} "with" {coq.term->string ERTXXN}), !,
+    (coherence AT EX EX' RX EW; trocq.error "Could not ensure coherence of" {coq.term->string RX} "and" {coq.term->string EW}), !.
 
 } % annot
