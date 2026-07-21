@@ -16,18 +16,28 @@ accumulate "Trocq.Elpi/annot".
 
 % API
 
+func check-infer -> term,term,term,term,aterm,term,term,term,term,aterm.
+check-infer W Rel T T' AT EW ERel ET ET' EAT :-
+  (do-not-fail => annot.check-database T T' Rel AT W ET ET' ERel EAT EW), !.
+check-infer W Rel T T' AT EW ERel ET ET' EAT :-
+  annot.infer W Rel T T' AT,
+  annot.check-database T T' Rel AT W ET ET' ERel EAT EW.
+
 % Checks and adds to database the lemma
-% (G, T', RT) @ AT ∵ W
-pred add-to-database gref, term, term, aterm, term ->.
-add-to-database G T' RT AT W :- !,
-  logging.info (coq.say "Trying to add" G "to the database"),
-  % First, we reduce the input terms
-  (annot.check-database {coq.env.global G} T' RT AT W;
-    trocq.error "Values are invalid for the database: " "(" G "," T'"," RT ")" "@" AT "∵" W), !,
-  (coq.env.global G' T'; trocq.error "Trocq does not support relating a gref to something that is not a gref"), !,
-  (coq.env.global WG W; trocq.error "Trocq does not support relating a gref with something that is not a gref"), !,
-  coq.elpi.accumulate _ "trocq.db"
-    (clause _ _ (trocq.db.gref G AT G' WG)).
+% (T, T', Rel) @ AT ∵ W in database ODB
+% ODB might be none -> In core database
+% T T' RT AT might be uvars -> Infer them from the type of W
+pred add-to-database term, term, term, term, aterm, option gref ->.
+add-to-database W Rel T T' AT ODB :- !,
+  logging.info (coq.say "[add-to-database] Trying to add" {coq.term->string W} "to the database"),
+  % We try with the information we have, if it does not work, we try to infer, then we retry
+  (check-infer W Rel T T' AT EW ERel_ ET ET' EAT, trocq.error "Could not infer database input for " {coq.term->string W}), !,
+  (coq.env.global G ET; trocq.error "Trocq does not support relating something that is not a gref"), !,
+  (coq.env.global G' ET'; trocq.error "Trocq does not support relating a gref to something that is not a gref"), !,
+  (coq.env.global WG EW; trocq.error "Trocq does not support relating a gref with something that is not a gref"), !,
+  if (ODB = some DBName)
+  (coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.known-gref DBName G EAT G' WG)))
+  (coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.gref              G EAT G' WG))).
 
 
 func usage-msg o:string.
@@ -36,7 +46,7 @@ usage-msg U :-
     "usage:",
     "- Trocq Register Univalence <u>",
     "- Trocq Register Funext <f>",
-    "- Trocq Use <RTrocq>+",
+    "- Trocq Register Witness [rel Rel] [: T ~ T' [@ AT]] [: DB]",
     "- Trocq RelatedWith <Relation> <RTrocq>+",
     "- Trocq Logging (\"off\"|\"info\"|\"debug\"|\"trace\")",
     "- Trocq Coercion (\"On\"|\"Off\")",
@@ -44,6 +54,13 @@ usage-msg U :-
     "", "",
   ] U.
 
+func vernac.infer-aterm term -> aterm.
+vernac.infer-aterm uvar _AT :- !.
+vernac.infer-aterm T AT :-
+  (coq.elaborate-skeleton T _ ET ok,
+  aterm.util.fake-term->aterm ET AT 
+  ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}), !,
+  logging.trace (coq.say "[infer-aterm] Inferred annotated term" AT).
 
 % command to register the univalence axiom
 main [str "Register", str "Univalence", str S] :- !, std.do! [
@@ -88,39 +105,27 @@ main [str "Register", str "Funext", str S] :- !, std.do! [
 ].
 
 % command to add custom witnesses to the database
-% and tells trocq to use it immediately
-main [str "Register", ArgT, str "@", ArgAT0, str "~", ArgT', str "because", ArgRT, str "rel", ArgRel] :- !,
-  (util.argument->term ArgAT0 ATT,
-  util.argument->gref ArgT T,
-  util.argument->term ArgT' T',
-  util.argument->term ArgRel Rel,
-  util.argument->term ArgRT RT, ! ; trocq.error ("Could not parse arguments. Please type `Trocq Usage` for help")),
-
-  % We parse ATT
-  coq.elaborate-skeleton ATT _ ATT' ok,
-  (aterm.util.fake-term->aterm ATT' AT, ! ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}),
-  logging.trace (coq.say "Inferred annotated term" AT),
-
-  add-to-database T T' Rel AT RT, !.
-
-% command to add custom witnesses to the database in a DB
-main [str "RegisterWith", DBT, T, str "@", AT0, str "~", T', str "because", RT] :- !,
-  util.argument->gref DBT DBG,
-  util.argument->term AT0 ATT,
-  util.argument->gref T GT,
-  util.argument->gref T' GT',
-  util.argument->gref RT GRT,
-  coq.elaborate-skeleton ATT _ ATT' ok,
-  (aterm.util.fake-term->aterm ATT' AT, ! ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}),
-  util.mk-app {aterm.rel AT} [{coq.env.global GT},{coq.env.global GT'}] RTType,
-  coq.env.global GRT TGRT,
-  coq.reduction.lazy.bi-norm RTType RTType',
-  coq.elaborate-ty-skeleton RTType' _ RTType'' Diag0,
-  (Diag0 = ok; trocq.error "Could not infer" {coq.term->string RTType'} "as a type" Diag0),
-  coq.elaborate-skeleton TGRT RTType'' _ Diag,
-  (Diag = ok; trocq.error "Could not elaborate" TGRT "with type" {coq.term->string RTType''} Diag),
-  coq.elpi.accumulate _ "trocq.db"
-    (clause _ _ (trocq.db.known-gref DBG GT AT GT' GRT)).
+% Parses `Trocq Register Witness [rel Rel] [: T ~ T' [@ AT]] [: DB]`
+main [str "Register", ArgW | L0] :-
+  util.argument->term ArgW W,
+  if (L0 = [str "rel", ArgRel | L1])
+  (util.argument->term ArgRel Rel)
+  (L1 = L0, Rel = W),
+  if (L1 = [str ":", ArgT, str "~", ArgT' | L2])
+  (
+    util.argument->term ArgT T,
+    util.argument->term ArgT' T',
+    if (L2 = [str "@", ArgAT | L3])
+    (util.argument->term ArgAT ATT)
+    (L3 = L2)
+  )
+  (L3 = L1),
+  if (L3 = [str ":", ArgDB | L4])
+  (util.argument->gref ArgDB DB, ODB = some DB)
+  (L4 = L3, ODB = none),
+  L4 = [],
+  !,
+  add-to-database W Rel T T' {vernac.infer-aterm ATT} ODB.
 
 main [str "Usage"] :- !, coq.info {usage-msg}.
 

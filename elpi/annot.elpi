@@ -166,8 +166,55 @@ namespace annot {
     weakener A B W,
     util.mk-app W [T,T',TR] TR'.
 
-  func coherence aterm, term, term, term, term ->.
-  coherence T X X' RX W :- !,
+  % Infers from a type T three terms AT, X, X' such that
+  % T = [[AT]] X X'
+  func infer-from-type term -> aterm, term, term.
+  infer-from-type WT T T' RT :-
+    logging.trace (coq.say "[infer-from-type] Trying to infer from type" WT "to" "(" T "," T' "," RT ")"),
+    fail,
+    !.
+  infer-from-type
+    (prod N T (x\ prod N' T' x'\ prod _ (RT x x') rx\ (F x x' rx)))
+    (aprod N AB (ax\ AF ax)) X X' :- !,
+    @pi-decl N T x\ @pi-decl N' T' x'\ infer-from-type (RT x x') AB x x',
+    @pi-adecl N AB (ax\ x\ x'\ rx\
+      infer-from-type (F x x' rx) (AF ax) X X'
+    ).
+  infer-from-type
+    (app [ParamC, X, Y])
+    (asort S C) XH YH :- coq.env.global ParamCG ParamC, trocq.db.rel C ParamCG _ _ _ _, !,
+      coq.typecheck-ty X S ok,
+      % We take the head term of X or Y
+      (app [XH,_] = X ; XH = X),
+      (app [YH,_] = Y ; YH = Y), !.
+  infer-from-type
+    (app [RT, X, Y]) AT XH YH :-
+    coq.typecheck X TX ok,
+    coq.typecheck Y TY ok,
+    (app [XH,_] = X ; XH = X),
+    (app [YH,_] = Y ; YH = Y),
+    (app [TXH,_] = TX ; TXH = TX),
+    (app [TYH,_] = TY ; TYH = TY), !,
+    %TODO AT's relation should not be exactly RT
+    if (global TXHG = TXH)
+    (AT = aglobal TXHG TYH RT)
+    (if (pglobal TXHG U = TXH)
+    (AT = apglobal TXHG U TYH RT)
+    (AT = atriple TXH TYH RT)).
+
+
+  % Infers from a term W four terms such that
+  % W : [[AT]] T T'
+  % rel(W) = Rel
+  func infer term -> term, term, term, aterm.
+  infer W Rel T T' AT :-
+    coq.env.global WG W,
+    coq.env.typeof WG TW,
+    infer-from-type TW AT T T',
+    Rel = W. % We hope this will coerce
+
+  func coherence aterm, term, term, term, term -> term.
+  coherence T X X' RX W ERX:- !,
     aterm.util.bottomOf T TBot,
     weaken T TBot X X' W Wweak, 
     coq.reduction.lazy.bi-norm Wweak Wweak',
@@ -180,20 +227,23 @@ namespace annot {
 
   % Checks that the given arguments can be added to the database
   % We check (X,X',RX) @ AT ∵ W
-  func check-database term, term, term, aterm, term ->.
-  check-database X X' RX AT W :- !,
+  func check-database term, term, term, aterm, term -> term, term, term, aterm, term.
+  check-database X X' RX AT W EX EX' ERX AT EW:- !,
     % We extract the subterms
     aterm.triple AT T T' RT,
 
-    % We check the types are correct
-    coq.env.global WG W,
+    % We elaborate X and X'
     (coq.elaborate-skeleton X T EX ok; trocq.error "Could not typecheck" X "with" {coq.term->string TN}), !,
     (coq.elaborate-skeleton X' T' EX' ok; trocq.error "Could not typecheck" {coq.term->string X'} "with" {coq.term->string TN'}), !,
 
+    % We elaborate W and RT
     % We β-reduce for readability
     coq.reduction.lazy.bi-norm {util.mk-app RT [EX, EX']} RTXXN,
     (coq.elaborate-ty-skeleton RTXXN _ ERTXXN ok; trocq.error "Could not elaborate" RTXXN "as a type"), !,
     (coq.elaborate-skeleton W ERTXXN EW ok; trocq.error "Could not typecheck" {coq.term->string W} "with" {coq.term->string ERTXXN}), !,
-    (coherence AT EX EX' RX EW; trocq.error "Could not ensure coherence of" {coq.term->string RX} "and" {coq.term->string EW}), !.
+    %TODO elaboration of RTXXN should be reflected in elaboration of AT
+    
+    % We elaborate RX with coherence
+    (coherence AT EX EX' RX EW ERX; trocq.error "Could not ensure coherence of" {coq.term->string RX} "and" {coq.term->string EW}), !.
 
 } % annot
