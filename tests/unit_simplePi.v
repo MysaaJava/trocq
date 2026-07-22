@@ -25,8 +25,8 @@ Section SimplePi.
     Variable (m : forall (X : A) (X' : A') (RX : RA X X'), (B' X') -> (B X)).
     Definition RL (X : A) (X' : A') (XR : RA X X') := mkParam01 (m X X' XR). 
 
-    Trocq Register A @ (PType map2a map0) ~ A' because RA.
-    Trocq Register B @ (PTriple A A' RA -> PType map0 map1) ~ B' because RL.
+    Trocq Register RA.
+    Trocq Register RL.
 
     Goal forall X : A, B X.
         trocq.

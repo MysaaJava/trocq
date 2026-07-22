@@ -24,18 +24,18 @@ Section TrocqTo.
 
     Variable (RA1 : Param01.Rel A A') (RA2 : Param01.Rel A A'').
 
-    Trocq Register A @ (PType map0 map1) ~ A' because RA1.
-    Trocq Register A @ (PType map0 map1) ~ A'' because RA2.
+    Trocq Register RA1.
+    Trocq Register RA2.
 
     Variable (RZ1 : RA1 Z Z') (RZ2 : RA2 Z Z'').
 
-    Trocq Register Z @ (PTriple A A' RA1) ~ Z' because RZ1.
-    Trocq Register Z @ (PTriple A A'' RA2) ~ Z'' because RZ2.
+    Trocq Register RZ1.
+    Trocq Register RZ2.
 
     Variable (RF : forall (n : A) (n' : A') (rn : RA1 n n')
         (m : A) (m' : A'') (rm : RA2 m m'), Param11.Rel (F n m) (G n' m')).
 
-    Trocq Register F @ (PTriple A A' RA1 -> PTriple A A'' RA2 -> PType map1 map1) ~ G because RF.
+    Trocq Register RF.
 
     Trocq Logging trace.
     Goal F Z Z.

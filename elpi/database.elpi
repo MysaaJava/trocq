@@ -60,6 +60,9 @@ pred rel o:param-class, o:gref, o:gref, o:gref, o:gref, o:gref.
 % relation inside a ParamMN
 pred r o:param-class, o:constant.
 
+% Get the projection {{rel}} : {{forall A B : Type, Param00.Rel A B -> A -> B -> Type}}
+pred rel0 o:gref.
+
 % Given the class (M, N), obtain {{Id_ParamMN}}
 pred id-param o:param-class, o:constant.
 
@@ -86,6 +89,8 @@ pred forget o:param-class, o:param-class, o:constant.
 pred paths i:univ-instance o:term.
 pred sym-rel o:gref.
 
+% Returns the grefs corresponding to {{ PType }} and {{ PTriple }}, used
+% to construct fake aterms
 pred fake-aterm-ptype o:gref o:gref.
 
 % param-type β α {{ Param(β)_Type(α) }}

@@ -19,7 +19,7 @@ Section SimpleArrow.
     Variable (A B : Type) (f : A -> B).
 
     Definition Rf := mkParam01 f.
-    Trocq Register B @ (PType map0 map1) ~ A because Rf.
+    Trocq Register Rf.
 
     Goal B.
         trocq.

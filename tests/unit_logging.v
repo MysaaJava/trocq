@@ -21,7 +21,7 @@ Section TrocqLogging.
     Variable (f : B -> A).
 
     Definition R1 : Param01.Rel A B := mkParam01 f.
-    Trocq Register A @ (PType map0 map1) ~ B because R1.
+    Trocq Register R1.
 
     Goal A.
         trocq.

@@ -20,7 +20,7 @@ Section LambdaType.
 
     Variable (fU : U' -> U).
     Definition RU := mkParam01 fU.
-    Trocq Register U @ (PType map0 map1) ~ U' because RU.
+    Trocq Register RU.
 
     Goal (fun A : Type => U) (forall X : Type, U).
         trocq.

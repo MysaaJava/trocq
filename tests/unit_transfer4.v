@@ -22,14 +22,14 @@ Section Transfer.
     Variable (f : I -> I').
 
     Definition Rf := mkParam30 f.
-    Trocq Register I @ (PType map3 map0) ~ I' because Rf.
+    Trocq Register Rf.
 
     Variable (pe : I -> Prop) (pe' : I' -> Prop).
     Variable (peR : forall (n : I) (n' : I'), Rf n n' -> pe' n' -> pe n).
 
     Definition Rpe (n : I) (n' : I') (rn : Rf n n') :=
         mkParam01 (peR n n' rn).
-    Trocq Register pe @ (PTriple I I' Rf -> PType map0 map1) ~ pe' because Rpe.
+    Trocq Register Rpe.
 
     Goal forall (m : I), m = m -> pe m.
         assert (H : True -> True) by exact (fun x => x).

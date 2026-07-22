@@ -18,10 +18,16 @@ accumulate "Trocq.Elpi/annot".
 
 func check-infer -> term,term,term,term,aterm,term,term,term,term,aterm.
 check-infer W Rel T T' AT EW ERel ET ET' EAT :-
-  (do-not-fail => annot.check-database T T' Rel AT W ET ET' ERel EAT EW), !.
+  logging.trace (coq.say "[check-infer] Checking if data is already enough"),
+  (do-not-fail => annot.check-database T T' Rel AT W ET ET' ERel EAT EW),
+  not (var ET), not (var ET'), not (var ERel), not (var EAT), not (var EW), !.
 check-infer W Rel T T' AT EW ERel ET ET' EAT :-
+  logging.trace (coq.say "[check-infer] Trying to infer the data"),
   annot.infer W Rel T T' AT,
-  annot.check-database T T' Rel AT W ET ET' ERel EAT EW.
+  logging.trace (coq.say "[check-infer] Inferred" {coq.term->string T} "~" {coq.term->string T'} "@" AT "rel" {coq.term->string Rel}),
+  logging.trace (coq.say "[check-infer] Checking the inferred data is correct"),
+  annot.check-database T T' Rel AT W ET ET' ERel EAT EW,
+  not (var ET), not (var ET'), not (var ERel), not (var EAT), not (var EW), !.
 
 % Checks and adds to database the lemma
 % (T, T', Rel) @ AT ∵ W in database ODB
@@ -31,7 +37,7 @@ pred add-to-database term, term, term, term, aterm, option gref ->.
 add-to-database W Rel T T' AT ODB :- !,
   logging.info (coq.say "[add-to-database] Trying to add" {coq.term->string W} "to the database"),
   % We try with the information we have, if it does not work, we try to infer, then we retry
-  (check-infer W Rel T T' AT EW ERel_ ET ET' EAT, trocq.error "Could not infer database input for " {coq.term->string W}), !,
+  (check-infer W Rel T T' AT EW ERel_ ET ET' EAT; trocq.error "Could not infer database input for" {coq.term->string W}), !,
   (coq.env.global G ET; trocq.error "Trocq does not support relating something that is not a gref"), !,
   (coq.env.global G' ET'; trocq.error "Trocq does not support relating a gref to something that is not a gref"), !,
   (coq.env.global WG EW; trocq.error "Trocq does not support relating a gref with something that is not a gref"), !,
@@ -46,7 +52,7 @@ usage-msg U :-
     "usage:",
     "- Trocq Register Univalence <u>",
     "- Trocq Register Funext <f>",
-    "- Trocq Register Witness [rel Rel] [: T ~ T' [@ AT]] [: DB]",
+    "- Trocq Register <Witness> [rel <Rel>] [: <T> ~ <T'> [@ <AT>]] [: <DB>]",
     "- Trocq RelatedWith <Relation> <RTrocq>+",
     "- Trocq Logging (\"off\"|\"info\"|\"debug\"|\"trace\")",
     "- Trocq Coercion (\"On\"|\"Off\")",
@@ -59,7 +65,7 @@ vernac.infer-aterm uvar _AT :- !.
 vernac.infer-aterm T AT :-
   (coq.elaborate-skeleton T _ ET ok,
   aterm.util.fake-term->aterm ET AT 
-  ; trocq.error "Could not make an annotated term out of term" {coq.term->string ATT'}), !,
+  ; trocq.error "Could not make an annotated term out of term" {coq.term->string T}), !,
   logging.trace (coq.say "[infer-aterm] Inferred annotated term" AT).
 
 % command to register the univalence axiom
@@ -106,6 +112,7 @@ main [str "Register", str "Funext", str S] :- !, std.do! [
 
 % command to add custom witnesses to the database
 % Parses `Trocq Register Witness [rel Rel] [: T ~ T' [@ AT]] [: DB]`
+% If not specified, Rel is set to Witness
 main [str "Register", ArgW | L0] :-
   util.argument->term ArgW W,
   if (L0 = [str "rel", ArgRel | L1])

@@ -23,8 +23,8 @@ Section TrocqCoercion.
     Definition R1 : Param10.Rel B A := mkParam10 f1.
     Definition R2 : Param10.Rel C A := mkParam10 f2.
 
-    Trocq Register B @ (PType map1 map0) ~ A because R1.
-    Trocq Register C @ (PType map1 map0) ~ A because R2.
+    Trocq Register R1.
+    Trocq Register R2.
 
     Trocq Coercion On.
 

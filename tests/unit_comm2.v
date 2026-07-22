@@ -27,11 +27,11 @@ Section N.
         end.
 
     Definition NR : Param44.Rel N N. admit. Admitted.
-    Trocq Register N @ (PType map4 map4) ~ N because NR.
+    Trocq Register NR.
     Definition NS {n n': N} (Rr : NR n n'): NR (S n) (S n'). admit. Admitted.
-    Trocq Register S @ (PTriple N N NR -> PTriple N N NR) ~ S because NS.
+    Trocq Register NS.
     Definition Nad {n n' : N} (Rr : NR n n') {m m' : N} (Rr' : NR m m'): NR (ad n m) (ad n' m'). admit. Admitted.
-    Trocq Register ad @ (PTriple N N NR -> PTriple N N NR -> PTriple N N NR) ~ ad because Nad.
+    Trocq Register Nad.
 
     Variable A : Type.
 
@@ -41,7 +41,7 @@ Section N.
 
     Definition NT
         {n n' : N} (nR : NR n n'): Param2a2b.Rel (T n) (T' n'). admit. Admitted.
-    Trocq Register T @ (PTriple N N NR -> PType map2a map2b) ~ T' because NT.
+    Trocq Register NT.
 
 
     Definition Nappend {n n' : N} (nR : NR n n')
@@ -49,10 +49,7 @@ Section N.
         {t : T n} {t' : T' n'} (tR : NT nR t t')
         {u : T m} {u' : T' m'} (uR : NT mR u u') :
         NT (Nad nR mR) (append t u) (append' t' u'). admit. Admitted. 
-    Trocq Register append @ (forall
-        (n : PTriple N N NR) (m : PTriple N N NR)
-        (t : PTriple T T' (@NT) n) (u: PTriple T T' (@NT) m),
-        PTriple T T' (@NT) (PTriple ad ad (@Nad) n m)) ~ append' because Nappend.
+    Trocq Register Nappend.
 
     Variable (P : forall {n : N}, T n -> Type).
     Variable (P' : forall {n : N}, T' n -> Type).
@@ -60,10 +57,7 @@ Section N.
         {t : T n} {t' : T' n'} {tR : NT nR t t'}
         : Param44.Rel (P t) (P' t').
         admit. Admitted.
-    Trocq Register P @ (forall
-        (n : PTriple N N NR)
-        (t : PTriple T T' (@NT) n),
-        PType map4 map4) ~ P' because RP.
+    Trocq Register RP.
 
     Goal forall {n1 n2 : N}
         (v1 : T n1) (v2 : T n2),

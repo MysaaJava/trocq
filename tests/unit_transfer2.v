@@ -20,7 +20,7 @@ Section Transfer.
     Variable (I I' : Type) (f : I -> I').
 
     Definition Rf := mkParam2a0 f.
-    Trocq Register I @ (PType map2a map0) ~ I' because Rf.
+    Trocq Register Rf.
 
     Variable (pe : I -> I -> Prop) (pe' : I' -> I' -> Prop).
     Variable (peR : forall (n m : I) (n' m' : I'), Rf n n' -> Rf m m' -> pe' n' m' -> pe n m).
@@ -28,7 +28,7 @@ Section Transfer.
     Definition Rpe (n : I) (n' : I') (rn : Rf n n')
         (m : I) (m' : I') (rm : Rf m m') :=
         mkParam01 (peR n m n' m' rn rm).
-    Trocq Register pe @ (PTriple I I' Rf -> PTriple I I' Rf -> PType map0 map1) ~ pe' because Rpe.
+    Trocq Register Rpe.
 
     Goal forall (n : I), forall (m : I), pe n m.
     Proof.
