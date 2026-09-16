@@ -162,7 +162,7 @@ namespace aterm.util {
   rawOf (aprod N AT AF) (aprod N AT' AF') :- !,
     rawOf AT AT',
     @pi-adecl N AT (ax\ _\ _\ _\
-    @pi-adecl N AT' (ax'\ _\ _\ _\
+    @pi-adecl2 N AT' (ax'\ _\ _\ _\
       rawOf ax ax' =!=> rawOf (AF ax) (AF' ax')
     )), !.
   rawOf (aapp [ (afun _ _ AF),AX1|AXs]) Out :- !,
@@ -178,12 +178,17 @@ namespace aterm.util {
 
 namespace aterm {
 
+  % Activate this predicate if you want triple to generate A -> B -> Type instead of Paramα.Rel A B
+  % XXX Rocq can't unify Param00.Rel A B with A -> B -> Type, that's why we need this option.
+  func triple-raw ->.
+
   func triple aterm -> term,term,term.
-  triple AX X X' RX0 :- adecl AX _ X X' RX _,
-    annot.weaken AX {aterm.util.bottomOf AX} X X' RX RX0, !.
+  triple AX X X' RX0 :- adecl AX _ X X' RX _, !.
   triple (atriple X X' RX) X X' RX.
   triple (asort S Cl) (sort S) (sort S) T :- 
-    trocq.data.rel Cl T.
+    if (triple-raw)
+     (T = fun `A` (sort S) A\ fun `A'` (sort S) A'\ prod _ A _\ prod _ A' _\ sort _)
+     (trocq.data.rel Cl T).
   triple (aglobal G TG' RG) (global G) TG' RG.
   triple (apglobal G U TG' RG) (pglobal G U) TG' RG.
   triple (afun N AT AF) (fun N T F) (fun N' T' F')
@@ -222,6 +227,11 @@ namespace aterm {
 
   func rel aterm -> term.
   rel AT RT :- triple AT _ _ RT.
+
+  % Gets the relation at the raw level
+  func relRaw aterm -> term.
+  relRaw AT RT :-
+    triple-raw => triple AT _ _ RT.
 
   % Annotates a term with fresh evars
   func fresh term -> aterm.

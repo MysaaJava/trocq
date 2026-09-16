@@ -164,7 +164,8 @@ namespace annot {
   % T = [[AT]] X X'
   func infer-from-type term -> aterm, term, term.
   infer-from-type WT AT X X' :-
-    logging.trace (coq.say "[infer-from-type] Trying to infer from type" {coq.term->string WT} "to" "(" AT "," {coq.term->string X} "," {coq.term->string X'} ")"),
+    %XXX This logging line creates a elpi error (see https://rocq-prover.zulipchat.com/#narrow/channel/253928-Elpi-users-.26-devs/topic/Anomaly.20not.20found/near/622813582)
+    %logging.trace (coq.say "[infer-from-type] Trying to infer from type" {coq.term->string WT} "to" "(" AT "," {coq.term->string X} "," {coq.term->string X'} ")"),
     fail,
     !.
   infer-from-type Term
@@ -201,28 +202,24 @@ namespace annot {
   infer W Rel T T' AT :-
     coq.env.global WG W,
     coq.env.typeof WG TW,
-    infer-from-type TW AT T T',
-    Rel = W. % We hope this will coerce
+    infer-from-type TW AT T T'.
+    %Rel = W. % XXX We hope this will coerce
 
   func coherence aterm, term, term, term, term -> term.
-  coherence T X X' RX W ERX:- !,
+  coherence AT X X' RX W ERX :- !,
     logging.trace (coq.say "[coherence] Checking database coherence of"
       "(" {coq.term->string X} "," {coq.term->string X'} "," {coq.term->string RX} ")"
       "because" {coq.term->string W}),
-    aterm.util.rawOf T TRaw,
-    annot.weaken T TRaw X X' W Wweak,
-    coq.reduction.lazy.bi-norm Wweak Wweak',
-    aterm.rel TRaw TT,
+    aterm.relRaw AT TT,
     coq.reduction.lazy.bi-norm {util.mk-app TT [X, X']} TTXX,
     (coq.elaborate-ty-skeleton TTXX _ ETTXX ok ; trocq.error "Could not typecheck" TTXX "as a type"),
     (coq.elaborate-skeleton RX ETTXX ERX ok ; trocq.error "Could not typecheck" {coq.term->string RX} "with" {coq.term->string ETTXX}), !,
-    (coq.elaborate-skeleton Wweak' ETTXX EWweak ok ; trocq.error "Could not typecheck" {coq.term->string EWweak} "with" {coq.term->string ETTXX}), !,
-    (coq.unify-eq EWweak ERX ok; coq.warn "Please make sure that" {coq.term->string ERX} "=" {coq.term->string EWweak}), !.
+    (coq.unify-eq W ERX ok; coq.warn "Please ensure coherence of" {coq.term->string W} " with " {coq.term->string ERX}), !.
 
   % Elaborates the given arguments so that they can be added to the database
   % We check (X,X',RX) @ AT ∵ W
   func check-database term, term, term, aterm, term -> term, term, term, aterm, term.
-  check-database X X' RX AT W EX EX' ERX AT EW:- !,
+  check-database X X' RX AT W EX EX' ERX AT EW :- !,
     % We extract the subterms
     aterm.triple AT T T' RT,
     
@@ -238,6 +235,7 @@ namespace annot {
     %TODO elaboration of RTXXN should be reflected in elaboration of AT
     
     % We elaborate RX with coherence
+    % XXX We don't crash here because we are not stating coherence
     (coherence AT EX EX' RX EW ERX; trocq.error "Could not ensure coherence of" {coq.term->string RX} "and" {coq.term->string EW}), !.
 
 } % annot

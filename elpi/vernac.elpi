@@ -22,10 +22,10 @@ check-infer W Rel T T' AT EW ERel ET ET' EAT :-
   (do-not-fail => annot.check-database T T' Rel AT W ET ET' ERel EAT EW),
   not (var ET), not (var ET'), not (var ERel), not (var EAT), not (var EW), !.
 check-infer W Rel T T' AT EW ERel ET ET' EAT :-
-  logging.trace (coq.say "[check-infer] Trying to infer the data"),
+  logging.debug (coq.say "[check-infer] Trying to infer the data"),
   annot.infer W Rel T T' AT,
-  logging.trace (coq.say "[check-infer] Inferred" {coq.term->string T} "~" {coq.term->string T'} "@" AT "rel" {coq.term->string Rel}),
-  logging.trace (coq.say "[check-infer] Checking the inferred data is correct"),
+  logging.debug (coq.say "[check-infer] Inferred" {coq.term->string T} "~" {coq.term->string T'} "@" AT "rel" {coq.term->string Rel}),
+  logging.debug (coq.say "[check-infer] Checking the inferred data is correct"),
   annot.check-database T T' Rel AT W ET ET' ERel EAT EW,
   not (var ET), not (var ET'), not (var ERel), not (var EAT), not (var EW), !.
 
