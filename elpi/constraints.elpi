@@ -161,13 +161,13 @@ has-univ-if-needed C :-
     (param-class-cstr.doesnt-require-axiom C).
 
 pred solve-gref-constraint i:cstr.
-solve-gref-constraint (cstr-gref G AT T' TR) :- !,
-    logging.trace (coq.say "[solve-gref]" G AT T' TR),
-    trocq.db.gref G AT' G' GR,
+solve-gref-constraint (cstr-gref G AT T0' TR0) :- !,
+    logging.trace (coq.say "[solve-gref]" G AT T0' TR0),
+    trocq.db.global G T' _ AT' TR,
     aterm.util.equals-ignore AT' AT,
-    logging.trace (coq.say "[found-gref]" G AT' G' GR),
-    coq.env.global G' T',
-    coq.env.global GR TR.
+    util.equals-ignore T' T0',
+    util.equals-ignore TR TR0,
+    logging.trace (coq.say "[found-gref]" "(" G "," {coq.term->string T0'} "," {coq.term->string TR0} ")" ":" AT').
 
 func cstr->prop cstr -> prop.
 cstr->prop (cstr-eq X Y) (X = Y).
@@ -272,7 +272,7 @@ undeterministic-progress Cstrz :-
 
 pred solve-constraints i:cstr-list.
 solve-constraints L :-
-    std.findall (trocq.db.gref _ _ _ _) DatabaseContents,
+    std.findall (trocq.db.global _ _ _ _ _) DatabaseContents,
     logging.trace (coq.say "[solve-constraints] Gref Database :" DatabaseContents),
     logging.trace (coq.say "[solve-constraints] Solving constraints", coq.say {cstrs.pp L}), !,
     cstrs->evars L LVars,

@@ -25,7 +25,8 @@ Section TrocqCoercionPi.
 
     Variable (B : A -> Type) (B' : A' -> Type).
     Variable (BR : forall (a' : A') (a : A), Rf a' a -> Param10.Rel (B' a') (B a)).
-    Trocq Register BR.
+    Variable (BR0 : forall (a' : A') (a : A), Rf a' a -> (B' a') -> (B a) -> Type).
+    Trocq Register BR rel BR0.
     
     Trocq Coercion On.
     Goal forall (a : A), B a.

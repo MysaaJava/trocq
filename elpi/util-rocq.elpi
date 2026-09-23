@@ -175,9 +175,12 @@ split-app-last N (app [T00|TArgs]) T0 Args :-
   std.split-at {calc (TArgsLength - N)} TArgs T0Args Args,
   util.mk-app T00 T0Args T0.
 
+func rocq-behead term -> term, list term.
+rocq-behead (app [H|L]) H L :- !.
+rocq-behead X X [].
+
 func head-term term -> term.
-head-term (app [H|_]) H :- !.
-head-term X X.
+head-term T H :- rocq-behead T H _.
 
 func equals-ignore term -> term.
 equals-ignore (prod N AT F) (prod _ AT' F') :- !,
@@ -189,8 +192,9 @@ equals-ignore (fun N AT F) (fun _ AT' F') :- !,
 equals-ignore (sort _) (sort _) :- !.
 equals-ignore (global G) (global G) :- !.
 equals-ignore (pglobal G _) (pglobal G _) :- !.
-equals-ignore (app AL) (app AL') :- !,
-  std.map AL equals-ignore AL'.
+equals-ignore (app AL) Out :- !,
+  std.map AL equals-ignore AL',
+  Out = app AL'. % This is to prevent elpi's default constraint on evar from waking on incomplete term
 equals-ignore X X :- !.
 
 func gref->string gref -> string.

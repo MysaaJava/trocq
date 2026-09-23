@@ -151,6 +151,25 @@ namespace annot {
     R = Rest, C = some C0
     ), !.
 
+  func untriple term, term, term -> aterm.
+  untriple X X' RX A :-
+    logging.trace (coq.say "[untriple] Untripling of" "(" X "," X' "," RX ")" "to" A), fail, !.
+  untriple X X' RX A :- adecl A _ X X' RX _, !.
+  untriple (app L) (app L') (app RL) A :-
+    util.behead L H Lp,
+    util.behead L' H' Lp',
+    util.behead RL RLH RLp,
+    util.mapBy3 RLp (x\_\_\o\ o = x) Lp,
+    util.mapBy3 RLp (_\x'\_\o\ o = x') Lp', !,
+    untriple H H' RLH AH,
+    util.mapBy3 RLp untriple ALp,
+    aterm.util.mk-app AH ALp A.
+  untriple X X' RG A :-
+    coq.env.global G X,
+    trocq.db.global G X' RX _ RGDB,
+    util.equals-ignore RGDB RG, !,
+    aterm.util.mk-global G X' RX A.
+
   % Unfolds a term `wkαβ A B (wkβγ A B (... (R )))`
   % Returns R
   func unfold-weaken term -> term.
@@ -165,7 +184,7 @@ namespace annot {
   func infer-from-type term -> aterm, term, term.
   infer-from-type WT AT X X' :-
     %XXX This logging line creates a elpi error (see https://rocq-prover.zulipchat.com/#narrow/channel/253928-Elpi-users-.26-devs/topic/Anomaly.20not.20found/near/622813582)
-    %logging.trace (coq.say "[infer-from-type] Trying to infer from type" {coq.term->string WT} "to" "(" AT "," {coq.term->string X} "," {coq.term->string X'} ")"),
+    logging.trace (coq.say "[infer-from-type] Trying to infer from type" WT "to" "(" AT "," X "," X' ")"),
     fail,
     !.
   infer-from-type Term
@@ -182,8 +201,7 @@ namespace annot {
   infer-from-type
     (app [ParamRel, X, Y])
     (asort S C) X Y :- coq.env.global ParamRelG ParamRel, trocq.db.rel C ParamRelG _ _ _ _, !,
-      coq.typecheck-ty X S ok, !.
-
+      coq.typecheck-ty X S Diag, coq.say Diag, Diag = ok, !.
   infer-from-type (app [RA, X, Y]) A X Y :-
     adecl A _ _ _ RA _, !.
   infer-from-type T A X Y :-
@@ -194,6 +212,17 @@ namespace annot {
       unfold-weaken Rest R, !,
       util.mk-app R [X, Y] Tunweakened,
       infer-from-type Tunweakened A X Y. % XXX This is wrong as the term is not well-typed anymore
+
+  % RG X Y where (G,G',RG) : AT ∵ W in the global env
+  % We deduce [[(G, G', RG)]] X Y
+  infer-from-type T A X Y :-
+    util.split-app-last 2 T RG [X, Y],
+    util.rocq-behead RG H Args,
+    trocq.db.global G TG' TRG _ RGDB,
+    util.equals-ignore RGDB H, !, % XXX Log search more properly
+    util.mapBy3 Args untriple AArgs,
+    aterm.util.mk-global G TG' TRG HA,
+    aterm.util.mk-app HA AArgs A.
 
   % Infers from a term W four terms such that
   % W : [[AT]] T T'
@@ -224,7 +253,7 @@ namespace annot {
     aterm.triple AT T T' RT,
     
     % We elaborate X and X'
-    (coq.elaborate-skeleton X T EX ok, util.evar-closed EX; trocq.error "Could not typecheck" X "with" {coq.term->string T}), !,
+    (coq.elaborate-skeleton X T EX ok, util.evar-closed EX; trocq.error "Could not typecheck" {coq.term->string X} "with" {coq.term->string T}), !,
     (coq.elaborate-skeleton X' T' EX' ok, util.evar-closed EX'; trocq.error "Could not typecheck" {coq.term->string X'} "with" {coq.term->string T'}), !,
 
     % We elaborate W and RT

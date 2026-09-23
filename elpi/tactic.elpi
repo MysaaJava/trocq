@@ -21,13 +21,13 @@ evar _ _ _ :- !.
 
 pred known->gref i:prop, o:prop.
 known->gref
-  (trocq.db.known-gref _Rel GR AT GR' GRR)
-  (trocq.db.gref GR AT GR' GRR).
+  (trocq.db.known-global _Rel G G' RG AT W)
+  (trocq.db.global G G' RG AT W).
 
 pred load-rel i:gref, o:list prop.
 load-rel GRRel DB :- std.do! [
   std.findall
-    (trocq.db.known-gref GRRel _GR _AT _GR' _GRR)
+    (trocq.db.known-global GRRel _ _ _ _ _)
     AllRel,
   std.map AllRel known->gref DB
 ].

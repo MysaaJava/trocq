@@ -183,7 +183,7 @@ namespace aterm {
   func triple-raw ->.
 
   func triple aterm -> term,term,term.
-  triple AX X X' RX0 :- adecl AX _ X X' RX _, !.
+  triple AX X X' RX :- adecl AX _ X X' RX _, !.
   triple (atriple X X' RX) X X' RX.
   triple (asort S Cl) (sort S) (sort S) T :- 
     if (triple-raw)
@@ -255,14 +255,16 @@ namespace aterm {
   % TODO Implement the other constructors for all this section
 }
 
-func aterm.util.global i:aterm o:gref.
+func aterm.util.global aterm -> gref.
 aterm.util.global (aglobal G _ _) G :- !.
 aterm.util.global (apglobal G _ _ _) G :- !.
-aterm.util.global (uvar as AT) G :-
-  coq.env.global G T,
+
+func aterm.util.mk-global gref, term, term -> aterm.
+aterm.util.mk-global G TG' TRG AT :-
+  coq.env.global G GT,
   (
-    (T = global G, AT = aglobal G _ _);
-    (T = pglobal G U, AT = apglobal G U _ _)
+    (GT = global G, AT = aglobal G TG' TRG);
+    (GT = pglobal G U, AT = apglobal G U TG' TRG)
   ), !.
 
 namespace aterm.util {

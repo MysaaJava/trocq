@@ -22,12 +22,13 @@ Section TrocqDepType.
     Definition RA := mkParam10 f.
 
     Variable (L L' : Type -> Type).
+    Variable (Rm : forall (X : Type) (X' : Type) (r : X -> X' -> Type), (L X) -> (L' X') -> Type).
     Variable (m : forall (X : Type) (X' : Type) (f : X -> X'), (L X) -> (L' X')).
     
     Definition RL (X : Type) (X' : Type) (XR : Param10.Rel X X') : Param10.Rel (L X) (L' X') := mkParam10 (m X X' (map XR)).
 
     Trocq Register RA.
-    Trocq Register RL.
+    Trocq Register RL rel Rm.
 
     Trocq Coercion On.
     Goal L' A'.
