@@ -140,7 +140,7 @@ Proof.
     + exact truncate.
     + exact R_in_truncate_nnR.
 Defined.
-Trocq RegisterWith R_nnR nnR @ (PType map4 map2b) ~ xnnR because Param42b_nnR.
+Trocq Register Param42b_nnR : nnR ~ xnnR @ (PType map4 map2b) : R_nnR.
 
 (* as sequences are encoded with constants, we need to relate them *)
 
@@ -168,7 +168,7 @@ Proof.
     + exact R_in_extendK_rseq.
   - unshelve econstructor.
 Defined.
-Trocq RegisterWith Rrseq summable @ (PType map4 map0) ~ seq_xnnR because Param40_rseq.
+Trocq Register Param40_rseq : summable ~ seq_xnnR @ (PType map4 map0): Rrseq.
 
 (* now we need to relate the various constants at level (0,0) *)
 
@@ -194,10 +194,13 @@ Proof.
 rewrite /Rrseq /seq_extend /R_nnR /sum_nnR.
 move=> u _ <-; rewrite extend_truncate//.
 by apply isSummableP.
-Qed.
-Trocq RegisterWith R_nnR sum_nnR @ (PTriple summable seq_xnnR Rrseq -> PTriple nnR xnnR Param42b_nnR) ~ sum_xnnR because R_sum_xnnR.
-Trocq RegisterWith R_nnR add_nnR @ (PTriple nnR xnnR Param42b_nnR -> PTriple nnR xnnR Param42b_nnR -> PTriple nnR xnnR Param42b_nnR) ~ add_xnnR because R_add_xnnR.
-Trocq RegisterWith Rrseq add_summable @ (PTriple summable seq_xnnR Rrseq -> PTriple summable seq_xnnR Rrseq -> PTriple summable seq_xnnR Rrseq) ~ add_seq_xnnR because seq_nnR_add.
+Qed. 
+Trocq Register R_sum_xnnR : sum_nnR ~ sum_xnnR
+  @ (PTriple summable seq_xnnR Rrseq -> PTriple nnR xnnR Param42b_nnR) : R_nnR.
+Trocq Register R_add_xnnR : add_nnR ~ add_xnnR
+  @ (PTriple nnR xnnR Param42b_nnR -> PTriple nnR xnnR Param42b_nnR -> PTriple nnR xnnR Param42b_nnR) : R_nnR.
+Trocq Register seq_nnR_add : add_summable ~ add_seq_xnnR
+  @ (PTriple summable seq_xnnR Rrseq -> PTriple summable seq_xnnR Rrseq -> PTriple summable seq_xnnR Rrseq) : Rrseq.
 
 (* we get a proof over non negative reals for free,
    from the analogous proof over the extended ones *)

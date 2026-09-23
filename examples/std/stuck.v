@@ -48,17 +48,17 @@ Axiom Rzero : Rp zerop zero.
 Axiom Radd : binop_param Rp Rp Rp addp add.
 Axiom paths_to_eqmodp : binop_param Rp Rp iff eq eqmodp.
 
-Trocq Register Zmodp @ (PType map2a map4) ~ int because Rp.
-Trocq Register addp @ (PTriple Zmodp int Rp -> PTriple Zmodp int Rp -> PTriple Zmodp int Rp) ~ add because Radd.
-Trocq Register zerop @ (PTriple Zmodp int Rp) ~ zero because Rzero.
+Trocq Register Rp : Zmodp ~ int @ (PType map2a map4).
+Trocq Register Radd : addp ~ add @ (PTriple Zmodp int Rp -> PTriple Zmodp int Rp -> PTriple Zmodp int Rp).
+Trocq Register Rzero : zerop ~ zero @ (PTriple Zmodp int Rp).
 Print Param_cons.
-Trocq Register cons @ (forall (A: PType map0 map0), A -> ((PTriple list list listR) A) ->
-      (PTriple list list listR) A) ~ cons because Param_cons.
-Trocq Register nil @ (forall (A: PType map0 map0), (PTriple list list listR) A) ~ nil because Param_nil.
+Trocq Register Param_cons : cons ~ cons
+  @ (forall (A: PType map0 map0), A -> ((PTriple list list listR) A) -> (PTriple list list listR) A).
+Trocq Register Param_nil : nil ~ nil @ (forall (A: PType map0 map0), (PTriple list list listR) A).
 
 Module Stuck.
 
-Trocq Register list @ (PType map4 map4 -> PType map4 map4) ~ list because Param44_list.
+Trocq Register Param44_list : list ~ list @ (PType map4 map4 -> PType map4 map4).
 Goal forall (l : list Zmodp), l = l.
 Fail trocq.
 Abort.
@@ -67,7 +67,7 @@ End Stuck.
 
 Module Works.
 
-Trocq Register list @ (PType map2a map4 -> PType map2a map4) ~ list because Param2a4_list.
+Trocq Register Param2a4_list : list ~ list @ (PType map2a map4 -> PType map2a map4).
 Goal forall (l : list Zmodp), l = l.
 trocq.
 reflexivity.

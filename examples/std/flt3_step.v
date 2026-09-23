@@ -157,17 +157,17 @@ apply: (@Param01.BuildRel (x ≡ y) (k = l) (fun _ _ => unit)) => //.
 by constructor; rewrite -exk -eyl.
 Qed.
 
-Trocq Register ℤ @ (PType map4 map2a) ~ (ℤ/9ℤ) because Rp.
-Trocq Register add @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp)~ addp because Radd.
-Trocq Register mul @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp)~ mulp because Rmul.
-Trocq Register mod3 @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp)~ modp3 because Rmod3.
-Trocq Register (0%ℤ) @ (PTriple ℤ (ℤ/9ℤ) Rp) ~ (0) because Rzero.
-Trocq Register (1%ℤ) @ (PTriple ℤ (ℤ/9ℤ) Rp) ~ (1) because Rone.
-Trocq Register eqmodp @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PType map0 map1) ~ eq_Zmod9 because Reqmodp01.
+Trocq Register Rp : ℤ ~ (ℤ/9ℤ) @ (PType map4 map2a).
+Trocq Register Radd : add ~ addp @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp).
+Trocq Register Rmul : mul ~ mulp @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp).
+Trocq Register Rmod3 : mod3 ~ modp3 @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp).
+Trocq Register Rzero : (0%ℤ) ~ (0) @ (PTriple ℤ (ℤ/9ℤ) Rp).
+Trocq Register Rone : (1%ℤ) ~ (1) @ (PTriple ℤ (ℤ/9ℤ) Rp).
+Trocq Register Reqmodp01 : eqmodp ~ eq_Zmod9 @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PType map0 map1).
 
-Trocq Register sum @ (PType map0 map1 -> PType map0 map1 -> PType map0 map1) ~ sum because Param01_sum.
-Trocq Register False @ (PType map0 map1) ~ False because Param01_Empty.
-Trocq Register False @ (PType map1 map0) ~ False because Param10_Empty.
+Trocq Register Param01_sum : sum ~ sum @ (PType map0 map1 -> PType map0 map1 -> PType map0 map1).
+Trocq Register Param01_Empty : False ~ False @ (PType map0 map1).
+Trocq Register Param10_Empty : False ~ False @ (PType map1 map0).
 
 Lemma flt3_step : forall (m n p : ℤ),
   ((m * n * p)%Z % 3)%Z ≢ 0 -> (m³ + n³)%ℤ ≠ p³%ℤ.

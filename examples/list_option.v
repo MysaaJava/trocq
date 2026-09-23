@@ -45,7 +45,7 @@ Proof.
   - apply Param_option_list_d.
   - apply (Param42b_list A A' AR).
 Defined.
-Trocq Register option @ (PType map4 map2b -> PType map4 map2b) ~ list because Param42b_option_list.
+Trocq Register Param42b_option_list : option ~ list @ (PType map4 map2b -> PType map4 map2b).
 
 Definition omap {A B : Type} (f : A -> B) (xo : option A) : option B :=
   match xo with
@@ -91,9 +91,9 @@ Proof.
     + rewrite <- r. apply option_to_list_map_morph.
     + exact (mapR A A' AR B B' BR f f' fR l l' lR).
 Defined.
-Trocq Register omap @ (forall (A : PType map4 map2b) (B : PType map4 map2b)
+Trocq Register omap_map_R : omap ~ map @ (forall (A : PType map4 map2b) (B : PType map4 map2b)
   (f : A -> B) (xo : (PTriple option list Param42b_option_list) A),
-  (PTriple option list Param42b_option_list) B) ~ map because omap_map_R.
+  (PTriple option list Param42b_option_list) B).
 
 Theorem map_compose (A B C : Type) (l : list A) (f : A -> B) (g : B -> C) :
   map g (map f l) = map (fun x => g (f x)) l.

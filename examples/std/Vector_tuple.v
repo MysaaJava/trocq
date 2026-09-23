@@ -167,7 +167,7 @@ Proof.
 Defined.
 
 Definition Param_append
-  (A A' : Type) (AR : Param00.Rel A A')
+  (A A' : Type) (AR : Param44.Rel A A')
   (n1 n1' : nat) (n1R : natR n1 n1')
   (n2 n2' : nat) (n2R : natR n2 n2')
   (t1 : tuple A n1) (v1' : Vector.t A' n1')
@@ -217,18 +217,17 @@ Defined.
 
 Module AppendConst.
 
-Trocq Register nat @ (PType map2a map0) ~ nat because Param2a0_nat.
-Trocq Register tuple @ (PType map4 map4 -> PTriple nat nat natR -> PType map0 map2b) ~ Vector.t because Param02b_tuple_vector.
-Trocq Register Nat.add @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple nat nat natR) ~ Nat.add because Param_add.
+Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
+Trocq Register Param02b_tuple_vector : tuple ~ Vector.t @ (PType map4 map4 -> PTriple nat nat natR -> PType map0 map2b).
+Trocq Register Param_add : Nat.add ~ Nat.add @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple nat nat natR).
 
-Trocq Register append @ (forall (A : PType map4 map4) (n1 : PTriple nat nat natR) (n2 : PTriple nat nat natR),
- (PTriple tuple Vector.t R_tuple_vector) A n1 ->
- (PTriple tuple Vector.t R_tuple_vector) A n2 ->
- (PTriple tuple Vector.t R_tuple_vector) A ((PTriple Nat.add Nat.add Param_add) n1 n2))
-  ~ Vector.append because Param_append.
-Trocq Register const @ (forall (A : PType map0 map0) (a : A) (n : PTriple nat nat natR),
- (PTriple tuple Vector.t R_tuple_vector) A n)
-  ~ Vector.const because Param_const.
+Trocq Register Param_append : append ~ Vector.append
+  @ (forall (A : PType map4 map4) (n1 : PTriple nat nat natR) (n2 : PTriple nat nat natR),
+    (PTriple tuple Vector.t R_tuple_vector) A n1 ->
+    (PTriple tuple Vector.t R_tuple_vector) A n2 ->
+    (PTriple tuple Vector.t R_tuple_vector) A ((PTriple Nat.add Nat.add Param_add) n1 n2)).
+Trocq Register Param_const : const ~ Vector.const
+  @ (forall (A : PType map0 map0) (a : A) (n : PTriple nat nat natR), (PTriple tuple Vector.t R_tuple_vector) A n).
 
 Lemma append_const : forall {A : Type} (a : A) (n1 n2 : nat),
   append (const a n1) (const a n2) = const a (n1 + n2).
@@ -258,13 +257,15 @@ Definition Rp2a2b : Param2a2b.Rel Zp int := Rp42b.
 Lemma head_const {n : nat} : forall (i : int), Vector.hd (Vector.const i (S n)) = i.
 Proof. destruct n; simpl; reflexivity. Qed.
 
-Trocq Register nat @ (PType map2a map0) ~ nat because Param2a0_nat.
-Trocq Register S @ (PTriple nat nat natR -> PTriple nat nat natR) ~ S because SR.
-Trocq Register Zp @ (PType map2a map2b) ~ int because Rp2a2b.
-Trocq Register head @ (forall (A : PType map0 map0) (n : PTriple nat nat natR),  (PTriple tuple Vector.t R_tuple_vector) A ((PTriple S S SR) n) -> A) ~ Vector.hd because Param_head.
-Trocq Register const @ (forall (A : PType map0 map0) (a : A) (n : PTriple nat nat natR),
- (PTriple tuple Vector.t R_tuple_vector) A n)
-  ~ Vector.const because Param_const.
+Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
+Trocq Register SR : S ~ S @ (PTriple nat nat natR -> PTriple nat nat natR).
+Trocq Register Rp2a2b : Zp ~ int @ (PType map2a map2b).
+Trocq Register Param_head : head ~ Vector.hd
+  @ (forall (A : PType map0 map0) (n : PTriple nat nat natR),
+    (PTriple tuple Vector.t R_tuple_vector) A ((PTriple S S SR) n) -> A).
+Trocq Register Param_const : const ~ Vector.const
+  @ (forall (A : PType map0 map0) (a : A) (n : PTriple nat nat natR),
+    (PTriple tuple Vector.t R_tuple_vector) A n).
 
 Lemma head_const' : forall {n : nat} (z : Zp), head (const z (S n)) = z.
 Proof. trocq. exact @head_const. Qed.
@@ -292,19 +293,21 @@ Proof.
     + exact vv'R.
 Defined.
 
-Trocq Register S @ (PTriple nat nat natR -> PTriple nat nat natR) ~ S because SR.
-Trocq Register cons @ (forall (A : PType map0 map0) (n : PTriple nat nat natR) (a : A),
-  (PTriple tuple Vector.t R_tuple_vector) A n -> (PTriple tuple Vector.t R_tuple_vector) A (PTriple S S SR n))
-  ~ Vector.cons because Param_cons.
-Trocq Register Nat.add @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple nat nat natR) ~ Nat.add because Param_add.
-Trocq Register append @ (forall (A : PType map4 map4) (n1 : PTriple nat nat natR) (n2 : PTriple nat nat natR),
- (PTriple tuple Vector.t R_tuple_vector) A n1 ->
- (PTriple tuple Vector.t R_tuple_vector) A n2 ->
- (PTriple tuple Vector.t R_tuple_vector) A ((PTriple Nat.add Nat.add Param_add) n1 n2))
-  ~ Vector.append because Param_append.
-Trocq Register tuple @ (PType map4 map4 -> PTriple nat nat natR -> PType map0 map2b) ~ Vector.t because Param02b_tuple_vector.
-Trocq Register tuple @ (PType map4 map4 -> PTriple nat nat natR -> PType map2a map0) ~ Vector.t because Param2a0_tuple_vector.
-Trocq Register nat @ (PType map2a map0) ~ nat because Param2a0_nat.
+Trocq Register SR : S ~ S @ (PTriple nat nat natR -> PTriple nat nat natR).
+Trocq Register Param_cons : cons ~ Vector.cons
+  @ (forall (A : PType map0 map0) (n : PTriple nat nat natR) (a : A),
+    (PTriple tuple Vector.t R_tuple_vector) A n -> (PTriple tuple Vector.t R_tuple_vector) A (PTriple S S SR n)).
+Trocq Register Param_add : Nat.add ~ Nat.add
+  @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple nat nat natR).
+Trocq Register Param_append : append ~ Vector.append
+  @ (forall (A : PType map4 map4) (n1 : PTriple nat nat natR) (n2 : PTriple nat nat natR),
+    (PTriple tuple Vector.t R_tuple_vector) A n1 ->
+    (PTriple tuple Vector.t R_tuple_vector) A n2 ->
+    (PTriple tuple Vector.t R_tuple_vector) A ((PTriple Nat.add Nat.add Param_add) n1 n2)).
+Trocq Register Param02b_tuple_vector : tuple ~ Vector.t
+  @ (PType map4 map4 -> PTriple nat nat natR -> PType map0 map2b).
+Trocq Register Param2a0_tuple_vector : tuple ~ Vector.t @ (PType map4 map4 -> PTriple nat nat natR -> PType map2a map0).
+Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
 
 Lemma append_comm_cons : forall {A : Type} {n1 n2 : nat}
     (v1 : tuple A n1) (v2 : tuple A n2) (a : A),
@@ -443,19 +446,20 @@ Axiom setBitThenGetSame :
   forall {k : nat} (bv : bitvector k) (i : nat) (b : bool),
     (i < k)%nat = true -> getBit_bv (setBit_bv bv i b) i = b.
 
-Trocq Register nat @ (PType map2a map0) ~ nat because Param2a0_nat.
-Trocq Register bool @ (PType map4 map4) ~ bool because Param44_Bool.
-Trocq Register bounded_nat @ (PTriple nat nat natR -> PType map2a map0) ~ bitvector because Param2a0_bnat_bv.
-Trocq Register getBit_bnat @ (forall (k : PTriple nat nat natR),
-  PTriple bounded_nat bitvector Param44_bnat_bv k -> PTriple nat nat natR -> PTriple bool bool BoolR)
-  ~ getBit_bv because getBitR.
-Trocq Register setBit_bnat @ (forall (k : PTriple nat nat natR),
-  PTriple bounded_nat bitvector Param44_bnat_bv k -> PTriple nat nat natR -> PTriple bool bool BoolR
-  -> PTriple bounded_nat bitvector Param44_bnat_bv k)
-  ~ setBit_bv because setBitR. 
-Trocq Register leq @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple bool bool BoolR) ~ leq because Param10_le.
-Trocq Register S @ (PTriple nat nat natR -> PTriple nat nat natR) ~ S because SR.
-Trocq Register true @ (PTriple bool bool BoolR) ~ true because trueR.
+Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
+Trocq Register Param44_Bool : bool ~ bool @ (PType map4 map4).
+Trocq Register Param2a0_bnat_bv : bounded_nat ~ bitvector @ (PTriple nat nat natR -> PType map2a map0).
+Trocq Register getBitR : getBit_bnat ~ getBit_bv
+  @ (forall (k : PTriple nat nat natR),
+    PTriple bounded_nat bitvector Param44_bnat_bv k -> PTriple nat nat natR -> PTriple bool bool BoolR).
+Trocq Register setBitR : setBit_bnat ~ setBit_bv
+  @ (forall (k : PTriple nat nat natR),
+    PTriple bounded_nat bitvector Param44_bnat_bv k -> PTriple nat nat natR -> PTriple bool bool BoolR
+    -> PTriple bounded_nat bitvector Param44_bnat_bv k).
+Trocq Register Param10_le : leq ~ leq
+  @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple bool bool BoolR).
+Trocq Register SR : S ~ S @ (PTriple nat nat natR -> PTriple nat nat natR).
+Trocq Register trueR : true ~ true @ (PTriple bool bool BoolR).
 
 Lemma setBitThenGetSame' :
   forall {k : nat} (bn : bounded_nat k) (i : nat) (b : bool),

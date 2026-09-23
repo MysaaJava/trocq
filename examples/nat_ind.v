@@ -32,9 +32,9 @@ Definition RI0 : RI I0 O. Proof. exact of_nat0. Qed.
 Definition RIS m n : RI m n -> RI (IS m) (S n).
 Proof. by move=> <-; apply: of_natS. Qed.
 
-Trocq Register I @ (PType map2a map3) ~ nat because RI. (* registering related types *)
-Trocq Register I0 @ (PTriple I nat RI) ~ (0%nat) because RI0.
-Trocq Register IS @ (PTriple I nat RI -> PTriple I nat RI) ~ (S%nat) because RIS.
+Trocq Register RI : I ~ nat @ (PType map2a map3). (* registering related types *)
+Trocq Register RI0 : I0 ~ (0%nat) @ (PTriple I nat RI).
+Trocq Register RIS : IS ~ (S%nat) @ (PTriple I nat RI -> PTriple I nat RI).
 
 
 Lemma I_Srec : forall (P : I -> Type), P I0 ->

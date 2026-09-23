@@ -57,17 +57,20 @@ apply: (@Param01.BuildRel (m <= n)%int (m' <= n')%int (fun _ _ => unit)).
 - by constructor => mn; apply (le_morph _ _ Rm _ _ Rn).
 Qed.
 
-Trocq Register le_int @ (PTriple int int le_int -> PTriple int int (sym_rel le_int) -> PType map0 map1) ~ le_int because le01.
-Trocq Register add @ (PTriple int int le_int -> PTriple int int le_int -> PTriple int int le_int) ~ add because add_morph.
-Trocq Register add @ (PTriple int int (sym_rel le_int) -> PTriple int int (sym_rel le_int) -> PTriple int int (sym_rel le_int)) ~ add because add_morph_sym.
+Trocq Register le01 : le_int ~ le_int
+  @ (PTriple int int le_int -> PTriple int int (sym_rel le_int) -> PType map0 map1).
+Trocq Register add_morph : add ~ add 
+  @ (PTriple int int le_int -> PTriple int int le_int -> PTriple int int le_int).
+Trocq Register add_morph_sym : add ~ add 
+  @ (PTriple int int (sym_rel le_int) -> PTriple int int (sym_rel le_int) -> PTriple int int (sym_rel le_int)).
 
 Parameters i j : int.
 Parameters ip : (j <= i)%int.
 Definition iid : (i <= i)%int := le_refl i.
 
-Trocq Register j @ (PTriple int int le_int) ~ i because ip.
-Trocq Register i @ (PTriple int int le_int) ~ i because iid.
-Trocq Register i @ (PTriple int int (sym_rel le_int)) ~ i because iid.
+Trocq Register ip : j ~ i @ (PTriple int int le_int).
+Trocq Register iid : i ~ i @ (PTriple int int le_int).
+Trocq Register iid : i ~ i @ (PTriple int int (sym_rel le_int)).
 
 Example ipi : (j + i + j <= i + i + i)%int.
 Proof.

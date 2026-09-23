@@ -38,9 +38,9 @@ add-to-database W Rel T T' AT ODB :- !,
   logging.info (coq.say "[add-to-database] Trying to add" {coq.term->string W} "to the database"),
   % We try with the information we have, if it does not work, we try to infer, then we retry
   (check-infer W Rel T T' AT EW ERel_ ET ET' EAT; trocq.error "Could not infer database input for" {coq.term->string W}), !,
-  (coq.env.global G ET; trocq.error "Trocq does not support relating something that is not a gref"), !,
-  (coq.env.global G' ET'; trocq.error "Trocq does not support relating a gref to something that is not a gref"), !,
-  (coq.env.global WG EW; trocq.error "Trocq does not support relating a gref with something that is not a gref"), !,
+  (coq.env.global G ET; trocq.error "Trocq does not support relating something that is not a gref" ":" {coq.term->string ET}), !,
+  (coq.env.global G' ET'; trocq.error "Trocq does not support relating a gref to something that is not a gref" ":" {coq.term->string ET'}), !,
+  (coq.env.global WG EW; trocq.error "Trocq does not support relating a gref with something that is not a gref" ":" {coq.term->string EW}), !,
   if (ODB = some DBName)
   (coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.known-gref DBName G EAT G' WG)))
   (coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.gref              G EAT G' WG))).
