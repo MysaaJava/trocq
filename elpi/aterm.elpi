@@ -206,8 +206,6 @@ namespace aterm.util {
   % Annotates GRef with first thing found in db
   func annotate-legacy term, list param-class, option param-class -> aterm.
   func annotate-legacy.all term, list param-class -> aterm.
-  annotate-legacy X L O AX :-
-    coq.say "[annotate-legacy]" {coq.term->string X} "with" L "&" O, fail, !.
   annotate-legacy.all X L AX :-
     shape X N B,
     util.if-bool B (std.split-at N L Cs [O], Out = some O) (Cs = L, Out = none),
@@ -235,14 +233,21 @@ namespace aterm.util {
     std.map2 Xs CsXsL annotate-legacy.all AXs,
     annotate-legacy F CsF Out AF.
   annotate-legacy X [] none AX :- adecl AX _ X _ _ _, !.
-  annotate-legacy (global G) [] none (aglobal G TG' TRG) :- !,
+  annotate-legacy (global G) [] none (aglobal G TG' TRG) :-
     trocq.db.gref G _ G' RG, !,
     coq.env.global G' TG',
     coq.env.global RG TRG. % We take first to match
-  annotate-legacy (pglobal G U) [] none (apglobal G U TG' TRG) :- !,
+  annotate-legacy (pglobal G U) [] none (apglobal G U TG' TRG) :-
     trocq.db.gref G _ G' RG, !,
     coq.env.global G' TG',
     coq.env.global RG TRG. % We take first to match
+  % If it failed, we try identity
+  % We put TG because we are not allowed to accumulate unification variables
+  annotate-legacy (global G) [] none (aglobal G TG TG) :-
+    coq.env.global G TG.
+  annotate-legacy (pglobal G U) [] none (apglobal G U TG TG) :-
+    coq.env.global G TG.
+
 
   func fake-term->aterm term -> aterm.
   fake-term->aterm (app [PType|L]) (asort (typ U) Cl) :-
@@ -318,6 +323,32 @@ namespace aterm.util {
     equals-ignore X X',
     equals-ignore (aapp L) (aapp L').
   equals-ignore X X :- !.
+
+  % From a full aterm in the database, instantiates a aterm with holes
+  % XXX This should be removed with database consistency
+  func equals-ignore-rel aterm -> aterm.
+  equals-ignore-rel X X' :-
+    logging.trace (coq.say "[equals-ignore-rel]" X "vs" X'), fail, !.
+  equals-ignore-rel (aprod N AT F) (aprod _ AT' F') :- !,
+    equals-ignore-rel AT AT',
+    @pi-adecl N AT (ax\ _\ _\ _\ equals-ignore-rel (F ax) (F' ax)).
+  equals-ignore-rel (afun N AT F) (afun _ AT' F') :- !,
+    equals-ignore-rel AT AT',
+    @pi-adecl N AT (ax\ _\ _\ _\ equals-ignore-rel (F ax) (F' ax)).
+  equals-ignore-rel (atriple X Y RX) (atriple X' Y' RX') :- !,
+    util.equals-ignore X X',
+    util.equals-ignore Y Y'.
+  equals-ignore-rel (asort _ Cl) (asort _ Cl) :- !.
+  equals-ignore-rel (aglobal G TG RG) (aglobal G TG' RG') :- !,
+    util.equals-ignore TG TG'.
+  equals-ignore-rel (apglobal G _ TG RG) (apglobal G _ TG' RG') :- !,
+    util.equals-ignore TG TG'.
+  equals-ignore-rel (aapp [X]) (aapp [X']) :- !,
+    equals-ignore-rel X X'.
+  equals-ignore-rel (aapp [X|L]) (aapp [X'|L']) :- !,
+    equals-ignore-rel X X',
+    equals-ignore-rel (aapp L) (aapp L').
+  equals-ignore-rel X X :- !.
 
   % remove head weakenings from the input term
   func remove-weakenings term -> term.

@@ -217,17 +217,12 @@ Defined.
 
 Module AppendConst.
 
-Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
-Trocq Register Param02b_tuple_vector : tuple ~ Vector.t @ (PType map4 map4 -> PTriple nat nat natR -> PType map0 map2b).
-Trocq Register Param_add : Nat.add ~ Nat.add @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple nat nat natR).
+Trocq Register Param2a0_nat.
+Trocq Register Param02b_tuple_vector.
+Trocq Register Param_add.
 
-Trocq Register Param_append : append ~ Vector.append
-  @ (forall (A : PType map4 map4) (n1 : PTriple nat nat natR) (n2 : PTriple nat nat natR),
-    (PTriple tuple Vector.t R_tuple_vector) A n1 ->
-    (PTriple tuple Vector.t R_tuple_vector) A n2 ->
-    (PTriple tuple Vector.t R_tuple_vector) A ((PTriple Nat.add Nat.add Param_add) n1 n2)).
-Trocq Register Param_const : const ~ Vector.const
-  @ (forall (A : PType map0 map0) (a : A) (n : PTriple nat nat natR), (PTriple tuple Vector.t R_tuple_vector) A n).
+Trocq Register Param_append.
+Trocq Register Param_const.
 
 Lemma append_const : forall {A : Type} (a : A) (n1 n2 : nat),
   append (const a n1) (const a n2) = const a (n1 + n2).
@@ -257,15 +252,11 @@ Definition Rp2a2b : Param2a2b.Rel Zp int := Rp42b.
 Lemma head_const {n : nat} : forall (i : int), Vector.hd (Vector.const i (S n)) = i.
 Proof. destruct n; simpl; reflexivity. Qed.
 
-Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
-Trocq Register SR : S ~ S @ (PTriple nat nat natR -> PTriple nat nat natR).
-Trocq Register Rp2a2b : Zp ~ int @ (PType map2a map2b).
-Trocq Register Param_head : head ~ Vector.hd
-  @ (forall (A : PType map0 map0) (n : PTriple nat nat natR),
-    (PTriple tuple Vector.t R_tuple_vector) A ((PTriple S S SR) n) -> A).
-Trocq Register Param_const : const ~ Vector.const
-  @ (forall (A : PType map0 map0) (a : A) (n : PTriple nat nat natR),
-    (PTriple tuple Vector.t R_tuple_vector) A n).
+Trocq Register Param2a0_nat.
+Trocq Register SR.
+Trocq Register Rp2a2b.
+Trocq Register Param_head.
+Trocq Register Param_const.
 
 Lemma head_const' : forall {n : nat} (z : Zp), head (const z (S n)) = z.
 Proof. trocq. exact @head_const. Qed.
@@ -293,21 +284,13 @@ Proof.
     + exact vv'R.
 Defined.
 
-Trocq Register SR : S ~ S @ (PTriple nat nat natR -> PTriple nat nat natR).
-Trocq Register Param_cons : cons ~ Vector.cons
-  @ (forall (A : PType map0 map0) (n : PTriple nat nat natR) (a : A),
-    (PTriple tuple Vector.t R_tuple_vector) A n -> (PTriple tuple Vector.t R_tuple_vector) A (PTriple S S SR n)).
-Trocq Register Param_add : Nat.add ~ Nat.add
-  @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple nat nat natR).
-Trocq Register Param_append : append ~ Vector.append
-  @ (forall (A : PType map4 map4) (n1 : PTriple nat nat natR) (n2 : PTriple nat nat natR),
-    (PTriple tuple Vector.t R_tuple_vector) A n1 ->
-    (PTriple tuple Vector.t R_tuple_vector) A n2 ->
-    (PTriple tuple Vector.t R_tuple_vector) A ((PTriple Nat.add Nat.add Param_add) n1 n2)).
-Trocq Register Param02b_tuple_vector : tuple ~ Vector.t
-  @ (PType map4 map4 -> PTriple nat nat natR -> PType map0 map2b).
-Trocq Register Param2a0_tuple_vector : tuple ~ Vector.t @ (PType map4 map4 -> PTriple nat nat natR -> PType map2a map0).
-Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
+Trocq Register SR.
+Trocq Register Param_cons.
+Trocq Register Param_add.
+Trocq Register Param_append.
+Trocq Register Param02b_tuple_vector.
+Trocq Register Param2a0_tuple_vector.
+Trocq Register Param2a0_nat.
 
 Lemma append_comm_cons : forall {A : Type} {n1 n2 : nat}
     (v1 : tuple A n1) (v2 : tuple A n2) (a : A),
@@ -446,20 +429,13 @@ Axiom setBitThenGetSame :
   forall {k : nat} (bv : bitvector k) (i : nat) (b : bool),
     (i < k)%nat = true -> getBit_bv (setBit_bv bv i b) i = b.
 
-Trocq Register Param2a0_nat : nat ~ nat @ (PType map2a map0).
-Trocq Register Param44_Bool : bool ~ bool @ (PType map4 map4).
-Trocq Register Param2a0_bnat_bv : bounded_nat ~ bitvector @ (PTriple nat nat natR -> PType map2a map0).
-Trocq Register getBitR : getBit_bnat ~ getBit_bv
-  @ (forall (k : PTriple nat nat natR),
-    PTriple bounded_nat bitvector Param44_bnat_bv k -> PTriple nat nat natR -> PTriple bool bool BoolR).
-Trocq Register setBitR : setBit_bnat ~ setBit_bv
-  @ (forall (k : PTriple nat nat natR),
-    PTriple bounded_nat bitvector Param44_bnat_bv k -> PTriple nat nat natR -> PTriple bool bool BoolR
-    -> PTriple bounded_nat bitvector Param44_bnat_bv k).
-Trocq Register Param10_le : leq ~ leq
-  @ (PTriple nat nat natR -> PTriple nat nat natR -> PTriple bool bool BoolR).
-Trocq Register SR : S ~ S @ (PTriple nat nat natR -> PTriple nat nat natR).
-Trocq Register trueR : true ~ true @ (PTriple bool bool BoolR).
+Trocq Register Param2a0_nat.
+Trocq Register Param44_Bool.
+Trocq Register Param2a0_bnat_bv.
+Trocq Register getBitR.
+Trocq Register setBitR.
+Trocq Register Param10_le.
+Trocq Register trueR.
 
 Lemma setBitThenGetSame' :
   forall {k : nat} (bn : bounded_nat k) (i : nat) (b : bool),

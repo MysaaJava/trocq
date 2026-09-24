@@ -161,10 +161,20 @@ has-univ-if-needed C :-
     (param-class-cstr.doesnt-require-axiom C).
 
 pred solve-gref-constraint i:cstr.
-solve-gref-constraint (cstr-gref G AT T' TR) :- !,
+solve-gref-constraint (cstr-gref G AT T' TR) :-
     logging.trace (coq.say "[solve-gref]" G AT T' TR),
     trocq.db.gref G AT' G' GR,
     aterm.util.equals-ignore AT' AT,
+    logging.trace (coq.say "[found-gref]" G AT' G' GR),
+    coq.env.global G' T',
+    coq.env.global GR TR.
+%XXX Because database may be inconsistent, as a last resort, we try 
+% to match ignoring the rel part of the aterm
+% (don't forget to add back the bang)
+solve-gref-constraint (cstr-gref G AT T' TR) :- !,
+    logging.trace (coq.say "[solve-gref]" G AT T' TR),
+    trocq.db.gref G AT' G' GR,
+    aterm.util.equals-ignore-rel AT' AT,
     logging.trace (coq.say "[found-gref]" G AT' G' GR),
     coq.env.global G' T',
     coq.env.global GR TR.

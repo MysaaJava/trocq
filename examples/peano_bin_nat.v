@@ -29,9 +29,9 @@ Definition RN : Param2a3.Rel N nat :=
 Definition RN0 : RN 0%N 0%nat. Proof. done. Qed.
 Definition RNS m n : RN m n -> RN (N.succ m) (S n). Proof. by case: _ /. Qed.
 
-Trocq Register RN : N ~ nat @ (PType map2a map3). (* registering related types *)
-Trocq Register RN0 : (0%N) ~ (0%nat) @ (PTriple N nat RN).
-Trocq Register RNS : (N.succ) ~ (S%nat) @ (PTriple N nat RN -> PTriple N nat RN).
+Trocq Register RN. (* registering related types *)
+Trocq Register RN0.
+Trocq Register RNS.
 
 Lemma N_Srec : forall (P : N -> Type), P N0 ->
  (forall n, P n -> P n.+1%N) -> forall n, P n.

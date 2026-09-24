@@ -57,20 +57,17 @@ apply: (@Param01.BuildRel (m <= n)%int (m' <= n')%int (fun _ _ => unit)).
 - by constructor => mn; apply (le_morph _ _ Rm _ _ Rn).
 Qed.
 
-Trocq Register le01 : le_int ~ le_int
-  @ (PTriple int int le_int -> PTriple int int (sym_rel le_int) -> PType map0 map1).
-Trocq Register add_morph : add ~ add 
-  @ (PTriple int int le_int -> PTriple int int le_int -> PTriple int int le_int).
-Trocq Register add_morph_sym : add ~ add 
-  @ (PTriple int int (sym_rel le_int) -> PTriple int int (sym_rel le_int) -> PTriple int int (sym_rel le_int)).
+Trocq Register le01.
+Trocq Register add_morph.
+Trocq Register add_morph_sym.
 
 Parameters i j : int.
 Parameters ip : (j <= i)%int.
 Definition iid : (i <= i)%int := le_refl i.
 
-Trocq Register ip : j ~ i @ (PTriple int int le_int).
-Trocq Register iid : i ~ i @ (PTriple int int le_int).
-Trocq Register iid : i ~ i @ (PTriple int int (sym_rel le_int)).
+Trocq Register ip.
+Trocq Register iid.
+Trocq Register iid.
 
 Example ipi : (j + i + j <= i + i + i)%int.
 Proof.

@@ -22,15 +22,15 @@ Set Universe Polymorphism.
   one `N`. We introduce the `Trocq Use` command to register such translations.
   *)
 Definition RN : (N <=> nat)%P := Iso.toParamSym N.of_nat_iso.
-Trocq Register RN : N ~ nat @ (PType map4 map4). (* registering related types *)
+Trocq Register RN. (* registering related types *)
 
 (** This equivalence proof coerces to a relation of type `N -> nat -> Type`,
   which we show relates the respective zero and successor constants of these
   types: *)
 Definition RN0 : RN 0%N 0%nat. Proof. done. Defined.
 Definition RNS m n : RN m n -> RN (N.succ m) (S n). Proof. by case: _ /. Defined.
-Trocq Register RN0 : (0%N) ~ (0%nat) @ (PTriple N nat RN).
-Trocq Register RNS : (N.succ) ~ (S%nat) @ (PTriple N nat RN -> PTriple N nat RN).
+Trocq Register RN0.
+Trocq Register RNS.
 
 (** We can now make use of the tactic to prove an induction principle on `N` *)
 Lemma N_Srec : forall (P : N -> Type), P 0%N ->

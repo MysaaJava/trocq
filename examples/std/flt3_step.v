@@ -157,17 +157,17 @@ apply: (@Param01.BuildRel (x ≡ y) (k = l) (fun _ _ => unit)) => //.
 by constructor; rewrite -exk -eyl.
 Qed.
 
-Trocq Register Rp : ℤ ~ (ℤ/9ℤ) @ (PType map4 map2a).
-Trocq Register Radd : add ~ addp @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp).
-Trocq Register Rmul : mul ~ mulp @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp).
-Trocq Register Rmod3 : mod3 ~ modp3 @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp).
-Trocq Register Rzero : (0%ℤ) ~ (0) @ (PTriple ℤ (ℤ/9ℤ) Rp).
-Trocq Register Rone : (1%ℤ) ~ (1) @ (PTriple ℤ (ℤ/9ℤ) Rp).
-Trocq Register Reqmodp01 : eqmodp ~ eq_Zmod9 @ (PTriple ℤ (ℤ/9ℤ) Rp -> PTriple ℤ (ℤ/9ℤ) Rp -> PType map0 map1).
+Trocq Register Rp.
+Trocq Register Radd.
+Trocq Register Rmul.
+Trocq Register Rmod3.
+Trocq Register Rzero.
+Trocq Register Rone.
+Trocq Register Reqmodp01.
 
-Trocq Register Param01_sum : sum ~ sum @ (PType map0 map1 -> PType map0 map1 -> PType map0 map1).
-Trocq Register Param01_Empty : False ~ False @ (PType map0 map1).
-Trocq Register Param10_Empty : False ~ False @ (PType map1 map0).
+Trocq Register Param01_sum.
+Trocq Register Param01_Empty.
+Trocq Register Param10_Empty.
 
 Lemma flt3_step : forall (m n p : ℤ),
   ((m * n * p)%Z % 3)%Z ≢ 0 -> (m³ + n³)%ℤ ≠ p³%ℤ.

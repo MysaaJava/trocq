@@ -122,16 +122,16 @@ apply: (@Param01.BuildRel (x ≡ y) (k = l) (fun _ _ => unit)) => //.
 by constructor; rewrite -exk -eyl.
 Qed.
 
-Trocq Register Rp : ℤ ~ (ℤ/7ℤ) @ (PType map4 map2a).
-Trocq Register Radd : add ~ addp @ (PTriple ℤ (ℤ/7ℤ) Rp -> PTriple ℤ (ℤ/7ℤ) Rp -> PTriple ℤ (ℤ/7ℤ) Rp).
-Trocq Register Rmul : mul ~ mulp @ (PTriple ℤ (ℤ/7ℤ) Rp -> PTriple ℤ (ℤ/7ℤ) Rp -> PTriple ℤ (ℤ/7ℤ) Rp).
-Trocq Register Rzero : (0%ℤ) ~ (0) @ (PTriple ℤ (ℤ/7ℤ) Rp).
-Trocq Register Rone : (1%ℤ) ~ (1) @ (PTriple ℤ (ℤ/7ℤ) Rp).
-Trocq Register Reqmodp01 : eqmodp ~ eq_Zmod7 @ (PTriple ℤ (ℤ/7ℤ) Rp -> PTriple ℤ (ℤ/7ℤ) Rp -> PType map0 map1).
+Trocq Register Rp.
+Trocq Register Radd.
+Trocq Register Rmul.
+Trocq Register Rzero.
+Trocq Register Rone.
+Trocq Register Reqmodp01.
 
 
-Trocq Register Param01_Empty : False ~ False @ (PType map0 map1).
-Trocq Register Param10_Empty : False ~ False @ (PType map1 map0).
+Trocq Register Param01_Empty.
+Trocq Register Param10_Empty.
 
 Lemma square_and_cube_mod7 : forall (m n p : ℤ),
   (m = n²)%Z -> (m = p³)%Z -> m ≡ 0 ∨ m ≡ 1.
