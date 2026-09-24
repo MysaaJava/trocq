@@ -69,6 +69,10 @@ pred unless i:prop, i:prop.
 unless Condition Goal :-
   if (Condition) true Goal.
 
+func if-bool i:bool, i:(func), i:(func).
+if-bool tt T _ :- !, T.
+if-bool ff _ F :- !, F.
+
 pred if-suspend i:A, i:prop, i:(func), i:(func).
 if-suspend V B T E :- var V, !, declare_constraint (if B T E) [V].
 if-suspend _ B T E :- if B T E.
@@ -172,6 +176,12 @@ lexicographic-cmp.curry _ [] [] eq :- !.
 lexicographic-cmp.curry F [X|_] [Y|_] Cmp :- F X Y Cmp, not (Cmp = eq), !.
 lexicographic-cmp.curry F [_|Xs] [_|Ys] Cmp :- lexicographic-cmp.curry F Xs Ys Cmp.
 lexicographic-cmp F (lexicographic-cmp.curry F).
+
+func multi-split list int, list A -> list (list A).
+multi-split [] [] [].
+multi-split [N|LN] L [O|LO] :-
+  std.split-at N L O Rest,
+  multi-split LN Rest LO.
 
 func mapTo2 list A, (func A -> B,C) -> list B, list C.
 mapTo2 [] F_ [] [].

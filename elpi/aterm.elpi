@@ -202,6 +202,48 @@ namespace aterm.util {
   shape X 0 ff :- (X = global _ ; X = pglobal _ _ ; name X), !.
   shape.all T N :- !, shape T NT B, N is NT + {util.bool->int B}.
 
+  % Create a aterm with legacy option/list decomposition.
+  % Annotates GRef with first thing found in db
+  func annotate-legacy term, list param-class, option param-class -> aterm.
+  func annotate-legacy.all term, list param-class -> aterm.
+  annotate-legacy X L O AX :-
+    coq.say "[annotate-legacy]" {coq.term->string X} "with" L "&" O, fail, !.
+  annotate-legacy.all X L AX :-
+    shape X N B,
+    util.if-bool B (std.split-at N L Cs [O], Out = some O) (Cs = L, Out = none),
+    annotate-legacy X Cs Out AX.
+  annotate-legacy (sort S) [] (some C) (asort S C) :- !.
+  annotate-legacy (prod Name T F) Cs Out (aprod Name AT AF) :- !,
+    shape.all T NT,
+    std.split-at NT Cs CsT CsF,
+    annotate-legacy.all T CsT AT,
+    @pi-adecl Name AT ax\ x\ _\ _\ (
+      annotate-legacy (F x) CsF Out (AF ax)
+    ).
+  annotate-legacy (fun Name T F) Cs none (afun Name AT AF) :- !,
+    shape.all T NT,
+    std.split-at NT Cs CsT CsF,
+    annotate-legacy.all T CsT AT,
+    @pi-adecl Name AT ax\ x\ _\ _\ (
+      annotate-legacy.all (F x) CsF (AF ax)
+    ).
+  annotate-legacy (app [F|Xs]) Cs Out (aapp [AF|AXs]) :- !,
+    std.map Xs shape.all NXs,
+    shape F NF _,
+    std.split-at NF Cs CsF CsXs,
+    util.multi-split NXs CsXs CsXsL,
+    std.map2 Xs CsXsL annotate-legacy.all AXs,
+    annotate-legacy F CsF Out AF.
+  annotate-legacy X [] none AX :- adecl AX _ X _ _ _, !.
+  annotate-legacy (global G) [] none (aglobal G TG' TRG) :- !,
+    trocq.db.gref G _ G' RG, !,
+    coq.env.global G' TG',
+    coq.env.global RG TRG. % We take first to match
+  annotate-legacy (pglobal G U) [] none (apglobal G U TG' TRG) :- !,
+    trocq.db.gref G _ G' RG, !,
+    coq.env.global G' TG',
+    coq.env.global RG TRG. % We take first to match
+
   func fake-term->aterm term -> aterm.
   fake-term->aterm (app [PType|L]) (asort (typ U) Cl) :-
     trocq.data.ptype PType, !,

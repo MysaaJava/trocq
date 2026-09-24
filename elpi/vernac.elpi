@@ -21,6 +21,18 @@ check-infer W Rel T T' AT EW ERel ET ET' EAT :-
   logging.trace (coq.say "[check-infer] Checking if data is already enough"),
   (do-not-fail => annot.check-database T T' Rel AT W ET ET' ERel EAT EW),
   not (var ET), not (var ET'), not (var ERel), not (var EAT), not (var EW), !.
+check-infer W Rel T T' AT EW ERel ET ET' EAT :- !, % We disable new inference for now
+  coq.env.global WG W,
+  coq.env.typeof WG WT,
+  Rel = W,
+  param-class.type->classes WT Class CList G G', !,
+  coq.env.global G T,
+  coq.env.global G' T',
+  coq.typecheck T TT ok,
+  (aterm.util.annotate-legacy TT CList (some Class) AT;
+  aterm.util.annotate-legacy TT CList none AT;
+  trocq.error "Could not make aterm back" TT "with" Class "&" CList), !,
+  EW = W, ERel = Rel, ET = T, ET' = T', EAT = AT.
 check-infer W Rel T T' AT EW ERel ET ET' EAT :-
   logging.trace (coq.say "[check-infer] Trying to infer the data"),
   annot.infer W Rel T T' AT,
