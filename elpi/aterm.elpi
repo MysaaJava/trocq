@@ -203,52 +203,51 @@ namespace aterm.util {
   shape X 0 ff :- (X = global _ ; X = pglobal _ _ ; name X), !.
   shape.all T N :- !, shape T NT B, N is NT + {util.bool->int B}.
 
-  func fake-term->aterm term -> aterm.
-  fake-term->aterm (app [PType|L]) (asort (typ U) Cl) :-
-    trocq.data.ptype PType, !,
-    L = [TM, TN],
-    trocq.data.term->map-class TM M,
-    trocq.data.term->map-class TN N,
-    if (var M, var N)
-    (Cl = _)
-    (Cl = pc M N),
-    coq.univ.new U.
-  fake-term->aterm (app [PTriple|L]) Out :-
-    trocq.data.ptriple PTriple,
-    L = [_,_,_,X,X',RX|L'], !,
-    std.map L' fake-term->aterm AL',
-    % XXX Reactivate this, but think about it first
-    %coq.elaborate-skeleton RX (prod `_` X _\ prod `_` X' _\ sort _) RXR Diag,
-    %(Diag = ok, ! ; trocq.error {coq.term->string RX} "is not a relation between" {coq.term->string X} "and" {coq.term->string X'} Diag), !,
-    RXR = RX,
-    if (X = global G)
-    (OutT = aglobal G X' RXR)
-    (if (X = pglobal G U)
-    (OutT = apglobal G U X' RXR)
-    (OutT = atriple X X' RXR)),
-    std.map L' fake-term->aterm AL',
-    aterm.util.mk-app OutT AL' Out.
-  fake-term->aterm (sort S) (asort S Cl) :- !,
-    prune Cl []. %XXX Check wether those prunes will cause any trouble.
-  fake-term->aterm (global G) (aglobal G G' RG) :- !,
-    prune G' [],
-    prune RG [].
-  fake-term->aterm (pglobal G U) (apglobal G U G' RG) :- !,
-    prune G' [],
-    prune RG [].
-  fake-term->aterm (fun Name T F) (afun Name AT AF) :- !,
-    fake-term->aterm T AT,
-    @pi-adecl Name AT (ay\ y\ _\ _\
-      fake-term->aterm (F y) (AF ay)
+  % Create a aterm with legacy option/list decomposition.
+  % Annotates GRef with first thing found in db
+  func annotate-legacy term, list param-class, option param-class -> aterm.
+  func annotate-legacy.all term, list param-class -> aterm.
+  annotate-legacy.all X L AX :-
+    shape X N B,
+    util.if-bool B (std.split-at N L Cs [O], Out = some O) (Cs = L, Out = none),
+    annotate-legacy X Cs Out AX.
+  annotate-legacy (sort S) [] (some C) (asort S C) :- !.
+  annotate-legacy (prod Name T F) Cs Out (aprod Name AT AF) :- !,
+    shape.all T NT,
+    std.split-at NT Cs CsT CsF,
+    annotate-legacy.all T CsT AT,
+    @pi-adecl Name AT ax\ x\ _\ _\ (
+      annotate-legacy (F x) CsF Out (AF ax)
     ).
-  fake-term->aterm (prod Name T F) (aprod Name AT AF) :- !,
-    fake-term->aterm T AT,
-    @pi-adecl Name AT (ay\ y\ _\ _\ 
-      fake-term->aterm (F y) (AF ay)
+  annotate-legacy (fun Name T F) Cs none (afun Name AT AF) :- !,
+    shape.all T NT,
+    std.split-at NT Cs CsT CsF,
+    annotate-legacy.all T CsT AT,
+    @pi-adecl Name AT ax\ x\ _\ _\ (
+      annotate-legacy.all (F x) CsF (AF ax)
     ).
-  fake-term->aterm (app L) (aapp AL) :- !,
-    std.map L fake-term->aterm AL.
-  fake-term->aterm X AX :- adecl AX _ X _ _ _, !.
+  annotate-legacy (app [F|Xs]) Cs Out (aapp [AF|AXs]) :- !,
+    std.map Xs shape.all NXs,
+    shape F NF _,
+    std.split-at NF Cs CsF CsXs,
+    util.multi-split NXs CsXs CsXsL,
+    std.map2 Xs CsXsL annotate-legacy.all AXs,
+    annotate-legacy F CsF Out AF.
+  annotate-legacy X [] none AX :- adecl AX _ X _ _ _, !.
+  annotate-legacy (global G) [] none (aglobal G TG' TRG) :-
+    trocq.db.gref G _ G' RG, !,
+    coq.env.global G' TG',
+    coq.env.global RG TRG. % We take first to match
+  annotate-legacy (pglobal G U) [] none (apglobal G U TG' TRG) :-
+    trocq.db.gref G _ G' RG, !,
+    coq.env.global G' TG',
+    coq.env.global RG TRG. % We take first to match
+  % If it failed, we try identity
+  % We put TG because we are not allowed to accumulate unification variables
+  annotate-legacy (global G) [] none (aglobal G TG TG) :-
+    coq.env.global G TG.
+  annotate-legacy (pglobal G U) [] none (apglobal G U TG TG) :-
+    coq.env.global G TG.
 
   % From a full aterm in the database, instantiates a aterm with holes
   func equals-ignore aterm -> aterm.
@@ -321,21 +320,4 @@ namespace aterm.util {
     topOf X X'.
   bottomOf X X :- !.
   topOf X X :- !.
-
-  % {infer-aterm TR AT T T'} infers AT, T, and T' such that
-  % TR = [[AT]] T T'
-  func infer-aterm term -> aterm, term, term.
-  infer-aterm T _ _ _ :-
-    coq.say "Inferring on" T, fail, !.
-  infer-aterm (prod N T x\ prod N' T' x'\ prod NR (RTxx x x') rx\ RU x x' rx)
-    (aprod N AT ax\ AU ax)
-    (prod N T x\ U x)
-    (prod N' T' x'\ U' x') :-
-    @pi-decl N T x\ @pi-decl N' T' x'\ infer-aterm (RTxx x x') AT x x',
-    @pi-adecl N AT ax\ x\ x'\ rx\ (
-      infer-aterm (RU x x' rx) (AU ax) (U x) (U' x')
-    ).
-  infer-aterm (app [ParamRelCl,T,T']) (asort S Cl) T T' :-
-    trocq.data.param.rel->param-class ParamRelCl Cl, !,
-    coq.typecheck T (sort S) ok.
 }

@@ -1,0 +1,102 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                            %                     Trocq                      %
+%  _______                   %        Copyright (C) 2023 Inria & MERCE        %
+% |__   __|                  %     (Mitsubishi Electric R&D Centre Europe)    %
+%    | |_ __ ___   ___ __ _  %        Cyril Cohen <cyril.cohen@inria.fr>      %
+%    | | '__/ _ \ / __/ _` | %        Enzo Crance <enzo.crance@inria.fr>      %
+%    | | | | (_) | (_| (_| | %    Assia Mahboubi <assia.mahboubi@inria.fr>    %
+%    |_|_|  \___/ \___\__, | %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                        | | %   This file is distributed under the terms of  %
+%                        |_| %   GNU Lesser General Public License Version 3  %
+%                            % (see LICENSE file for the text of the license) %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% -----------------------------------------------------------------------------
+% Convertion from/into fake aterms.
+% -----------------------------------------------------------------------------
+
+accumulate "Trocq.Elpi/database".
+accumulate "Trocq.Elpi/data".
+accumulate "Trocq.Elpi/aterm".
+accumulate "Trocq.Elpi/util-rocq".
+
+% `@pi-adecl N AT (ax\ x\ x'\ xr\ F x x' xr)` declares elpi pi-variables x x' xr with adecl
+% x has annotated type AT
+macro @pi-adecl N PAD_AT PAD_F :-
+  aterm.triple PAD_AT PAD_T PAD_T' PAD_TR,
+  util.mk-app PAD_TR [PAD_T,PAD_T'] PAD_TRx,
+  coq.name-suffix N "'" N',
+  coq.name-suffix N "R" NR,
+  @pi-decl N PAD_T x\ (
+  @pi-decl N' PAD_T' x'\ (
+  @pi-decl NR PAD_TRx xR\ (
+  pi ax\ [
+    adecl ax N x x' xR PAD_AT
+  ] => (
+    logging.trace (coq.say "[adecl]" ax "==" x "@" PAD_AT "~" x' "∵" xR),
+    (PAD_F ax x x' xR)
+  )))).
+
+typeabbrev fake-map-class term.
+typeabbrev fake-param-class term.
+typeabbrev fake-aterm term.
+
+% Converts a fake-map-class into a map-class.
+func fake-map-class->map-class fake-map-class -> map-class.
+fake-map-class->map-class T N :-
+  coq.env.global G T,
+  trocq.db.map-class->indc-class N G, !.
+
+% Converts a fake-param-class into a param-class.
+func fake-param-class->param-class fake-param-class -> param-class.
+fake-param-class->param-class T Cl :-
+  coq.env.global G T,
+  trocq.db.rel Cl G _ _ _ _,
+  !.
+
+% Converts a fake-aterm into an aterm.
+func fake-aterm->aterm fake-aterm -> aterm.
+fake-aterm->aterm (app [PType|L]) (asort (typ U) Cl) :-
+  trocq.data.ptype PType, !,
+  L = [TM, TN],
+  fake-map-class->map-class TM M,
+  fake-map-class->map-class TN N,
+  if (var M, var N)
+  (Cl = _)
+  (Cl = pc M N),
+  coq.univ.new U.
+fake-aterm->aterm (app [PTriple|L]) Out :-
+  trocq.data.ptriple PTriple,
+  L = [_,_,_,X,X',RX|L'], !,
+  std.map L' fake-aterm->aterm AL',
+  % XXX Reactivate this, but think about it first
+  %coq.elaborate-skeleton RX (prod `_` X _\ prod `_` X' _\ sort _) RXR Diag,
+  %(Diag = ok, ! ; trocq.error {coq.term->string RX} "is not a relation between" {coq.term->string X} "and" {coq.term->string X'} Diag), !,
+  RXR = RX,
+  if (X = global G)
+  (OutT = aglobal G X' RXR)
+  (if (X = pglobal G U)
+  (OutT = apglobal G U X' RXR)
+  (OutT = atriple X X' RXR)),
+  std.map L' fake-aterm->aterm AL',
+  aterm.util.mk-app OutT AL' Out.
+fake-aterm->aterm (sort S) (asort S Cl) :- !,
+  prune Cl []. %XXX Check wether those prunes will cause any trouble.
+fake-aterm->aterm (global G) (aglobal G G' RG) :- !,
+  prune G' [],
+  prune RG [].
+fake-aterm->aterm (pglobal G U) (apglobal G U G' RG) :- !,
+  prune G' [],
+  prune RG [].
+fake-aterm->aterm (fun Name T F) (afun Name AT AF) :- !,
+  fake-aterm->aterm T AT,
+  @pi-adecl Name AT (ay\ y\ _\ _\
+    fake-aterm->aterm (F y) (AF ay)
+  ).
+fake-aterm->aterm (prod Name T F) (aprod Name AT AF) :- !,
+  fake-aterm->aterm T AT,
+  @pi-adecl Name AT (ay\ y\ _\ _\ 
+    fake-aterm->aterm (F y) (AF ay)
+  ).
+fake-aterm->aterm (app L) (aapp AL) :- !,
+  std.map L fake-aterm->aterm AL.
+fake-aterm->aterm X AX :- adecl AX _ X _ _ _, !.
