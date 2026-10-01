@@ -300,8 +300,8 @@ namespace aterm.util {
     coq.env.global G TG.
 
 
-  func fake-term->aterm term -> aterm.
-  fake-term->aterm (app [PType|L]) (asort (typ U) Cl) :-
+  func fake-aterm->aterm term -> aterm.
+  fake-aterm->aterm (app [PType|L]) (asort (typ U) Cl) :-
     trocq.data.ptype PType, !,
     L = [TM, TN],
     trocq.data.term->map-class TM M,
@@ -310,10 +310,10 @@ namespace aterm.util {
     (Cl = _)
     (Cl = pc M N),
     coq.univ.new U.
-  fake-term->aterm (app [PTriple|L]) Out :-
+  fake-aterm->aterm (app [PTriple|L]) Out :-
     trocq.data.ptriple PTriple,
     L = [_,_,_,X,X',RX|L'], !,
-    std.map L' fake-term->aterm AL',
+    std.map L' fake-aterm->aterm AL',
     % XXX Reactivate this, but think about it first
     %coq.elaborate-skeleton RX (prod `_` X _\ prod `_` X' _\ sort _) RXR Diag,
     %(Diag = ok, ! ; trocq.error {coq.term->string RX} "is not a relation between" {coq.term->string X} "and" {coq.term->string X'} Diag), !,
@@ -323,29 +323,29 @@ namespace aterm.util {
     (if (X = pglobal G U)
     (OutT = apglobal G U X' RXR)
     (OutT = atriple X X' RXR)),
-    std.map L' fake-term->aterm AL',
+    std.map L' fake-aterm->aterm AL',
     aterm.util.mk-app OutT AL' Out.
-  fake-term->aterm (sort S) (asort S Cl) :- !,
+  fake-aterm->aterm (sort S) (asort S Cl) :- !,
     prune Cl []. %XXX Check wether those prunes will cause any trouble.
-  fake-term->aterm (global G) (aglobal G G' RG) :- !,
+  fake-aterm->aterm (global G) (aglobal G G' RG) :- !,
     prune G' [],
     prune RG [].
-  fake-term->aterm (pglobal G U) (apglobal G U G' RG) :- !,
+  fake-aterm->aterm (pglobal G U) (apglobal G U G' RG) :- !,
     prune G' [],
     prune RG [].
-  fake-term->aterm (fun Name T F) (afun Name AT AF) :- !,
-    fake-term->aterm T AT,
+  fake-aterm->aterm (fun Name T F) (afun Name AT AF) :- !,
+    fake-aterm->aterm T AT,
     @pi-adecl Name AT (ay\ y\ _\ _\
-      fake-term->aterm (F y) (AF ay)
+      fake-aterm->aterm (F y) (AF ay)
     ).
-  fake-term->aterm (prod Name T F) (aprod Name AT AF) :- !,
-    fake-term->aterm T AT,
+  fake-aterm->aterm (prod Name T F) (aprod Name AT AF) :- !,
+    fake-aterm->aterm T AT,
     @pi-adecl Name AT (ay\ y\ _\ _\ 
-      fake-term->aterm (F y) (AF ay)
+      fake-aterm->aterm (F y) (AF ay)
     ).
-  fake-term->aterm (app L) (aapp AL) :- !,
-    std.map L fake-term->aterm AL.
-  fake-term->aterm X AX :- adecl AX _ X _ _ _, !.
+  fake-aterm->aterm (app L) (aapp AL) :- !,
+    std.map L fake-aterm->aterm AL.
+  fake-aterm->aterm X AX :- adecl AX _ X _ _ _, !.
 
   % From a full aterm in the database, instantiates a aterm with holes
   func equals-ignore aterm -> aterm.
