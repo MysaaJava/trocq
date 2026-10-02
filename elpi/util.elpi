@@ -69,6 +69,10 @@ pred unless i:prop, i:prop.
 unless Condition Goal :-
   if (Condition) true Goal.
 
+pred do-or i:prop i:prop.
+do-or P _ :- P.
+do-or _ Q :- !, Q, fail.
+
 func if-bool i:bool, i:(func), i:(func).
 if-bool tt T _ :- !, T.
 if-bool ff _ F :- !, F.
@@ -80,6 +84,15 @@ if-suspend _ B T E :- if B T E.
 pred map.find-opt i:A, i:std.map A B, o:option B.
 map.find-opt K M (some V) :- std.map.find K M V, !.
 map.find-opt _ _ none.
+
+% Maps a list to another list and separates when the predicate failed
+func map-fails list A, (func A -> B) -> list B, list A.
+map-fails [] _ [] [].
+map-fails [X|L] F [X'|L'] Fails :-
+  F X X', !, map-fails L F L' Fails.
+map-fails [X|L] F L' [X|Fails] :-
+  map-fails L F L' Fails.
+
 
 func map.update A, (func option B -> option B), std.map A B -> std.map A B.
 map.update K F M M' :-
@@ -94,7 +107,7 @@ map.update K F M M' :-
 map.update _ _ M M.          % no-op
 
 % [mem-evar! L X] succeeds once if X is an evar and occurs inside L 
-pred mem-evar! -> list A, A.
+func mem-evar! -> list A, A.
 mem-evar! [X|_] Y :- X == Y, !.
 mem-evar! [_|L] Y :- mem-evar! L Y.
 
@@ -105,7 +118,7 @@ split-last [X] [] X :- !.
 split-last [Y|L] [Y|L'] X :- split-last L L' X.
 
 % [append-uniq-evar L1 L2 L] adds elements of L2 into L1 if they are evars that did not occur
-pred append-uniq-evar -> list A, list A, list A.
+func append-uniq-evar list A, list A -> list A.
 append-uniq-evar L1 [] L1.
 append-uniq-evar L1 [X|L2] L :- 
   var X,
@@ -204,10 +217,37 @@ interleave L Out :- beheads L LH LT, !,
 % Else, lists are empty
 interleave L_ [].
 
+% Turns a boolean into its integer representation (either 1 or 0)
 func bool->int bool -> int.
 bool->int tt 1.
 bool->int ff 0.
 
+% Removes from a list elements matching predicate
+func filter-out list A, (func A) -> list A.
+filter-out L F L' :- std.filter L (x\ not (F x)) L'.
+
+func is-min list (pair A A), A ->.
+is-min [] X.
+is-min [(pr X Y)|L] Z :- not (Y == Z), is-min L Z.
+
+func zip-prod list A, list B -> list (pair A B).
+zip-prod [] _ [].
+zip-prod [X|L] Ys Out :-
+  zip-prod L Ys P,
+  std.map Ys (y\ o\ o = pr X y) P2,
+  std.append P2 P Out.
+
+func topo-sort list (pair A A), list A -> list A.
+topo-sort S L L' :-
+  coq.say "[topo-sort]" S "--" L "->" L',
+  fail, !.
+topo-sort _ [] [] :- !.
+topo-sort S L L' :-
+  std.partition L (is-min S) LMin LOther,
+  std.assert! (not (LMin = [])) "Could not sort topologically",
+  util.filter-out S (x\ sigma A\ x = (pr A _), mem-evar! LMin A) S',
+  topo-sort S' LOther LOther',
+  std.append LMin LOther' L'.
 } % util
 
 pred std.string.list->set i:list string, o:std.string.set.
