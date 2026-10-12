@@ -4,6 +4,8 @@
 -R ../std/ Trocq
 -R ../elpi/ Trocq.Elpi
 
+elpi/uvar_to_evar.v
+
 unit_arrow_contravariant.v
 unit_coercion_deptype.v
 unit_coercion_onoff.v
