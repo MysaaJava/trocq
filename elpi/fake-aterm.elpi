@@ -42,6 +42,8 @@ typeabbrev fake-aterm term.
 
 % Converts a fake-map-class into a map-class.
 func fake-map-class->map-class fake-map-class -> map-class.
+fake-map-class->map-class (uvar as E) _ :- !,
+  trocq.error "[fake-map-class->map-class] called on the evar" {coq.term->string E}.
 fake-map-class->map-class T N :-
   coq.env.global G T,
   trocq.db.map-class->indc-class N G, !.
@@ -61,8 +63,8 @@ fake-aterm->aterm (app [PType|L]) (asort (typ U) Cl) :-
   fake-map-class->map-class TM M,
   fake-map-class->map-class TN N,
   if (var M, var N)
-  (Cl = _)
-  (Cl = pc M N),
+    (Cl = _)
+    (Cl = pc M N),
   coq.univ.new U.
 fake-aterm->aterm (app [PTriple|L]) Out :-
   trocq.data.ptriple PTriple,
@@ -73,14 +75,14 @@ fake-aterm->aterm (app [PTriple|L]) Out :-
   %(Diag = ok, ! ; trocq.error {coq.term->string RX} "is not a relation between" {coq.term->string X} "and" {coq.term->string X'} Diag), !,
   RXR = RX,
   if (X = global G)
-  (OutT = aglobal G X' RXR)
+    (OutT = aglobal G X' RXR)
   (if (X = pglobal G U)
-  (OutT = apglobal G U X' RXR)
-  (OutT = atriple X X' RXR)),
+    (OutT = apglobal G U X' RXR)
+    (OutT = atriple X X' RXR)),
   std.map L' fake-aterm->aterm AL',
   aterm.util.mk-app OutT AL' Out.
 fake-aterm->aterm (sort S) (asort S Cl) :- !,
-  prune Cl []. %XXX Check wether those prunes will cause any trouble.
+  prune Cl []. %XXX Check whether those prunes will cause any trouble.
 fake-aterm->aterm (global G) (aglobal G G' RG) :- !,
   prune G' [],
   prune RG [].
@@ -100,3 +102,7 @@ fake-aterm->aterm (prod Name T F) (aprod Name AT AF) :- !,
 fake-aterm->aterm (app L) (aapp AL) :- !,
   std.map L fake-aterm->aterm AL.
 fake-aterm->aterm X AX :- adecl AX _ X _ _ _, !.
+fake-aterm->aterm (uvar as E) _ :- !,
+  trocq.error "[fake-aterm->aterm] cannot create an annotated term out of an evar:" {coq.term->string E}.
+fake-aterm->aterm T _ :-
+  trocq.error "[fake-aterm->aterm] not implemented for the subterm:" {coq.term->string T}.
