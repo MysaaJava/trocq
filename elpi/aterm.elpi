@@ -23,13 +23,13 @@ accumulate "Trocq.Elpi/data".
 % `@pi-adecl N AT (ax\ x\ x'\ xr\ F x x' xr)` declares elpi pi-variables x x' xr with adecl
 % x has annotated type AT
 macro @pi-adecl N PAD_AT PAD_F :-
-  aterm.triple PAD_AT PAD_T PAD_T' PAD_TR,
-  util.mk-app PAD_TR [PAD_T,PAD_T'] PAD_TRx,
-  coq.name-suffix N "'" N',
-  coq.name-suffix N "R" NR,
+  aterm.raw-triple PAD_AT PAD_T PAD_T' PAD_RT,
+  util.name-suffix N "'" N',
+  util.name-suffix N "R" NR,
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
-  @pi-decl NR PAD_TRx xR\ (
+  util.mk-app PAD_RT [x, x'] (PAD_RTx x x'),
+  @pi-decl NR (PAD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR PAD_AT
   ] => (
@@ -55,6 +55,57 @@ trocq.data.rel C T :-
 
 namespace aterm {
 
+  func raw-triple aterm -> term,term,term.
+  raw-triple AX X X' RX :- adecl AX _ X X' RX _, !.
+  raw-triple (atriple X X' RX) X X' RX.
+  raw-triple (asort S _) (sort S) (sort S) (
+    fun `A` (sort S) a\ fun `B` (sort S) b\
+      prod _ a _\ prod _ b _\ sort _ 
+  ).
+  raw-triple (aglobal G TG' RG) (global G) TG' RG.
+  raw-triple (apglobal G U TG' RG) (pglobal G U) TG' RG.
+  raw-triple (afun N AT AF) (fun N T F) (fun N' T' F')
+      (fun N T x\ fun N' T' x'\ fun NR (TRx x x') rx\ RF x x' rx) :-
+    util.name-suffix N "'" N', 
+    util.name-suffix N "R" NR, 
+    raw-triple {raw AT} T T' RT,
+    @pi-decl N T x\ @pi-decl N' T' x'\ util.mk-app RT [x,x'] (TRx x x'),
+    @pi-adecl N AT (ay\ y\ y'\ ry\ raw-triple (AF ay) (F y) (F' y') (RF y y' ry)).
+  raw-triple (aprod N AT AF) (prod N T F) (prod N' T' F')
+      (fun `f` _ f\ fun `f'` _ f'\ prod N T x\ prod N' T' x'\ prod NR (TRx x x') rx\ RFOut f f' x x' rx) :-
+    util.name-suffix N "'" N',
+    util.name-suffix N "R" NR,
+    raw-triple AT T T' RT,
+    @pi-adecl N AT (ay\ y\ y'\ ry\
+      util.mk-app RT [y,y'] (TRx y y'),
+      raw-triple (AF ay) (F y) (F' y') (RF y y' ry),
+      @pi-decl `f` _ f\   (
+      @pi-decl `f'` _ f'\ ( sigma Fx Fx'\
+        util.mk-app f [y] Fx,
+        util.mk-app f' [y'] Fx',
+        util.mk-app (RF y y' ry) [Fx, Fx'] (RFOut f f' y y' ry)
+      ))
+    ).
+  raw-triple (aapp AL) (app [X|L]) (app [X'|L']) Out :-
+    util.mapTo3 AL raw-triple [X|L] [X'|L'] [RX|RL],
+    util.mk-app RX {util.interleave [L,L',RL]} Out.
+  raw-triple (uvar as AT) T T' RT :- !,
+    declare_constraint (raw-triple AT T T' RT) [AT].
+
+  func raw aterm -> aterm.
+  raw (asort S _) (asort S (pc map0 map0)) :- !.
+  raw (afun N AT AF) (afun N AT0 AF0) :- !,
+    raw AT AT0,
+    @pi-adecl N AT (ay\ y\ y'\ ry\ raw (AF ay) (AF0 ay)).
+  raw (aprod N AT AF) (aprod N AT0 AF0) :- !,
+    raw AT AT0,
+    @pi-adecl N AT (ay\ y\ y'\ ry\ raw (AF ay) (AF0 ay)).
+  raw (aapp AL) (aapp AL0) :- !,
+    std.map AL raw AL0.
+  raw (uvar as AT) AT0 :- !,
+    declare_constraint (raw AT AT0) [AT].
+  raw X X.
+
   func triple aterm -> term,term,term.
   triple AX X X' RX :- adecl AX _ X X' RX _, !.
   triple (atriple X X' RX) X X' RX.
@@ -63,16 +114,16 @@ namespace aterm {
   triple (aglobal G TG' RG) (global G) TG' RG.
   triple (apglobal G U TG' RG) (pglobal G U) TG' RG.
   triple (afun N AT AF) (fun N T F) (fun N' T' F')
-      (fun N T x\ fun N' T' x'\ fun NR TRx rx\ RF x x' rx) :-
-    coq.name-suffix N "'" N', 
-    coq.name-suffix N "R" NR, 
-    triple AT T T' RT,
-    util.mk-app RT [T,T'] TRx,
+      (fun N T x\ fun N' T' x'\ fun NR (TRx x x') rx\ RF x x' rx) :-
+    util.name-suffix N "'" N', 
+    util.name-suffix N "R" NR, 
+    triple {raw AT} T T' RT,
+    @pi-decl N T x\ @pi-decl N' T' x'\ util.mk-app RT [x,x'] (TRx x x'),
     @pi-adecl N AT (ay\ y\ y'\ ry\ triple (AF ay) (F y) (F' y') (RF y y' ry)).
   triple (aprod N AT AF) (prod N T F) (prod N' T' F')
       (fun `f` _ f\ fun `f'` _ f'\ prod N T x\ prod N' T' x'\ prod NR (TRx x x') rx\ RFOut f f' x x' rx) :-
-    coq.name-suffix N "'" N', 
-    coq.name-suffix N "R" NR, 
+    util.name-suffix N "'" N', 
+    util.name-suffix N "R" NR, 
     triple AT T T' RT,
     @pi-adecl N AT (ay\ y\ y'\ ry\
       util.mk-app RT [y,y'] (TRx y y'),
@@ -335,13 +386,13 @@ namespace aterm.util {
   equals-ignore-rel (afun N AT F) (afun _ AT' F') :- !,
     equals-ignore-rel AT AT',
     @pi-adecl N AT (ax\ _\ _\ _\ equals-ignore-rel (F ax) (F' ax)).
-  equals-ignore-rel (atriple X Y RX) (atriple X' Y' RX') :- !,
+  equals-ignore-rel (atriple X Y _) (atriple X' Y' _) :- !,
     util.equals-ignore X X',
     util.equals-ignore Y Y'.
   equals-ignore-rel (asort _ Cl) (asort _ Cl) :- !.
-  equals-ignore-rel (aglobal G TG RG) (aglobal G TG' RG') :- !,
+  equals-ignore-rel (aglobal G TG _) (aglobal G TG' _) :- !,
     util.equals-ignore TG TG'.
-  equals-ignore-rel (apglobal G _ TG RG) (apglobal G _ TG' RG') :- !,
+  equals-ignore-rel (apglobal G _ TG _) (apglobal G _ TG' _) :- !,
     util.equals-ignore TG TG'.
   equals-ignore-rel (aapp [X]) (aapp [X']) :- !,
     equals-ignore-rel X X'.
@@ -362,8 +413,8 @@ namespace aterm.util {
   func topOf atype -> atype.
   bottomOf T U :- logging.trace (coq.say "[bottomOf]" T "//" U), fail, !.
   topOf T U :- logging.trace (coq.say "[topOf]" T "//" U), fail, !.
-  bottomOf (asort S C) (asort S Bot) :- !, param-class.bottom Bot.
-  topOf (asort S C) (asort S Top) :- !, param-class.top Top.
+  bottomOf (asort S _) (asort S Bot) :- !, param-class.bottom Bot.
+  topOf (asort S _) (asort S Top) :- !, param-class.top Top.
   bottomOf (aprod N AT AF) (aprod N AT' AF') :- !,
     topOf AT AT',
     @pi-adecl N AT' (ax\ _\ _\ _\

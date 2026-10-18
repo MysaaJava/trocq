@@ -18,13 +18,13 @@ accumulate "Trocq.Elpi/annot".
 accumulate "Trocq.Elpi/data".
 
 macro @pi-adecl N PAD_AT PAD_F :-
-  aterm.triple PAD_AT PAD_T PAD_T' PAD_TR,
-  util.mk-app PAD_TR [PAD_T,PAD_T'] PAD_TRx,
-  coq.name-suffix N "'" N',
-  coq.name-suffix N "R" NR,
+  aterm.raw-triple PAD_AT PAD_T PAD_T' PAD_RT,
+  util.name-suffix N "'" N',
+  util.name-suffix N "R" NR,
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
-  @pi-decl NR PAD_TRx xR\ (
+  util.mk-app PAD_RT [x, x'] (PAD_RTx x x'),
+  @pi-decl NR (PAD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR PAD_AT
   ] => (
@@ -70,13 +70,13 @@ param
   ].
 
 % TrocqLam
-param (afun N T F as T0) (aprod _ TT FT as AT) (fun N' T' F' as T0') Witness Cstrs :- !,
-  logging.debug (coq.say "[param] Rule lam :" T0 "@" AT),
-  coq.name-suffix N "'" N', 
-  coq.name-suffix N "R" NR,
-  aterm.triple T Ter T' TR,
-  annot.eq T TT CstrsT,
-  (@pi-adecl N T (ax\ x\ x'\ xR\ 
+param (afun N AT F as T0) (aprod _ TT FT) (fun N' T' F' as T0') Witness Cstrs :- !,
+  logging.debug (coq.say "[param] Rule lam :" T0 "@" (aprod _ TT FT)),
+  util.name-suffix N "'" N', 
+  util.name-suffix N "R" NR,
+  aterm.triple AT Ter T' TR,
+  annot.eq AT TT CstrsT,
+  (@pi-adecl N AT (ax\ x\ x'\ xR\ 
     param (F ax) (FT ax) (F' x') (FR x x' xR) CstrsF
   )),
   std.append CstrsT CstrsF Cstrs,
@@ -109,8 +109,8 @@ param
   (prod N' A' B' as T')
   Witness Cstrs' :- !, std.do![
     logging.debug (coq.say "[param] Rule pi :" T "@" AT),
-    coq.name-suffix N "'" N',
-    coq.name-suffix N "R" NR,
+    util.name-suffix N "'" N',
+    util.name-suffix N "R" NR,
     (annot.typecheck A (asort SortA _) CstrsD; trocq.error "[param/forall] Cannot typecheck" A "with a sort"),
     param A (asort SortA CA) A' AR CstrsA,
     (@pi-adecl N A (ax\ x\ x'\ xR\

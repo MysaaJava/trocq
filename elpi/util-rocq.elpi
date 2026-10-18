@@ -193,6 +193,11 @@ evar-closed (prod N A B) :- !, evar-closed A, @pi-decl N A x\ evar-closed (B x).
 evar-closed (app L) :- !, std.forall L evar-closed.
 evar-closed _ :- !.
 
+func name-suffix name, any -> name.
+name-suffix uvar _ _ :- !.
+name-suffix X S O :- coq.name-suffix X S O.
+
+
 % Elpi does not allow replacing a named clause with a named clause. This is not allowed:
 %   coq.elpi.accumulate Scope Database (clause ClauseName (replace ClauseName) Content)
 % (read the explanation: https://github.com/LPCIC/elpi/blob/62d3f0c311206cb4b0cf033c34fca8336c61822e/ELPI.md?plain=1#L281)

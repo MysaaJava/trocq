@@ -92,9 +92,10 @@ translate-goal DB Ty G C G' GR' :- param-class.end-suspension ES => DB => std.do
   logging.debug (coq.say "[translate-goal] will translate" G "at level" T),
   aterm.fresh G AG,
   % generate the associated goal G' and witness GR
-  param AG T G' GR Cstrs,
-  logging.debug (coq.say "[translate-goal] after translation: goal" G' "with proof" GR),
-  solve-constraints Cstrs,
+  param AG T G' GRU Cstrs,
+  util.equals-ignore GRU GR, %XXX This is because of universe issues
+  logging.debug (coq.say "[translate-goal] after translation: goal" G' "with proof" {coq.term->string GR}),
+  (DB => solve-constraints Cstrs),
   logging.debug (coq.say "[translate-goal] After constraint solve: goal" G' "with proof" GR),
   ES = pc map0 map0, % This triggers elpi held constraints
   logging.debug (coq.say "[translate-goal] After freeing constraints: goal" G' "with proof" GR),

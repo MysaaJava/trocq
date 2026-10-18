@@ -17,28 +17,28 @@
 accumulate "Trocq.Elpi/constraints".
 
 macro @pi-adecl N PAD_AT PAD_F :-
-  aterm.triple PAD_AT PAD_T PAD_T' PAD_TR,
-  util.mk-app PAD_TR [PAD_T,PAD_T'] PAD_TRx,
-  coq.name-suffix N "'" N',
-  coq.name-suffix N "R" NR,
+  aterm.raw-triple PAD_AT PAD_T PAD_T' PAD_RT,
+  util.name-suffix N "'" N',
+  util.name-suffix N "R" NR,
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
-  @pi-decl NR PAD_TRx xR\ (
+  util.mk-app PAD_RT [x, x'] (PAD_RTx x x'),
+  @pi-decl NR (PAD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR PAD_AT
   ] => (
     logging.trace (coq.say "[adecl]" ax "==" x "@" PAD_AT "~" x' "∵" xR),
     (PAD_F ax x x' xR)
   )))).
-%XXX Enlever cette infamie parce que weakening appelle deux fois @pi-adec
+%XXX Enlever cette infamie parce que weakening appelle deux fois @pi-adecl
 macro @pi-adecl2 N POD_AT POD_F :-
-  aterm.triple POD_AT POD_T POD_T' POD_TR,
-  util.mk-app POD_TR [POD_T,POD_T'] POD_TRx,
-  coq.name-suffix N "'" N',
-  coq.name-suffix N "R" NR,
+  aterm.raw-triple POD_AT POD_T POD_T' POD_RT,
+  util.name-suffix N "'" N',
+  util.name-suffix N "R" NR,
   @pi-decl N POD_T x\ (
   @pi-decl N' POD_T' x'\ (
-  @pi-decl NR POD_TRx xR\ (
+  util.mk-app POD_RT [x, x'] (POD_RTx x x'),
+  @pi-decl NR (POD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR POD_AT
   ] => (
@@ -130,13 +130,12 @@ namespace annot {
   %TODO XXX We do not type the output function, as we have pi variable dependency issues appearing with this.
   % We should do more pruning because this should work in the future
   weakener (aprod N A P as AP) (aprod _ B Q as _BQ)
-      (fun _ _ t\ fun _ _ t'\ fun _ _ tr\ fun _ _ x\ fun _ _ x'\ fun _ _ xr\ 
-      %(fun _ TAP t\ fun _ TAP' t'\ fun _ RRTAP tr\ fun _ TB x\ fun _ TB' x'\ fun _ RRTB xr\ 
+      (fun _ TAP t\ fun _ TAP' t'\ fun _ (RRTAP t t') tr\ fun _ TB x\ fun _ TB' x'\ fun _ (RRTB x x') xr\ 
         WeakenerF t t' tr x x' xr) :- !,
-    %aterm.triple AP TAP TAP' RTAP,
-    %aterm.triple BQ TB TB' RTB, % Property on subtype, we should have TA=TB and TA'=TB'
-    %util.mk-app RTAP [TAP,TAP'] RRTAP,
-    %util.mk-app RTB [TB,TB'] RRTB,
+    aterm.triple AP TAP TAP' RTAP,
+    aterm.triple B TB TB' RTB, % Property on subtype, we should have TA=TB and TA'=TB'
+    @pi-decl _ TAP t\ @pi-decl _ TAP' t'\ util.mk-app RTAP [t,t'] (RRTAP t t'),
+    @pi-decl _ TB x\ @pi-decl _ TB' x'\ util.mk-app RTB [x, x'] (RRTB x x'),
     weakener B A BAWeakener,
     @pi-adecl `t` AP (_\ t\ t'\ tr\
     @pi-adecl2 N B (ax\ x\ x'\ xr\

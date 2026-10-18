@@ -16,6 +16,7 @@
 
 accumulate "Trocq.Elpi/data".
 accumulate "Trocq.Elpi/aterm".
+accumulate "Trocq.Elpi.constraints/constraints-impl".
 
 kind cstr type.
 
@@ -52,7 +53,7 @@ param-class.pp C S :-
     param-class.to_string C S.
 
 func cstr.pp cstr -> string.
-cstr.pp (cstr-eq X Y) S :- S is {param-class.pp X} ^ "=" ^ {param-class.pp Y}.
+cstr.pp (cstr-eq X Y) S :- S is {param-class.pp X} ^ " = " ^ {param-class.pp Y}.
 cstr.pp (cstr-pi X Y Z) S :- S is "DΠ(" ^ {param-class.pp X} ^ ") = (" ^ {param-class.pp Y} ^ "," ^ {param-class.pp Z} ^ ")".
 cstr.pp (cstr-arrow X Y Z) S :- S is "D➜(" ^ {param-class.pp X} ^ ") = (" ^ {param-class.pp Y} ^ "," ^ {param-class.pp Z} ^ ")".
 cstr.pp (cstr-type X Y) S :- S is "D□(" ^ {param-class.pp X} ^ "," ^ {param-class.pp Y} ^ ")".
@@ -66,13 +67,13 @@ cstrs.pp L S :- std.string.concat "\n" {std.map L cstr.pp} S.
 % `@pi-adecl N AT (ax\ x\ x'\ xr\ F x x' xr)` declares elpi pi-variables x x' xr with adecl
 % x has annotated type AT
 macro @pi-adecl N PAD_AT PAD_F :-
-  aterm.triple PAD_AT PAD_T PAD_T' PAD_TR,
-  util.mk-app PAD_TR [PAD_T,PAD_T'] PAD_TRx,
-  coq.name-suffix N "'" N',
-  coq.name-suffix N "R" NR,
+  aterm.raw-triple PAD_AT PAD_T PAD_T' PAD_RT,
+  util.name-suffix N "'" N',
+  util.name-suffix N "R" NR,
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
-  @pi-decl NR PAD_TRx xR\ (
+  util.mk-app PAD_RT [x, x'] (PAD_RTx x x'),
+  @pi-decl NR (PAD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR PAD_AT
   ] => (
@@ -430,18 +431,34 @@ solve-ordered [] Cstrs :-
     logging.trace (coq.say "[cstr]" "Solving last constraints :", coq.say {cstrs.pp Cstrs}),
     do-cstrz-det Cstrs.
 
+func solve-equality cstr ->.
+solve-equality (cstr-eq X Y) :- X = Y, !.
+solve-equality _.
+
+func solve-cstr-legacy cstr ->.
+solve-cstr-legacy (cstr-eq X Y) :-
+    cstr.eq X Y, !.
+solve-cstr-legacy (cstr-pi X Y Z) :-
+    cstr.dep-pi X Y Z, !.
+solve-cstr-legacy (cstr-arrow X Y Z) :-
+    cstr.dep-arrow X Y Z, !.
+solve-cstr-legacy (cstr-type X Y) :-
+    cstr.dep-type X Y, !.
+solve-cstr-legacy (cstr-geq X Y) :-
+    cstr.geq X Y, !.
+solve-cstr-legacy (cstr-gref G T G' RG) :- 
+    cstr.dep-gref G T G' RG, !.
+
 pred solve-constraints i:cstr-list.
 solve-constraints L :-
     std.findall (trocq.db.gref _ _ _ _) DatabaseContents,
     logging.trace (coq.say "[solve-constraints] Gref Database :" DatabaseContents),
     logging.trace (coq.say "[solve-constraints] Solving constraints", coq.say {cstrs.pp L}), !,
-    make-arrows L DE UE,
-    logging.trace (coq.say "[solve-constraints] Got arrows" DE "&" UE),
-    complete-graph DE UE G,
-    logging.trace (coq.say "[solve-constraints] Graph is" G),
-    evars-from-edges G Vars,
-    logging.trace (coq.say "[solve-constraints] Unordered variables are" Vars),
-    util.topo-sort G Vars LVars,
-    logging.trace (coq.say "[solve-constraints] Topologically sorted variables are" LVars),
-    (solve-ordered LVars L; trocq.error "Could not solve constraint graph"), !,
-    logging.trace (coq.say "[solve-constraints] Solved all constraints ! Assignation is " LVars).
+    cstr.init,
+    logging.trace (coq.say "[solve-constraints] Using legacy algorithm"),
+    std.forall L solve-equality,
+    std.forall L solve-cstr-legacy,
+    logging.trace (coq.say "[solve-constraints] Generated the constraint graph"),
+    cstr.local-db [],
+    (cstr.reduce-graph; trocq.error "Could not solve constraint graph"), !,
+    logging.trace (coq.say "[solve-constraints] Solved all constraints !").

@@ -227,8 +227,8 @@ func filter-out list A, (func A) -> list A.
 filter-out L F L' :- std.filter L (x\ not (F x)) L'.
 
 func is-min list (pair A A), A ->.
-is-min [] X.
-is-min [(pr X Y)|L] Z :- not (Y == Z), is-min L Z.
+is-min [] _.
+is-min [(pr _ Y)|L] Z :- not (Y == Z), is-min L Z.
 
 func zip-prod list A, list B -> list (pair A B).
 zip-prod [] _ [].

@@ -10,6 +10,7 @@ unit_coercion_deptype.v
 unit_coercion_onoff.v
 unit_coercion_pi.v
 unit_coercion.v
+unit_comm0.v
 unit_comm1.v
 unit_comm2.v
 unit_double_use.v
@@ -27,10 +28,13 @@ unit_transfer2.v
 unit_transfer3.v
 unit_transfer4.v
 unit_transfer5.v
+unit_transfer6.v
 unit_twoTranslations.v
 unit_twoTranslationsGref.v
 unit_typeArrow.v
 unit_type.v
+unit_type_arrow.v
+unit_type_beta.v
 
 inductives/coverage.v
 inductives/test_sym.v
