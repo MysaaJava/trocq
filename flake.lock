@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1783065972,
-        "narHash": "sha256-Xmn0dMsWC78Z5lH5pld9L/6jKS4hsv0c7XascNE451Q=",
+        "lastModified": 1794503089,
+        "narHash": "sha256-Qv5zFIUcSveE4EWiRwLHCyCbZjjK+e6V2IwnEA8Y9lU=",
         "owner": "MysaaJava",
         "repo": "coq-nix-toolbox",
-        "rev": "f51974cc39d79e7f6110e0e938d585c7580cacbb",
+        "rev": "8b907e0a717de42c20f6456eee610efed0c070a3",
         "type": "github"
       },
       "original": {
@@ -197,16 +197,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1783004704,
-        "narHash": "sha256-q39WkHfb+e4/fTytQpEJFd5HZGckvB9dXgNfCMeliZQ=",
+        "lastModified": 1794386569,
+        "narHash": "sha256-x9sADJvoVG0L6RejZB+/BB4YiGZFBZrfTlhF4uBq1tQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "9ffdb111bd3fcd7bfaad4294328948d4abd8b44b",
+        "rev": "d4f25a3e562008648d45bcf2d70bcc7422cad84e",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "master",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -410,8 +410,8 @@
       },
       "original": {
         "owner": "LPCIC",
-        "ref": "ba3cc750eda486c85d94e3eb35fb0eba77609338",
         "repo": "coq-elpi",
+        "rev": "ba3cc750eda486c85d94e3eb35fb0eba77609338",
         "type": "github"
       }
     },
