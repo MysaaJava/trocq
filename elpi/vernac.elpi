@@ -24,7 +24,7 @@ check-infer W Rel T T' AT EW ERel ET ET' EAT :-
 check-infer W Rel T T' AT EW ERel ET ET' EAT :- !, % We disable new inference for now
   coq.env.global WG W,
   coq.env.typeof WG WT,
-  Rel = W,
+  if (var Rel) (Rel = W) true,
   param-class.type->classes WT Class CList G G', !,
   coq.env.global G T,
   coq.env.global G' T',
@@ -32,7 +32,13 @@ check-infer W Rel T T' AT EW ERel ET ET' EAT :- !, % We disable new inference fo
   (aterm.util.annotate-legacy TT CList (some Class) AT;
   aterm.util.annotate-legacy TT CList none AT;
   trocq.error "Could not make aterm back" TT "with" Class "&" CList), !,
-  EW = W, ERel = Rel, ET = T, ET' = T', EAT = AT.
+  %coq.elaborate-skeleton W _ EW ok,
+  %coq.elaborate-skeleton Rel _ ERel ok,
+  %coq.say "[zzz] Checking add" T "-" T' "-" ERel "-" AT "-" EW,
+  %annot.check-database-add T T' ERel AT EW Diag,
+  %(Diag = ok; trocq.error "Inferred data is incorrect using legacy algorithm : " Diag), !,
+  EW = W, ERel = Rel,
+  ET = T, ET' = T', EAT = AT.
 check-infer W Rel T T' AT EW ERel ET ET' EAT :-
   logging.trace (coq.say "[check-infer] Trying to infer the data"),
   annot.infer W Rel T T' AT,
@@ -50,9 +56,9 @@ add-to-database W Rel T T' AT ODB :- !,
   logging.info (coq.say "[add-to-database] Trying to add" {coq.term->string W} "to the database"),
   % We try with the information we have, if it does not work, we try to infer, then we retry
   (check-infer W Rel T T' AT EW ERel_ ET ET' EAT; trocq.error "Could not infer database input for" {coq.term->string W}), !,
-  (coq.env.global G ET; trocq.error "Trocq does not support relating something that is not a gref" ":" {coq.term->string ET}), !,
-  (coq.env.global G' ET'; trocq.error "Trocq does not support relating a gref to something that is not a gref" ":" {coq.term->string ET'}), !,
-  (coq.env.global WG EW; trocq.error "Trocq does not support relating a gref with something that is not a gref" ":" {coq.term->string EW}), !,
+  (util.term->gref ET G; trocq.error "Trocq does not support relating something that is not a gref" ":" {coq.term->string ET}), !,
+  (util.term->gref ET' G'; trocq.error "Trocq does not support relating a gref to something that is not a gref" ":" {coq.term->string ET'}), !,
+  (util.term->gref EW WG; trocq.error "Trocq does not support relating a gref with something that is not a gref" ":" {coq.term->string EW}), !,
   if (ODB = some DBName)
   (coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.known-gref DBName G EAT G' WG)))
   (coq.elpi.accumulate _ "trocq.db" (clause _ _ (trocq.db.gref              G EAT G' WG))).

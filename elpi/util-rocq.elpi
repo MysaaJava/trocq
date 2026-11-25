@@ -222,6 +222,10 @@ uvar-to-evar U E :-
 uvar-to-evar U E :-
   logging.trace (coq.say "[uvar-evar-mapping]" U "↔" {coq.term->string E}),
   uvar-evar-mapping! U E.
+% Duplicates to coq.env.global, which does not work on some cases
+func term->gref term -> gref.
+term->gref (global G) G.
+term->gref (pglobal G _) G.
 
 % Elpi does not allow replacing a named clause with a named clause. This is not allowed:
 %   coq.elpi.accumulate Scope Database (clause ClauseName (replace ClauseName) Content)

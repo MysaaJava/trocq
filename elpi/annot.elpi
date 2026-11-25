@@ -23,7 +23,8 @@ macro @pi-adecl N PAD_AT PAD_F :-
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
   util.mk-app PAD_RT [x, x'] (PAD_RTx x x'),
-  @pi-decl NR (PAD_RTx x x') xR\ (
+  coq.elaborate-ty-skeleton (PAD_RTx x x') _ (EPAD_RTx x x') ok,
+  @pi-decl NR (EPAD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR PAD_AT
   ] => (
@@ -38,7 +39,8 @@ macro @pi-adecl2 N POD_AT POD_F :-
   @pi-decl N POD_T x\ (
   @pi-decl N' POD_T' x'\ (
   util.mk-app POD_RT [x, x'] (POD_RTx x x'),
-  @pi-decl NR (POD_RTx x x') xR\ (
+  coq.elaborate-ty-skeleton (POD_RTx x x') _ (EPOD_RTx x x') ok,
+  @pi-decl NR (EPOD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR POD_AT
   ] => (
@@ -300,4 +302,20 @@ namespace annot {
     % We elaborate RX with coherence
     (coherence AT EX EX' RX EW ERX; trocq.error "Could not ensure coherence of" {coq.term->string RX} "and" {coq.term->string EW}), !.
 
+  % Checks wether (X,X',RX) @ AT ∵ W can be added to the database
+  func check-database-add term, term, term, aterm, term -> diagnostic.
+  check-database-add X X' RX AT W Diag :-
+    aterm.triple AT T T' RT,
+    aterm.raw-triple AT T T' RT0,
+    std.forall [X,X',RX,W] util.evar-closed,
+    coq.typecheck X T DiagX,
+    util.evar-closed X',
+    coq.typecheck X' T' DiagX',
+    util.mk-app RT [X, X'] RTXX,
+    coq.say "[zzz]" W "with" RTXX,
+    coq.typecheck W RTXX DiagW,
+    util.mk-app RT0 [X, X'] RT0XX,
+    coq.typecheck RX RT0XX DiagRX,
+    util.merge-diagnostics [DiagX, DiagX', DiagW, DiagRX] Diag.
+    %XXX We don't check coherence for now
 } % annot

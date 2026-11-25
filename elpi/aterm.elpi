@@ -25,7 +25,8 @@ macro @pi-adecl N PAD_AT PAD_F :-
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
   util.mk-app PAD_RT [x, x'] (PAD_RTx x x'),
-  @pi-decl NR (PAD_RTx x x') xR\ (
+  coq.elaborate-ty-skeleton (PAD_RTx x x') _ (EPAD_RTx x x') ok,
+  @pi-decl NR (EPAD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR PAD_AT
   ] => (
@@ -61,22 +62,22 @@ namespace aterm {
   raw-triple (aglobal G TG' RG) (global G) TG' RG.
   raw-triple (apglobal G U TG' RG) (pglobal G U) TG' RG.
   raw-triple (afun N AT AF) (fun N T F) (fun N' T' F')
-      (fun N T x\ fun N' T' x'\ fun NR (TRx x x') rx\ RF x x' rx) :-
+      (fun N T x\ fun N' T' x'\ fun NR (RTx x x') rx\ RF x x' rx) :-
     util.name-suffix N "'" N', 
     util.name-suffix N "R" NR, 
     raw-triple {raw AT} T T' RT,
-    @pi-decl N T x\ @pi-decl N' T' x'\ util.mk-app RT [x,x'] (TRx x x'),
+    @pi-decl N T x\ @pi-decl N' T' x'\ util.mk-app RT [x,x'] (RTx x x'),
     @pi-adecl N AT (ay\ y\ y'\ ry\ raw-triple (AF ay) (F y) (F' y') (RF y y' ry)).
   raw-triple (aprod N AT AF) (prod N T F) (prod N' T' F')
-      (fun `f` _ f\ fun `f'` _ f'\ prod N T x\ prod N' T' x'\ prod NR (TRx x x') rx\ RFOut f f' x x' rx) :-
+      (fun `f` (prod N T F) f\ fun `f'` (prod N' T' F') f'\ prod N T x\ prod N' T' x'\ prod NR (RTx x x') rx\ RFOut f f' x x' rx) :-
     util.name-suffix N "'" N',
     util.name-suffix N "R" NR,
     raw-triple AT T T' RT,
     @pi-adecl N AT (ay\ y\ y'\ ry\
-      util.mk-app RT [y,y'] (TRx y y'),
+      util.mk-app RT [y,y'] (RTx y y'),
       raw-triple (AF ay) (F y) (F' y') (RF y y' ry),
-      @pi-decl `f` _ f\   (
-      @pi-decl `f'` _ f'\ ( sigma Fx Fx'\
+      @pi-decl `f` (prod N T F) f\   (
+      @pi-decl `f'` (prod N' T' F') f'\ ( sigma Fx Fx'\
         util.mk-app f [y] Fx,
         util.mk-app f' [y'] Fx',
         util.mk-app (RF y y' ry) [Fx, Fx'] (RFOut f f' y y' ry)
@@ -117,18 +118,18 @@ namespace aterm {
     @pi-decl N T x\ @pi-decl N' T' x'\ util.mk-app RT [x,x'] (TRx x x'),
     @pi-adecl N AT (ay\ y\ y'\ ry\ triple (AF ay) (F y) (F' y') (RF y y' ry)).
   triple (aprod N AT AF) (prod N T F) (prod N' T' F')
-      (fun `f` _ f\ fun `f'` _ f'\ prod N T x\ prod N' T' x'\ prod NR (TRx x x') rx\ RFOut f f' x x' rx) :-
+      (fun `f` (prod N T F) f\ fun `f'` (prod N' T' F') f'\ prod N T x\ prod N' T' x'\ prod NR (TRx x x') rx\ ERFOut f f' x x' rx) :-
     util.name-suffix N "'" N', 
     util.name-suffix N "R" NR, 
     triple AT T T' RT,
     @pi-adecl N AT (ay\ y\ y'\ ry\
       util.mk-app RT [y,y'] (TRx y y'),
       triple (AF ay) (F y) (F' y') (RF y y' ry),
-      @pi-decl `f` _ f\   (
-      @pi-decl `f'` _ f'\ ( sigma Fx Fx'\
+      @pi-decl `f` (prod N T F) f\   (
+      @pi-decl `f'` (prod N' T' F') f'\ ( sigma Fx Fx'\
         util.mk-app f [y] Fx,
         util.mk-app f' [y'] Fx',
-        util.mk-app (RF y y' ry) [Fx, Fx'] (RFOut f f' y y' ry)
+        util.mk-app (RF y y' ry) [Fx, Fx'] (ERFOut f f' y y' ry)
       ))
     ).
   triple (aapp AL) (app [X|L]) (app [X'|L']) Out :-

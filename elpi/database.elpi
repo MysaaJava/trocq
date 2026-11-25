@@ -124,7 +124,7 @@ coercion-enabled :- false.
 
 pred log-level o:verbosity.
 :name "log-level"
-log-level level.info.
+log-level level.trace.
 
 } % trocq.db
 

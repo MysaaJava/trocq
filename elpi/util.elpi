@@ -221,6 +221,16 @@ topo-sort S L L' :-
   util.filter-out S (x\ sigma A\ x = (pr A _), mem-evar! LMin A) S',
   topo-sort S' LOther LOther',
   std.append LMin LOther' L'.
+
+func merge-diagnostics list diagnostic -> diagnostic.
+merge-diagnostics [] ok.
+merge-diagnostics [ok|L] Diag :- !,
+  merge-diagnostics L Diag.
+merge-diagnostics [Diag|L] Diag :-
+  merge-diagnostics L ok, !.
+merge-diagnostics [error SX|L] (error S) :-
+  merge-diagnostics L (error SL),
+  S is SX ^ " and also " ^ SL.
 } % util
 
 pred std.string.list->set i:list string, o:std.string.set.

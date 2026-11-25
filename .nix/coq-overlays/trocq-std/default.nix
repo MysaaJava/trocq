@@ -1,7 +1,7 @@
 {
   lib,
   mkCoqDerivation,
-  coq-elpi,
+  rocq-helpi,
   trocq,
 }:
 
@@ -17,6 +17,6 @@ mkCoqDerivation {
   installTargets = [ "install-std" ];
 
   propagatedBuildInputs = [
-    coq-elpi
+    rocq-helpi
   ];
 }

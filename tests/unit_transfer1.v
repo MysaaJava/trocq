@@ -31,6 +31,7 @@ Section Transfer.
         mkParam01 (peR m n m' n' rm rn).
     Trocq Register Rpe.
 
+    Elpi Trace.
     Goal forall (m : I), pe m m.
     Proof.
         trocq.

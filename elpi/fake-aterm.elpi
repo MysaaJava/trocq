@@ -25,7 +25,8 @@ macro @pi-adecl N PAD_AT PAD_F :-
   @pi-decl N PAD_T x\ (
   @pi-decl N' PAD_T' x'\ (
   util.mk-app PAD_RT [x, x'] (PAD_RTx x x'),
-  @pi-decl NR (PAD_RTx x x') xR\ (
+  coq.elaborate-ty-skeleton (PAD_RTx x x') _ (EPAD_RTx x x') ok,
+  @pi-decl NR (EPAD_RTx x x') xR\ (
   pi ax\ [
     adecl ax N x x' xR PAD_AT
   ] => (
