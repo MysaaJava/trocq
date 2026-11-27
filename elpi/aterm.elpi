@@ -38,8 +38,6 @@ macro @pi-adecl N PAD_AT PAD_F :-
     (PAD_F ax x x' xR)
   )))).
 
-% curry f := fun x => f (fst x) (snd x)
-% forall z : A * A', B[z] -> forall x : A, forall y : A', B[x,y]
 % TODO XXX Move this back to data.elpi
 func trocq.data.r param-class -> term.
 trocq.data.r C T :-
@@ -289,8 +287,8 @@ namespace aterm.util {
   func topOf atype -> atype.
   bottomOf T U :- logging.trace (coq.say "[bottomOf]" T "//" U), fail, !.
   topOf T U :- logging.trace (coq.say "[topOf]" T "//" U), fail, !.
-  bottomOf (asort S C) (asort S Bot) :- !, param-class.bottom Bot.
-  topOf (asort S C) (asort S Top) :- !, param-class.top Top.
+  bottomOf (asort S _) (asort S Bot) :- !, param-class.bottom Bot.
+  topOf (asort S _) (asort S Top) :- !, param-class.top Top.
   bottomOf (aprod N AT AF) (aprod N AT' AF') :- !,
     topOf AT AT',
     @pi-adecl N AT' (ax\ _\ _\ _\
@@ -320,4 +318,52 @@ namespace aterm.util {
     topOf X X'.
   bottomOf X X :- !.
   topOf X X :- !.
+
+  func head-beta-step aterm -> aterm.
+  head-beta-step (aapp [(afun _ _ X), Y|L]) Out :-
+    aterm.util.mk-app (X Y) L Out.
+  
+  func datax aterm -> term.
+  datax (asort _ _) (
+    fun `A` (sort _) a\ fun `B` (sort _) b\
+    prod `_` a _\ prod `_` b _\ sort _
+  ) :- !.
+  datax (aprod N AA AB) (
+    fun `f` (prod N A B) f\
+    fun `f'` (prod N' A' B') f'\
+    prod N A x\
+    prod N' A' x'\
+    prod Nr (RAxx' x x') rx\
+    BRFXGX f f' x x' rx
+  ) :- !,
+    coq.name-suffix N "'" N',
+    coq.name-suffix N "r" Nr,
+    aterm.triple AA A A' _,
+    datax AA RA,
+    @pi-decl N A x\
+    @pi-decl N' A' x'\ (
+      util.mk-app RA [x, x'] (RAxx' x x'),
+      @pi-decl Nr (RAxx' x x') rx\
+      pi ax\ adecl-data ax N x x' rx AA => (
+      @pi-decl `f` (prod N A B) f\
+      @pi-decl `f'` (prod N' A' B') f'\ (
+        datax (AB ax) (BR x x' rx),
+        util.mk-app (BR x x' rx) [(app [f, x]), (app [f', x'])] (BRFXGX f f' x x' rx)
+      ))
+    ).
+  datax AA RA :- adecl-data AA _ _ _ RA _, !.
+  datax AA AData :- head-beta-step AA AA', !, datax AA' AData.
+  datax (aapp [AU|AL]) AData :- !,
+    datax AU UData,
+    util.mapTo3 AL (ax\ x\ x'\ rx\
+      aterm.triple ax x x' _,
+      datax ax rx
+    ) L L' RL,
+    util.interleave [L, L', RL] Args,
+    util.mk-app UData Args AData.
+  % Last chance, AA is not a type
+  datax AA Unit :- !,
+    coq.say "XXX -> aterm has been transformed to unit : " AA,
+    coq.locate "unit" UnitG,
+    coq.env.global UnitG Unit.
 }

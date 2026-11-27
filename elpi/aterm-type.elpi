@@ -37,3 +37,5 @@ type aprimitive primitive-value -> aterm.
 % `adecl ax N x x' xr A` declares an annotated variable ax with name N with an annotated type A
 % which forgets to a term x and translates to a term x' with relation xr
 pred adecl o:aterm o:name o:term o:term o:term o:atype.
+% Same as adecl but xr has type data(A) x x' instead of [[A]] x x'
+pred adecl-data o:aterm o:name o:term o:term o:term o:atype.

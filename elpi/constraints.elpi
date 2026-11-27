@@ -130,7 +130,7 @@ namespace param-class-cstr {
 }
 
 func aterm.certain aterm ->.
-aterm.certain (uvar as X) :- !, fail.
+aterm.certain uvar :- !, fail.
 aterm.certain X :- name X, !.
 aterm.certain (asort _ C) :- !, param-class-cstr.certain C.
 aterm.certain (aprod N T F) :- !,
@@ -144,8 +144,8 @@ aterm.certain (afun N T F) :- !,
         aterm.certain (F ax)
     ).
 aterm.certain (aapp L) :- !, std.forall L aterm.certain.
-aterm.certain (aglobal _ X' RX) :- not (var X), not (var RX), !.
-aterm.certain (apglobal _ _ X' RX) :- not (var X), not (var RX), !.
+aterm.certain (aglobal _ X' RX) :- not (var X'), not (var RX), !.
+aterm.certain (apglobal _ _ X' RX) :- not (var X'), not (var RX), !.
 %XXX We should expand that with checking the gref
 % and with checking wether we have multiple copies of the gref in the database.
 
